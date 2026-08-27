@@ -69,11 +69,11 @@ progetto.
 
 ## Limiti Free e benchmark
 
-`wrangler.toml` imposta esplicitamente `cpu_ms = 10`, il limite per invocazione
-del piano Workers Free. L'attesa di `fetch()` verso PoliMi e Telegram non conta
-come CPU, mentre parsing HTML, logica del bot e formattazione sì. Il piano Free
-ha inoltre un tetto di richieste giornaliere (attualmente 100.000): verificare
-sempre i limiti Cloudflare correnti prima della pubblicazione.
+Il piano Workers Free applica automaticamente il proprio limite CPU per
+invocazione (attualmente 10 ms). L'attesa di `fetch()` verso PoliMi e Telegram
+non conta come CPU, mentre parsing HTML, logica del bot e formattazione sì. Il
+piano Free ha inoltre un tetto di richieste giornaliere: verificare sempre i
+limiti Cloudflare correnti prima della pubblicazione.
 
 Il runtime locale non riproduce in modo affidabile il consumo CPU della rete
 Cloudflare. Prima di considerare concluso il deploy:
