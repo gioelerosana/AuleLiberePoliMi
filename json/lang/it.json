@@ -1,7 +1,7 @@
 {
     "texts":
     {
-        "welcome": "Ciao <b>{}</b>! Questo è Aule Libere Polimi bot, con questo bot sarai in grado di cercare le aule libere per l'intera settimana!\nBot originale di <b>Daniele Ferrazzo</b>, ora mantenuto da <a href='telegram.me/joelshepard'><b>Joel Shepard</b></a>.\nPer problemi o suggerimenti, contattami!\nSe vuoi ulteriori informazioni premi info!\nPuoi terminare in qualsiasi momento la conversazione con il comando /terminate , attenzione così facendo eliminerai tutte le tue preferenze!",
+        "welcome": "Ciao <b>{}</b>! Questo è Aule Libere Polimi bot, con questo bot sarai in grado di cercare le aule libere per l'intera settimana!\nBot originale di <b>Daniele Ferrazzo</b>.\nSe vuoi ulteriori informazioni premi info!\nPuoi terminare in qualsiasi momento la conversazione con il comando /terminate , attenzione così facendo eliminerai tutte le tue preferenze!",
         "location": "Seleziona il campus",
         "day" : "Seleziona il giorno",
         "starting_time" : "Seleziona l'orario iniziale",
@@ -19,7 +19,7 @@
         "missing" : "Prima imposta il campus preferito!\nPremi il pulsante qui sotto per aprire il Mini App.",
         "invalid_preferences": "❌ Le preferenze ricevute non sono valide. Riapri la Mini App e riprova.",
         "no_rooms": "Non sono state trovate aule libere in questa fascia oraria.",
-        "exception" : "C'è stato un problema durante la ricerca☹️\nRitenta più tardi o contatta <a href='telegram.me/joelshepard'>qui</a> per ulteriori informazioni",
+        "exception" : "C'è stato un problema durante la ricerca☹️\nRitenta più tardi.",
         "until" : "fino alle"
     },
     "keyboards" : 

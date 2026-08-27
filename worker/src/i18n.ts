@@ -29,7 +29,7 @@ export interface Translation {
 export const translations: Record<Language, Translation> = {
   it: {
     welcome: (name) =>
-      `Ciao <b>${escapeHtml(name)}</b>! Con Aule Libere PoliMi puoi cercare le aule libere per tutta la settimana.\n\nBot originale di <b>Daniele Ferrazzo</b>, ora mantenuto da <a href="https://t.me/joelshepard"><b>Joel Shepard</b></a>.`,
+      `Ciao <b>${escapeHtml(name)}</b>! Con Aule Libere PoliMi puoi cercare le aule libere per tutta la settimana.\n\nBot originale di <b>Daniele Ferrazzo</b>.`,
     location: "Seleziona il campus",
     day: "Seleziona il giorno",
     startingTime: "Seleziona l'orario iniziale",
@@ -57,7 +57,7 @@ export const translations: Record<Language, Translation> = {
   },
   en: {
     welcome: (name) =>
-      `Hi <b>${escapeHtml(name)}</b>! Aule Libere PoliMi helps you find free classrooms throughout the week.\n\nOriginal bot by <b>Daniele Ferrazzo</b>, now maintained by <a href="https://t.me/joelshepard"><b>Joel Shepard</b></a>.`,
+      `Hi <b>${escapeHtml(name)}</b>! Aule Libere PoliMi helps you find free classrooms throughout the week.\n\nOriginal bot by <b>Daniele Ferrazzo</b>.`,
     location: "Choose a campus",
     day: "Choose a day",
     startingTime: "Choose the starting time",

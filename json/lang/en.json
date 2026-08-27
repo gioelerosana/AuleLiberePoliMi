@@ -1,7 +1,7 @@
 {
     "texts":
     {
-        "welcome": "Hi <b>{}</b>! This is Aule Libere Polimi bot, with this bot you will be able to search free classrooms for the entire week!\nOriginal bot by <b>Daniele Ferrazzo</b>, now maintained by <a href='telegram.me/joelshepard'><b>Joel Shepard</b></a>.\nFor issues or suggestions, contact me!\nIf you want more information select info!\nYou can terminate the conversation whenever you want using /terminate",
+        "welcome": "Hi <b>{}</b>! This is Aule Libere Polimi bot, with this bot you will be able to search free classrooms for the entire week!\nOriginal bot by <b>Daniele Ferrazzo</b>.\nIf you want more information select info!\nYou can terminate the conversation whenever you want using /terminate",
         "location": "Choose the location",
         "day" : "Choose a day",
         "starting_time" : "Choose the starting time",
@@ -19,7 +19,7 @@
         "missing" : "Set your campus preference first!\nPress the button below to open the Mini App.",
         "invalid_preferences": "❌ The preferences received are invalid. Please reopen the Mini App and try again.",
         "no_rooms": "No free classrooms were found for this time slot.",
-        "exception" : "An exception occurred during the search process☹️\nTry again later or contact <a href='telegram.me/joelshepard'>me</a> for further info",
+        "exception" : "An exception occurred during the search process☹️\nTry again later.",
         "until" : "free until"
     },
     "keyboards":
