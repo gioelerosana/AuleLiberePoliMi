@@ -1,5 +1,7 @@
-import re
 import json
+import re
+from pathlib import Path
+
 import requests
 from bs4 import BeautifulSoup
 
@@ -12,16 +14,33 @@ that can be opened and checked by the bot in constant time. Of course this won't
 we don't add and remove power outlets to rooms every day, so launching this script every now and then is more than fine.
 """
 
-r = requests.get(URL)
-soup = BeautifulSoup(r.text, 'html.parser')
-tableContainer = soup.find("tbody", {"class": "TableDati-tbody"})
-tableRows = tableContainer.find_all('tr')
+OUTPUT_PATH = Path(__file__).resolve().parents[1] / "json" / "roomsWithPower.json"
 
-roomsWithPower = []
 
-for row in tableRows:
-    link = row.find_all('td')[2]
-    id_aula = int(re.findall("idaula=(\d+)&",link.find("a")['href'])[0])
-    roomsWithPower.append(id_aula)
+def generate_power_rooms() -> list[int]:
+    response = requests.get(URL, timeout=30)
+    response.raise_for_status()
+    soup = BeautifulSoup(response.text, "lxml")
+    table_container = soup.find("tbody", {"class": "TableDati-tbody"})
+    if table_container is None:
+        raise RuntimeError("PoliMi power-room table not found")
 
-json.dump(roomsWithPower,open("../json/roomsWithPower.json","w"),indent=3)
+    room_ids = []
+    for row in table_container.find_all("tr"):
+        cells = row.find_all("td")
+        if len(cells) < 3 or cells[2].find("a") is None:
+            continue
+        match = re.search(r"idaula=(\d+)(?:&|$)", cells[2].find("a").get("href", ""))
+        if match:
+            room_ids.append(int(match.group(1)))
+    return room_ids
+
+
+def main() -> None:
+    with OUTPUT_PATH.open("w", encoding="utf-8") as output_file:
+        json.dump(generate_power_rooms(), output_file, indent=3)
+        output_file.write("\n")
+
+
+if __name__ == "__main__":
+    main()

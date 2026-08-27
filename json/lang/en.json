@@ -7,7 +7,7 @@
         "starting_time" : "Choose the starting time",
         "ending_time" : "Choose the ending time",
         "error": "Use the buttons you fucking donkey!",
-        "ops" : "In this time slot PoliMi is closed!\nI will give you instead the free classrooms of tomorrow morning from 8 a.m. to 10 a.m.",
+        "ops" : "PoliMi is currently closed. I will search from the next opening time.",
         "terminate": "Conversation terminated!\nPress /start to start again the conversation!",
         "cancel" : "Going back⬅",
         "info" : "To start the Search process simply touch the \"🔍Search\" button and then insert using the custom keyboard the asked information\n\nThe \"🕒Now\" button allows you, after setting your preferences, to quickly search the free classrooms!\n\nThe \"⚙️Preferences\" button allows you to set your preferences about yout preferred campus and the duration in term of hours for the quick search. Also allows you to change language! \n\nThe code is available on GitHub <a href='https://github.com/JoelShepard/AuleLiberePoliMi'>here</a>\nOriginal bot by <b>Daniele Ferrazzo</b>.",
@@ -17,6 +17,8 @@
         "time" : "Choose the amount of hours for the quick search",
         "success" : "Done👍🏻",
         "missing" : "Set your campus preference first!\nPress the button below to open the Mini App.",
+        "invalid_preferences": "❌ The preferences received are invalid. Please reopen the Mini App and try again.",
+        "no_rooms": "No free classrooms were found for this time slot.",
         "exception" : "An exception occurred during the search process☹️\nTry again later or contact <a href='telegram.me/joelshepard'>me</a> for further info",
         "until" : "free until"
     },

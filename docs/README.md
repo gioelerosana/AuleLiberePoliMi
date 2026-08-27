@@ -11,23 +11,22 @@ gestione delle preferenze utente, interamente lato client.
 ## Architettura
 
 ```
-┌─────────────────────┐     ┌──────────────────┐     ┌──────────────────┐
-│  Telegram Client    │────▶│  Bot Container   │────▶│ PoliMi Web       │
-│  (app mobile /      │◀────│  (Cloud Run)     │◀────│ onlineservices   │
-│   desktop / web)    │     │                  │     │ .polimi.it       │
-│                     │     │  python-telegram │     └──────────────────┘
-│  ┌───────────────┐  │     │  -bot v22        │
-│  │ Mini App      │  │     │  requests+bs4    │
-│  │ (Cloudflare   │──│────▶│ (web_app_data)   │
-│  │  Pages)       │  │     └──────────────────┘
-│  └───────────────┘  │
-└─────────────────────┘
+┌─────────────────────┐   webhook   ┌─────────────────────┐
+│ Telegram            │────────────▶│ Cloudflare Worker   │
+│ Mini App settings   │             │ TypeScript          │
+└──────────┬──────────┘             └──────────┬──────────┘
+           │ HTTPS                              │ HTTPS
+           ▼                                    ▼
+┌─────────────────────┐             ┌─────────────────────┐
+│ Cloudflare Pages    │             │ Servizi PoliMi      │
+│ HTML + CSS + JS     │             │ occupazione aule    │
+└─────────────────────┘             └─────────────────────┘
 ```
 
-- **Bot**: container Python su Google Cloud Run
-- **Scraping**: `requests` + `BeautifulSoup` → pagine PoliMi
+- **Bot**: Cloudflare Worker TypeScript stateless tramite webhook Telegram
+- **Scraping**: `fetch` + `HTMLRewriter` → pagine PoliMi
 - **Mini App**: HTML+CSS+JS statico su Cloudflare Pages
-- **Preferenze**: interamente lato client (`localStorage` della Mini App)
+- **Preferenze**: lato client (Telegram CloudStorage, fallback `localStorage`)
 - **Stateless**: nessun database, nessun file persistente
 
 ---
@@ -36,13 +35,12 @@ gestione delle preferenze utente, interamente lato client.
 
 | Componente | Tecnologia |
 |---|---|
-| Linguaggio | Python 3.13+ |
-| Framework bot | [python-telegram-bot](https://github.com/python-telegram-bot/python-telegram-bot) v22 |
-| Scraping | requests + beautifulsoup4 |
+| Linguaggio produzione | TypeScript su Cloudflare Workers |
+| Bot API | Webhook + `fetch` diretto |
+| Scraping | `fetch` + Cloudflare `HTMLRewriter` |
 | Mini App | HTML5 + CSS3 + JS vanilla (statica) |
-| Hosting bot | Google Cloud Run |
+| Hosting bot | Cloudflare Workers Free |
 | Hosting Mini App | Cloudflare Pages |
-| Contenitore | Docker (multi-stage) |
 
 ---
 
@@ -50,10 +48,14 @@ gestione delle preferenze utente, interamente lato client.
 
 ```
 AuleLiberePoliMi/
-├── bot.py                        # Entry point del bot
-├── requirements.txt              # Dipendenze Python
-├── Dockerfile                    # Image per Cloud Run
-├── docker-compose.yml            # Sviluppo locale
+├── worker/                       # Worker TypeScript di produzione
+│   ├── src/                      # Router, Telegram, scraper e formatter
+│   ├── test/                     # Test Vitest
+│   └── wrangler.toml             # Configurazione Cloudflare
+├── bot.py                        # Implementazione Python di riferimento
+├── pyproject.toml                # Metadati e dipendenze Python
+├── uv.lock                       # Lockfile riproducibile
+├── Dockerfile                    # Runtime legacy di riferimento
 ├── .env                          # Variabili locali (NON in Git)
 ├── .env.example                  # Template per .env
 ├── .dockerignore
@@ -62,7 +64,6 @@ AuleLiberePoliMi/
 │   ├── errorhandler.py           # Gestione errori + bonk
 │   ├── input_check.py            # Validazione input utente
 │   ├── keyboard_builder.py       # Generazione tastiere
-│   ├── regex_builder.py          # Regex per alias multilingua
 │   └── string_builder.py         # Formattazione risposte
 ├── search/
 │   ├── __init__.py
@@ -79,12 +80,15 @@ AuleLiberePoliMi/
 │   └── settings/
 │       ├── index.html            # Mini App impostazioni
 │       ├── style.css             # Stile tema Telegram
+│       ├── data.js               # Sedi generate dalla sorgente JSON
 │       └── script.js             # Logica preferenze client-side
 ├── photos/
 │   └── bonk.jpg                  # Meme per input errati
+├── tests/                        # Test automatici unittest
 ├── AGENTS.md                     # Contesto per AI agent (root)
 └── docs/
     ├── README.md                 # Questa documentazione
+    ├── CLOUDFLARE_MIGRATION.md   # Architettura e gate di migrazione
     └── TODO.md                   # Piano di rinnovamento
 ```
 
@@ -95,15 +99,30 @@ AuleLiberePoliMi/
 1. L'utente avvia il bot con `/start`
 2. Sceglie tra **Cerca**, **Ora**, **Info** e **Preferenze**
 3. **Cerca**: seleziona campus → giorno → ora inizio → ora fine → risultati
-4. **Ora**: cerca subito (usa preferenze dalla Mini App se impostate)
+4. **Ora**: dopo il salvataggio, usa il pulsante rapido stateless inviato dal bot
 5. **Preferenze**: apre la Mini App via pulsante testuale o bottone blu Web App
    - Nella Mini App: lingua, campus preferito, durata ricerca rapida
-   - I dati sono salvati nel `localStorage` del client Telegram
+   - I dati sono salvati in Telegram CloudStorage, con fallback `localStorage`
    - Quando si preme "Salva", i dati arrivano al bot via `web_app_data`
 
 Il bot è **stateless**: nessuna preferenza è salvata lato server.
-Al riavvio del container, tutto riparte pulito.
+Al riavvio del Worker, tutto riparte pulito.
 Le preferenze vivono solo nel client Telegram.
+
+---
+
+## Verifica locale
+
+```bash
+cd worker
+npm install
+npm run check
+npm test
+npm run deploy
+```
+
+Per i test dell'implementazione Python di riferimento: `uv sync --frozen` e
+`uv run python -m unittest discover -v` dalla root.
 
 ---
 

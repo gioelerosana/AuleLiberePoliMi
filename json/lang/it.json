@@ -7,7 +7,7 @@
         "starting_time" : "Seleziona l'orario iniziale",
         "ending_time" : "Seleziona l'orario finale",
         "error": "Sei stato bonkato, usa i pulsanti!",
-        "ops" : "Il PoliMi adesso è chiuso!\nTi darò invee le informazioni sulle aule libere di domattina!",
+        "ops" : "Il PoliMi adesso è chiuso. Cercherò a partire dalla prossima apertura.",
         "terminate": "Conversazione terminata!\nPremi /start per iniziare una nuova conversazione!",
         "cancel" : "Torno indietro⬅",
         "info" : "Per iniziare la ricerca premi il pulsante \"🔍Cerca\" e dopo inserisci usanto gli appositi pulsanti le informazioni richieste.\n\nIl pulsante \"🕒Ora\" ti permette , dopo aver impostato le preferenze, di cercare velocemente le aule libere!\n\nIl pulsante \"⚙️Preferenze\" ti permette di impostare il tuo campus preferito e la durata in ore per la ricerca rapida, inoltre ti permette di selezionare la tua lingua preferita!\n\nIl codice è disponibile su GitHub <a href='https://github.com/JoelShepard/AuleLiberePoliMi'>qui</a>\nBot originale di <b>Daniele Ferrazzo</b>.",
@@ -17,6 +17,8 @@
         "time" : "Seleziona il numero di ore per la ricerca rapida",
         "success" : "Fatto👍🏻",
         "missing" : "Prima imposta il campus preferito!\nPremi il pulsante qui sotto per aprire il Mini App.",
+        "invalid_preferences": "❌ Le preferenze ricevute non sono valide. Riapri la Mini App e riprova.",
+        "no_rooms": "Non sono state trovate aule libere in questa fascia oraria.",
         "exception" : "C'è stato un problema durante la ricerca☹️\nRitenta più tardi o contatta <a href='telegram.me/joelshepard'>qui</a> per ulteriori informazioni",
         "until" : "fino alle"
     },

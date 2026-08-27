@@ -54,21 +54,29 @@ Legenda: `[ ]` da fare · `[~]` in corso · `[x]` fatto
 - [x] URL della Mini App come variabile d'ambiente (`WEBAPP_URL`)
 - [~] Test funzionamento end-to-end (testato bot, Mini App in attesa di test su Telegram)
 
-## ✅ Fase 3 — Containerizzazione (PARZIALE)
+## ✅ Fase 3 — Containerizzazione e test (COMPLETATA)
 
 - [x] `Dockerfile` multi-stage (builder + runtime python:3.13-slim, USER non-root)
 - [x] `.dockerignore`
-- [ ] `docker-compose.yml` per sviluppo locale
-- [ ] Verificare build locale dell'immagine (Docker daemon non attivo)
-- [ ] Verificare avvio del bot nel container
+- [x] Suite automatica per validazione, ricerca, formattazione e preferenze
+- [x] Verificata build locale dell'immagine
+- [x] Verificati avvio, healthcheck e arresto pulito del bot nel container
+- [x] Verificata ricerca live contro il sito PoliMi
 
-## ⬜ Fase 4 — Deploy su Google Cloud Run (DA FARE)
+## 🟨 Fase 4 — Cloudflare Worker TypeScript (IN CORSO)
 
-- [ ] Creare `cloudbuild.yaml` per build automatizzata
-- [ ] Istruzioni deploy: `gcloud run deploy`
-- [ ] Variabili d'ambiente: `TOKEN` da Secret Manager
-- [ ] Test deploy su Cloud Run (regione europe-west1)
-- [ ] Verificare log su Cloud Logging
+- [x] Scelto Cloudflare Workers per concentrare bot e Mini App
+- [x] Riscritto runtime Telegram come webhook TypeScript stateless
+- [x] Portato scraper PoliMi su `fetch` + `HTMLRewriter`
+- [x] Aggiunti callback compatti e suite automatica Worker
+- [x] Validati typecheck e build Wrangler dry-run
+- [x] Verificata parità live Python/TypeScript (37 edifici, 80 aule)
+- [x] Unificata la sorgente dati campus tra Worker e Mini App
+- [ ] Ruotare il token Telegram prima del deploy
+- [ ] Salvare token e webhook secret nei Worker Secrets
+- [ ] Deploy su Cloudflare Workers Free
+- [ ] Verificare CPU time reale sotto 10 ms
+- [ ] Eseguire smoke test dopo il deploy
 - [ ] Verificare funzionamento bot dopo deploy
 
 ## ✅ Fase 5 — Ownership & documentazione (COMPLETATA)

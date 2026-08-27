@@ -1,0 +1,13 @@
+name = "aule-libere-polimi"
+main = "src/index.ts"
+compatibility_date = "2026-08-27"
+
+# The Free plan allows 10 ms of CPU per invocation. Network wait time is not
+# counted, but parsing and formatting are. Keep this explicit so local
+# profiling and production use the same ceiling.
+[limits]
+cpu_ms = 10
+
+[observability.logs]
+enabled = true
+invocation_logs = true

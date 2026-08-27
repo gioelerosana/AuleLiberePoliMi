@@ -24,68 +24,69 @@ nel tuo slot orario preferito.
 ## Architettura
 
 ```
-┌─────────────────────┐     ┌──────────────────┐     ┌──────────────────┐
-│  Telegram Client    │────▶│  Bot Container   │────▶│ PoliMi Web       │
-│  (app mobile /      │◀────│  (Cloud Run)     │◀────│ onlineservices   │
-│   desktop / web)    │     │                  │     │ .polimi.it       │
-│                     │     │  python-telegram │     └──────────────────┘
-│  ┌───────────────┐  │     │  -bot v22        │
-│  │ Mini App      │  │     │  requests+bs4    │
-│  │ (Cloudflare   │──│────▶│ (web_app_data)   │
-│  │  Pages)       │  │     └──────────────────┘
-│  └───────────────┘  │
-└─────────────────────┘
+┌─────────────────────┐   webhook   ┌─────────────────────┐
+│ Telegram            │────────────▶│ Cloudflare Worker   │
+│                     │◀────────────│ TypeScript          │
+│ Mini App settings   │             │ fetch + HTMLRewriter│
+└──────────┬──────────┘             └──────────┬──────────┘
+           │ HTTPS                              │ HTTPS
+           ▼                                    ▼
+┌─────────────────────┐             ┌─────────────────────┐
+│ Cloudflare Pages    │             │ Servizi PoliMi      │
+│ HTML + CSS + JS     │             │ occupazione aule    │
+└─────────────────────┘             └─────────────────────┘
 ```
 
-- **Bot**: container Python su Google Cloud Run
-- **Scraping**: `requests` + `BeautifulSoup` → pagine PoliMi
+- **Bot**: Cloudflare Worker TypeScript stateless tramite webhook Telegram
+- **Scraping**: `fetch` + `HTMLRewriter` → pagine PoliMi
 - **Mini App**: HTML+CSS+JS statico su Cloudflare Pages
-- **Preferenze**: interamente lato client (`localStorage` della Mini App)
+- **Preferenze**: lato client (Telegram CloudStorage, con fallback `localStorage`)
 - **Stateless**: nessun database, nessun file persistente
 
 ## Stack
 
 | Componente | Tecnologia |
 |---|---|
-| Linguaggio | Python 3.13+ |
-| Framework bot | [python-telegram-bot](https://github.com/python-telegram-bot/python-telegram-bot) v22 |
-| Scraping | requests + beautifulsoup4 |
+| Linguaggio produzione | TypeScript su Cloudflare Workers |
+| Bot API | Webhook + `fetch` diretto |
+| Scraping | `fetch` + Cloudflare `HTMLRewriter` |
 | Mini App | HTML5 + CSS3 + JS vanilla (statica) |
-| Hosting bot | Google Cloud Run |
+| Hosting bot | Cloudflare Workers Free |
 | Hosting Mini App | Cloudflare Pages |
-| Contenitore | Docker (multi-stage) |
 
 ## Sviluppo locale
 
-### Dipendenze
+Il runtime di produzione richiede Node.js 20 o successivo:
 
 ```bash
-pip install python-telegram-bot python-dotenv pytz requests beautifulsoup4 lxml
+cd worker
+npm install
+npm run check
+npm test
+npm run dev
 ```
 
-### Configurazione
+Il backend Python e il relativo Dockerfile restano temporaneamente nel
+repository come riferimento per i test di parità; non sono il target di
+produzione. Per eseguire anche la suite legacy:
 
-Crea un file `.env` con:
-
+uv run python -m unittest discover -v
 ```
-TOKEN=IL_TUO_TOKEN_BOT
-```
 
-Poi avvia:
-
-```bash
-python bot.py
-```
+Il backend Python resta temporaneamente come implementazione di riferimento.
+Per sviluppo e deploy del Worker vedi [worker/README.md](worker/README.md) e il
+[piano di migrazione](docs/CLOUDFLARE_MIGRATION.md).
 
 ## Come funziona
 
 1. L'utente avvia il bot con `/start`
 2. Sceglie tra **Cerca**, **Ora**, **Info** e **Preferenze**
 3. **Cerca**: seleziona campus → giorno → ora inizio → ora fine → risultati
-4. **Ora**: cerca subito (usa preferenze dalla Mini App se impostate)
+4. **Ora**: dopo il salvataggio, il bot invia un pulsante rapido stateless con
+   campus e durata incorporati
 5. **Preferenze**: apre la Mini App via pulsante testuale o bottone blu Web App
    - Nella Mini App: lingua, campus preferito, durata ricerca rapida
-   - I dati sono salvati nel `localStorage` del client Telegram
+   - I dati sono salvati in Telegram CloudStorage, con fallback `localStorage`
    - Quando si preme "Salva", i dati arrivano al bot via `web_app_data`
 
 Il bot è **stateless**: nessuna preferenza è salvata lato server.

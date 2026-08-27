@@ -5,14 +5,15 @@ AuleLiberePoliMi Bot — Telegram bot to find free classrooms at PoliMi.
 Rewrite for PTB v22+, stateless, with Mini App support.
 Original bot by Daniele Ferrazzo (2021). Adapted and maintained by Joel Shepard (2026).
 """
-import os
-import re
+import asyncio
 import json
 import logging
+import os
+import re
 import pytz
 from os.path import join, dirname
 from dotenv import load_dotenv
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from telegram import Update, ReplyKeyboardMarkup, ReplyKeyboardRemove
 from telegram.constants import ParseMode, ChatAction
@@ -143,6 +144,26 @@ def get_preferences(context: ContextTypes.DEFAULT_TYPE) -> dict:
     return context.user_data.get("preferences", {})
 
 
+def validate_preferences(data: object) -> dict:
+    """Validate and normalize the Mini App payload before using it."""
+    if not isinstance(data, dict):
+        raise ValueError("preferences must be a JSON object")
+
+    lang = data.get("lang")
+    campus = data.get("campus")
+    duration = data.get("duration")
+    if lang not in texts:
+        raise ValueError("unsupported language")
+    if campus not in location_dict:
+        raise ValueError("unknown campus")
+    if isinstance(duration, bool) or not isinstance(duration, int):
+        raise ValueError("duration must be an integer")
+    if not 1 <= duration <= 8:
+        raise ValueError("duration must be between 1 and 8")
+
+    return {"lang": lang, "campus": campus, "duration": duration}
+
+
 # ══════════════════════════════════════════════════════════════════
 #  WEB APP DATA HANDLER (outside ConversationHandler)
 # ══════════════════════════════════════════════════════════════════
@@ -165,7 +186,7 @@ async def handle_web_app_data(
         return
 
     try:
-        preferences = json.loads(web_app_data.data)
+        preferences = validate_preferences(json.loads(web_app_data.data))
         context.user_data["preferences"] = preferences
 
         pref_lang = preferences.get("lang")
@@ -183,10 +204,14 @@ async def handle_web_app_data(
             update.effective_user.username if update.effective_user else "unknown",
             preferences,
         )
-    except (json.JSONDecodeError, TypeError) as e:
+    except (json.JSONDecodeError, TypeError, ValueError) as e:
         lang = get_lang(update, context)
         logging.warning("Invalid web_app_data: %s", e)
-        await update.message.reply_text("❌ Invalid data received.")
+        await update.message.reply_text(
+            texts[lang]["texts"].get(
+                "invalid_preferences", "❌ Invalid preferences received."
+            )
+        )
 
 
 # ══════════════════════════════════════════════════════════════════
@@ -284,12 +309,16 @@ async def _cmd_now(update: Update, context: ContextTypes.DEFAULT_TYPE, lang: str
         )
         return INITIAL_STATE
 
-    # Do quick search
+    # Do quick search. Outside opening hours, use the next useful opening.
     now = datetime.now(pytz.timezone("Europe/Rome"))
     start_hour = int(now.strftime("%H"))
 
-    if start_hour >= MAX_TIME or start_hour < MIN_TIME:
+    if start_hour < MIN_TIME:
         await update.message.reply_text(texts[lang]["texts"]["ops"])
+        start_hour = MIN_TIME
+    elif start_hour >= MAX_TIME:
+        await update.message.reply_text(texts[lang]["texts"]["ops"])
+        now += timedelta(days=1)
         start_hour = MIN_TIME
 
     end_hour = start_hour + duration
@@ -415,7 +444,8 @@ async def _perform_search(
     day, month, year = date.split("/")
 
     try:
-        available_rooms = find_free_room(
+        available_rooms = await asyncio.to_thread(
+            find_free_room,
             float(start_time + TIME_SHIFT),
             float(end_time + TIME_SHIFT),
             location_dict[location],
@@ -428,9 +458,13 @@ async def _perform_search(
             "{}  {}  {}-{}".format(date, location, start_time, end_time)
         )
 
-        for msg in string_builder.room_builder_str(
+        result_messages = string_builder.room_builder_str(
             available_rooms, texts[lang]["texts"]["until"]
-        ):
+        )
+        if not result_messages:
+            result_messages = [texts[lang]["texts"]["no_rooms"]]
+
+        for msg in result_messages:
             await update.message.reply_chat_action(ChatAction.TYPING)
             await update.message.reply_text(
                 msg,
@@ -512,6 +546,9 @@ def build_info_regex() -> str:
 
 def main() -> None:
     """Build, configure and start the bot."""
+    if not TOKEN:
+        raise RuntimeError("TOKEN environment variable is required")
+
     application = Application.builder().token(TOKEN).build()
 
     # ── 1. Web App data handler (before ConversationHandler) ────
@@ -523,7 +560,12 @@ def main() -> None:
     info_regex = build_info_regex()
 
     conv_handler = ConversationHandler(
-        entry_points=[CommandHandler("start", start)],
+        entry_points=[
+            CommandHandler("start", start),
+            # Keep reply-keyboard buttons usable after a process restart,
+            # when ConversationHandler has no in-memory state for the user.
+            MessageHandler(filters.Regex(_initial_regex), initial_state),
+        ],
         states={
             INITIAL_STATE: [
                 MessageHandler(

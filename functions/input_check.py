@@ -40,7 +40,7 @@ def start_time_check(message: str) -> Tuple[bool, int]:
     except (ValueError, TypeError):
         return False, 0
 
-    if start_time > MAX_TIME or start_time < MIN_TIME:
+    if start_time >= MAX_TIME or start_time < MIN_TIME:
         return False, 0
     return True, start_time
 
@@ -52,6 +52,6 @@ def end_time_check(message: str, start_time: int) -> Tuple[bool, int]:
     except (ValueError, TypeError):
         return False, 0
 
-    if start_time >= end_time or end_time > MAX_TIME + 1:
+    if start_time is None or start_time >= end_time or end_time > MAX_TIME:
         return False, 0
     return True, end_time

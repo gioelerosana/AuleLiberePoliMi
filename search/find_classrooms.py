@@ -1,7 +1,9 @@
-from logging import root
+import json
+from pathlib import Path
+from urllib.parse import urljoin
+
 import requests
 from bs4 import BeautifulSoup
-import json
 
 URL = "https://onlineservices.polimi.it/spazi/spazi/controller/OccupazioniGiornoEsatto.do"
 BASE_URL = "https://onlineservices.polimi.it/spazi/spazi/controller/"
@@ -12,18 +14,19 @@ TIME_SHIFT = 0.25
 MIN_TIME = 8
 MAX_TIME = 20
 
-GARBAGE = ["PROVA_ASICT" , "2.2.1-D.I."]
+GARBAGE = {"PROVA_ASICT", "2.2.1-D.I."}
+REQUEST_TIMEOUT = 20
+POWER_ROOMS_PATH = Path(__file__).resolve().parents[1] / "json" / "roomsWithPower.json"
 
 
 """
 Clean the dict with all the class occupancies from rooms that don't exists or are unreacheable
 """
 def clean_data(infos):
-    for building in infos:
+    for rooms in infos.values():
         for room in GARBAGE:
-            if room in infos[building]:
-                del infos[building][room]          
-            
+            rooms.pop(room, None)
+
     return infos
 
 
@@ -33,64 +36,89 @@ the function makes a get requests to the URL and then
 build a dict with the classes information stored on the html table (the code may not be perfect 🥲)
 """
 
-def find_classrooms(location , day , month , year):
-    info = {} 
-    buildingName = '-' #defaul value for building
-    info[buildingName] = {} #first initialization due to table format
+def find_classrooms(location, day, month, year):
+    info = {}
+    building_name = "-"
+    info[building_name] = {}
 
-    params = {'csic': location , 'categoria' : 'tutte', 'tipologia' : 'tutte', 'giorno_day' : day , 'giorno_month' : month, 'giorno_year' : year , 'jaf_giorno_date_format' : 'dd%2FMM%2Fyyyy'  , 'evn_visualizza' : ''}
-    r = requests.get(URL , params= params)
-    
-    soup = BeautifulSoup(r.text, 'html.parser')
-    tableContainer = soup.find("div", {"id": "tableContainer"})
-    if tableContainer is None:
-        return info  # no data for this location/date
-    tableRows = tableContainer.find_all('tr')[3:] #remove first three headers
+    params = {
+        "csic": location,
+        "categoria": "tutte",
+        "tipologia": "tutte",
+        "giorno_day": day,
+        "giorno_month": month,
+        "giorno_year": year,
+        "jaf_giorno_date_format": "dd/MM/yyyy",
+        "evn_visualizza": "",
+    }
+    response = requests.get(URL, params=params, timeout=REQUEST_TIMEOUT)
+    response.raise_for_status()
 
-    with open("json/roomsWithPower.json","r") as j:
-        rwp = set(json.load(j))
+    soup = BeautifulSoup(response.text, "lxml")
+    table_container = soup.find("div", {"id": "tableContainer"})
+    if table_container is None:
+        return {}
+    # Do not drop a fixed number of rows: the first building header is near
+    # the top of the table and the upstream layout can add/remove header rows.
+    table_rows = table_container.find_all("tr")
 
-    for row in tableRows:
-        tds = row.find_all('td')
-        if 'class' not in row.attrs:
-            if BUILDING in tds[0].attrs['class']:
-                buildingName = tds[0].string
-                try:
-                    # buildingName = re.search('(Edificio.*)' , buildingName).group(1) #take only the building name
-                    buildingName = buildingName.split('-')[2]
-                except:
-                    print(buildingName)
-                if buildingName not in info:
-                    info[buildingName] = {}
+    with POWER_ROOMS_PATH.open(encoding="utf-8") as power_rooms_file:
+        rooms_with_power = set(json.load(power_rooms_file))
+
+    for row in table_rows:
+        cells = row.find_all("td")
+        if not cells:
+            continue
+
+        if "class" not in row.attrs:
+            if BUILDING in cells[0].get("class", []):
+                raw_name = cells[0].get_text(" ", strip=True)
+                parts = raw_name.split("-", 2)
+                building_name = (parts[2] if len(parts) == 3 else raw_name).strip()
+                info.setdefault(building_name, {})
         else:
-            room = ''
+            room = ""
             time = 7.75
-            for td in tds:
-                if ROOM in td.attrs['class']:
-                    a_tag = td.find('a')
+            for cell in cells:
+                classes = cell.get("class", [])
+                if ROOM in classes:
+                    a_tag = cell.find("a")
                     if a_tag is None:
                         continue
-                    room = a_tag.string.replace(" ","")
-                    link = a_tag['href']
-                    id_aula = int(link.split("=")[-1])
-                    
-                    if room not in info[buildingName]:
-                        info[buildingName][room] = {}
-                        info[buildingName][room]['link'] = BASE_URL + link
-                        info[buildingName][room]['lessons'] = []
-                        info[buildingName][room]['powerPlugs'] = id_aula in rwp
+                    room = a_tag.get_text(strip=True).replace(" ", "")
+                    link = a_tag.get("href", "")
+                    try:
+                        room_id = int(link.rsplit("=", 1)[-1])
+                    except ValueError:
+                        room_id = -1
 
-                elif LECTURE in td.attrs['class'] and room != '':
-                    duration = int(td.attrs['colspan'])
-                    lesson_name = td.find('a').string if td.find('a') else "Occupata"
-                    lesson = {}
-                    lesson['name'] = lesson_name
-                    lesson['from'] = time
-                    time += duration/4
-                    lesson['to'] = time
-                    info[buildingName][room]['lessons'].append(lesson)
+                    building_rooms = info.setdefault(building_name, {})
+                    building_rooms.setdefault(
+                        room,
+                        {
+                            "link": urljoin(BASE_URL, link),
+                            "lessons": [],
+                            "powerPlugs": room_id in rooms_with_power,
+                        },
+                    )
+
+                elif LECTURE in classes and room:
+                    duration = int(cell.get("colspan", 1))
+                    lesson_link = cell.find("a")
+                    lesson_name = (
+                        lesson_link.get_text(" ", strip=True)
+                        if lesson_link
+                        else "Occupata"
+                    )
+                    lesson = {"name": lesson_name, "from": time}
+                    time += duration / 4
+                    lesson["to"] = time
+                    info[building_name][room]["lessons"].append(lesson)
                 else:
                     time += TIME_SHIFT
+
+    if not info.get("-"):
+        info.pop("-", None)
     return clean_data(info)
 
 
