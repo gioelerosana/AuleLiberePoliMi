@@ -91,7 +91,7 @@ Legenda: `[ ]` da fare · `[~]` in corso · `[x]` fatto
 
 ---
 
-## 🟨 Fase 6 — Ambiente dev e fix preferenze (IN CORSO)
+## ✅ Fase 6 — Ambiente dev e fix preferenze (COMPLETATA)
 
 - [x] Branch `dev` come ramo di sviluppo, `main` resta la produzione
 - [x] `npm run dev:local`: Mini App statica + `wrangler dev` + quick tunnel
@@ -103,8 +103,8 @@ Legenda: `[ ]` da fare · `[~]` in corso · `[x]` fatto
       la scorciatoia a un tap
 - [x] Messaggi post-salvataggio riordinati: la tastiera si aggiorna prima,
       il pulsante rapido resta l'ultimo messaggio
-- [ ] Test end-to-end con bot di test in locale
-- [ ] Merge su `main` e verifica in produzione
+- [x] Test end-to-end con bot di test in locale
+- [x] Merge su `main`, deploy del Worker e `/health` di produzione verificato
 
 ## 📝 Note
 
