@@ -28,6 +28,7 @@ export type CallbackState =
       startHour: number;
       endHour: number;
     }
+  | { action: "quickCampus"; lang: Language; campus: string }
   | { action: "quick"; lang: Language; campus: string; duration: number }
   | { action: "info" | "cancel"; lang: Language };
 
@@ -37,6 +38,7 @@ const actionCodes: Record<CallbackState["action"], string> = {
   date: "d",
   start: "b",
   end: "e",
+  quickCampus: "qc",
   quick: "q",
   info: "i",
   cancel: "x",
@@ -50,6 +52,7 @@ export function encodeCallback(state: CallbackState): string {
     case "cancel":
       break;
     case "campus":
+    case "quickCampus":
       base.push(state.campus);
       break;
     case "date":
@@ -90,6 +93,8 @@ export function decodeCallback(value: string): CallbackState | null {
   if (!campus || !isCampusCode(campus)) return null;
   if (code === "c" && parts.length === 3)
     return { action: "campus", lang, campus };
+  if (code === "qc" && parts.length === 3)
+    return { action: "quickCampus", lang, campus };
   if (code === "d" && parts.length === 4) {
     const date = expandDate(parts[3]!);
     return date ? { action: "date", lang, campus, date } : null;

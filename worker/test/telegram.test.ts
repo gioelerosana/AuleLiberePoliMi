@@ -70,10 +70,20 @@ describe("stateless callback protocol", () => {
     });
   });
 
+  it("round-trips a quick-search campus choice", () => {
+    const value = encodeCallback({ action: "quickCampus", lang: "it", campus: "MIA11" });
+    expect(decodeCallback(value)).toEqual({
+      action: "quickCampus",
+      lang: "it",
+      campus: "MIA11",
+    });
+  });
+
   it("rejects forged campuses, invalid dates and time ranges", () => {
     expect(decodeCallback("e:en:NOPE:20260828:8:10")).toBeNull();
     expect(decodeCallback("e:en:MIA:20260231:8:10")).toBeNull();
     expect(decodeCallback("e:en:MIA:20260828:12:10")).toBeNull();
+    expect(decodeCallback("qc:en:NOPE")).toBeNull();
   });
 });
 
@@ -111,7 +121,9 @@ describe("Telegram handler", () => {
     });
 
     expect(api.calls).toHaveLength(2);
-    const markup = api.calls[0]?.body.reply_markup as {
+    // The reply keyboard is restored first so the quick button is the last message.
+    expect(api.calls[0]?.body.reply_markup).toHaveProperty("keyboard");
+    const markup = api.calls[1]?.body.reply_markup as {
       inline_keyboard: Array<Array<{ callback_data: string }>>;
     };
     const callback = markup.inline_keyboard[0]?.[0]?.callback_data;
@@ -120,6 +132,50 @@ describe("Telegram handler", () => {
       lang: "it",
       campus: "MIA11",
       duration: 3,
+    });
+  });
+
+  it("starts the inline quick flow when the 🕒Ora keyboard button is pressed", async () => {
+    const api = telegramFetch();
+    await handleTelegramUpdate(messageUpdate("🕒Ora", "it"), env, {
+      fetch: api.mock,
+      search: vi.fn(async () => []),
+    });
+
+    expect(api.calls).toHaveLength(1);
+    const markup = api.calls[0]?.body.reply_markup as {
+      inline_keyboard: Array<Array<{ text: string; callback_data: string }>>;
+    };
+    const campusButton = markup.inline_keyboard[1]?.[0];
+    expect(campusButton && decodeCallback(campusButton.callback_data)).toEqual({
+      action: "quickCampus",
+      lang: "it",
+      campus: CAMPUSES["Milano Città Studi"],
+    });
+  });
+
+  it("asks for the duration after a quick campus choice", async () => {
+    const api = telegramFetch();
+    const data = encodeCallback({
+      action: "quickCampus",
+      lang: "en",
+      campus: CAMPUSES["Milano Città Studi"],
+    });
+    await handleTelegramUpdate(callbackUpdate(data), env, {
+      fetch: api.mock,
+      search: vi.fn(async () => []),
+    });
+
+    const markup = api.calls[1]?.body.reply_markup as {
+      inline_keyboard: Array<Array<{ text: string; callback_data: string }>>;
+    };
+    const durationButton = markup.inline_keyboard[1]?.[3];
+    expect(durationButton?.text).toBe("4h");
+    expect(durationButton && decodeCallback(durationButton.callback_data)).toEqual({
+      action: "quick",
+      lang: "en",
+      campus: "MIA",
+      duration: 4,
     });
   });
 

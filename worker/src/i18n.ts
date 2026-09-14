@@ -11,7 +11,7 @@ export interface Translation {
   cancel: string;
   info: string;
   success: string;
-  missingPreferences: string;
+  quickDuration: string;
   invalidPreferences: string;
   noRooms: string;
   searchError: string;
@@ -37,10 +37,9 @@ export const translations: Record<Language, Translation> = {
     error: "Scelta non valida. Usa i pulsanti disponibili.",
     closed: "Il PoliMi adesso è chiuso. Cercherò dalla prossima apertura.",
     cancel: "Torno al menu principale ⬅",
-    info: 'Premi “🔍Cerca” per scegliere campus, giorno e fascia oraria. Dopo aver salvato le preferenze nella Mini App puoi usare “🕒Ora” per una ricerca rapida.\n\nIl codice è disponibile su <a href="https://github.com/JoelShepard/AuleLiberePoliMi">GitHub</a>. Bot originale di <b>Daniele Ferrazzo</b>.',
+    info: 'Premi “🔍Cerca” per scegliere campus, giorno e fascia oraria. “🕒Ora” avvia una ricerca rapida da adesso: scegli campus e durata, oppure salva le preferenze nella Mini App e usa il pulsante rapido che ricevi.\n\nIl codice è disponibile su <a href="https://github.com/JoelShepard/AuleLiberePoliMi">GitHub</a>. Bot originale di <b>Daniele Ferrazzo</b>.',
     success: "Preferenze salvate 👍🏻",
-    missingPreferences:
-      "Prima imposta campus e durata con il pulsante ⚙️Preferenze.",
+    quickDuration: "Per quante ore vuoi cercare?",
     invalidPreferences:
       "❌ Le preferenze ricevute non sono valide. Riapri la Mini App e riprova.",
     noRooms: "Non sono state trovate aule libere in questa fascia oraria.",
@@ -65,10 +64,9 @@ export const translations: Record<Language, Translation> = {
     error: "Invalid choice. Please use the available buttons.",
     closed: "PoliMi is currently closed. I will search from the next opening.",
     cancel: "Back to the main menu ⬅",
-    info: 'Press “🔍Search” to choose a campus, day and time range. After saving preferences in the Mini App, use “🕒Now” for a quick search.\n\nThe source code is available on <a href="https://github.com/JoelShepard/AuleLiberePoliMi">GitHub</a>. Original bot by <b>Daniele Ferrazzo</b>.',
+    info: 'Press “🔍Search” to choose a campus, day and time range. “🕒Now” starts a quick search from the current time: pick campus and duration, or save your preferences in the Mini App and use the quick button you receive.\n\nThe source code is available on <a href="https://github.com/JoelShepard/AuleLiberePoliMi">GitHub</a>. Original bot by <b>Daniele Ferrazzo</b>.',
     success: "Preferences saved 👍🏻",
-    missingPreferences:
-      "Set a campus and duration first with the ⚙️Preferences button.",
+    quickDuration: "For how many hours should I search?",
     invalidPreferences:
       "❌ The received preferences are invalid. Reopen the Mini App and try again.",
     noRooms: "No free classrooms were found for this time slot.",

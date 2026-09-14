@@ -139,9 +139,7 @@ export async function handleTelegramUpdate(
     return;
   }
   if (isLabel(text, "now")) {
-    await api.sendMessage(message.chat.id, translations[lang].missingPreferences, {
-      reply_markup: mainKeyboard(lang, env.WEBAPP_URL),
-    });
+    await sendCampusPicker(message.chat.id, lang, api, "quickCampus");
   }
 }
 
@@ -170,6 +168,11 @@ async function handleCallback(
     case "date":
       await api.sendMessage(chatId, t.startingTime, {
         reply_markup: { inline_keyboard: hourKeyboard(state.lang, state.campus, state.date) },
+      });
+      return;
+    case "quickCampus":
+      await api.sendMessage(chatId, t.quickDuration, {
+        reply_markup: { inline_keyboard: durationKeyboard(state.lang, state.campus) },
       });
       return;
     case "start":
@@ -256,6 +259,12 @@ async function handleWebAppData(
     return;
   }
   const t = translations[preferences.lang];
+  // Restore the translated persistent keyboard in a separate message: Telegram
+  // cannot attach an inline keyboard and a reply keyboard to the same message.
+  await api.sendMessage(message.chat.id, t.menuReady, {
+    reply_markup: mainKeyboard(preferences.lang, env.WEBAPP_URL),
+  });
+  // Send the one-tap quick search last so it stays the most recent message.
   await api.sendMessage(message.chat.id, t.success, {
     reply_markup: {
       inline_keyboard: [
@@ -272,11 +281,6 @@ async function handleWebAppData(
         ],
       ],
     },
-  });
-  // Restore the translated persistent keyboard in a separate message: Telegram
-  // cannot attach an inline keyboard and a reply keyboard to the same message.
-  await api.sendMessage(message.chat.id, t.menuReady, {
-    reply_markup: mainKeyboard(preferences.lang, env.WEBAPP_URL),
   });
 }
 
@@ -307,14 +311,26 @@ async function sendCampusPicker(
   chatId: number,
   lang: Language,
   api: ReturnType<typeof createTelegramApi>,
+  action: "campus" | "quickCampus" = "campus",
 ): Promise<void> {
   const rows: InlineButton[][] = Object.entries(CAMPUSES).map(([name, campus]) => [
-    { text: name, callback_data: encodeCallback({ action: "campus", lang, campus }) },
+    { text: name, callback_data: encodeCallback({ action, lang, campus }) },
   ]);
   rows.unshift(cancelRow(lang));
   await api.sendMessage(chatId, translations[lang].location, {
     reply_markup: { inline_keyboard: rows },
   });
+}
+
+function durationKeyboard(lang: Language, campus: string): InlineButton[][] {
+  const buttons: InlineButton[] = [];
+  for (let duration = 1; duration <= 8; duration += 1) {
+    buttons.push({
+      text: `${duration}h`,
+      callback_data: encodeCallback({ action: "quick", lang, campus, duration }),
+    });
+  }
+  return [cancelRow(lang), ...chunk(buttons, 4)];
 }
 
 async function sendInfo(
