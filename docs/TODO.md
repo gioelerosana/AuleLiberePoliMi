@@ -1,6 +1,6 @@
 # TODO — Rinnovamento AuleLiberePoliMi Bot
 
-Stato progetto: **🚀 Fase 0-2 completate (Mini App live su Cloudflare Pages), Fase 3 parziale — bot attivo**
+Stato progetto: **🚀 Bot live su Cloudflare Workers + Mini App su Pages — sviluppo su branch `dev` con ambiente locale end-to-end**
 
 Legenda: `[ ]` da fare · `[~]` in corso · `[x]` fatto
 
@@ -90,6 +90,21 @@ Legenda: `[ ]` da fare · `[~]` in corso · `[x]` fatto
 - [x] `.env.example` creato
 
 ---
+
+## 🟨 Fase 6 — Ambiente dev e fix preferenze (IN CORSO)
+
+- [x] Branch `dev` come ramo di sviluppo, `main` resta la produzione
+- [x] `npm run dev:local`: Mini App statica + `wrangler dev` + quick tunnel
+      Cloudflare + `setWebhook` automatico sul bot di test
+- [x] `npm run dev:webapp` per provare la Mini App nel browser
+- [x] `worker/.dev.vars.example` e download automatico di `cloudflared` in `.tools/`
+- [x] Fix “🕒Ora”: la tastiera persistente avvia il flusso rapido inline
+      (campus → durata → ricerca); il pulsante inline dopo il salvataggio resta
+      la scorciatoia a un tap
+- [x] Messaggi post-salvataggio riordinati: la tastiera si aggiorna prima,
+      il pulsante rapido resta l'ultimo messaggio
+- [ ] Test end-to-end con bot di test in locale
+- [ ] Merge su `main` e verifica in produzione
 
 ## 📝 Note
 

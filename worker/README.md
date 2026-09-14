@@ -29,6 +29,48 @@ questo modo le sedi hanno un'unica sorgente. Dopo una modifica ai JSON eseguire
 `npm run data:generate`; check, test e deploy falliscono se una copia generata
 non è aggiornata.
 
+## Test locale
+
+### Mini App senza Telegram
+
+```bash
+npm run dev:webapp   # http://127.0.0.1:8788
+```
+
+Fuori da Telegram la pagina usa `localStorage` come fallback, quindi impostazioni
+e layout si possono provare direttamente nel browser.
+
+### Bot end-to-end con bot di test
+
+Serve un bot Telegram **dedicato**, diverso da quello di produzione. Se
+`cloudflared` non è installato, lo script lo scarica una volta sola in
+`worker/.tools/` (ignorato da Git).
+
+1. Crea il bot con @BotFather e copia il token.
+2. Configura il token:
+   ```bash
+   cd worker
+   cp .dev.vars.example .dev.vars
+   # inserisci il token in BOT_TOKEN
+   ```
+3. Avvia tutto:
+   ```bash
+   npm run dev:local
+   ```
+
+`dev:local` avvia in un solo comando la Mini App statica, `wrangler dev`, due
+quick tunnel HTTPS `*.trycloudflare.com` (Mini App e Worker) e registra il
+webhook del bot di test verso il tunnel del Worker. `WEBAPP_URL` viene iniettato
+automaticamente, quindi il pulsante `⚙️Preferenze` della tastiera apre la Mini
+App locale. Poi su Telegram apri il bot di test e premi `/start`.
+
+Alla chiusura con `Ctrl+C` il webhook del bot di test viene rimosso
+(`KEEP_WEBHOOK=1` per mantenerlo, `--no-webhook` per non registrarlo affatto).
+Il bot di produzione non viene mai toccato.
+
+Variabili utili: `WORKER_PORT` (default 8787), `WEBAPP_PORT` (default 8788),
+`CLOUDFLARED` (percorso del binario).
+
 ## Configurazione Cloudflare
 
 Creare un segreto URL-safe casuale di almeno 16 caratteri e configurare i due

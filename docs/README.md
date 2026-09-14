@@ -99,8 +99,10 @@ AuleLiberePoliMi/
 1. L'utente avvia il bot con `/start`
 2. Sceglie tra **Cerca**, **Ora**, **Info** e **Preferenze**
 3. **Cerca**: seleziona campus → giorno → ora inizio → ora fine → risultati
-4. **Ora**: dopo il salvataggio, usa il pulsante rapido stateless inviato dal bot
-5. **Preferenze**: apre la Mini App via pulsante testuale o bottone blu Web App
+4. **Ora**: ricerca rapida da adesso. Dalla tastiera persistente chiede campus
+   e durata inline; dopo il salvataggio in Mini App usa il pulsante rapido a un
+   tap inviato dal bot
+5. **Preferenze**: apre la Mini App (bottone `web_app` nella tastiera)
    - Nella Mini App: lingua, campus preferito, durata ricerca rapida
    - I dati sono salvati in Telegram CloudStorage, con fallback `localStorage`
    - Quando si preme "Salva", i dati arrivano al bot via `web_app_data`
@@ -118,11 +120,15 @@ cd worker
 npm install
 npm run check
 npm test
+npm run dev:webapp   # Mini App nel browser
+npm run dev:local    # stack completo con bot di test e tunnel
 npm run deploy
 ```
 
-Per i test dell'implementazione Python di riferimento: `uv sync --frozen` e
-`uv run python -m unittest discover -v` dalla root.
+`dev:local` richiede un bot Telegram di test e `worker/.dev.vars`; dettagli in
+[worker/README.md](../worker/README.md). Per i test dell'implementazione Python
+di riferimento: `uv sync --frozen` e `uv run python -m unittest discover -v`
+dalla root.
 
 ---
 

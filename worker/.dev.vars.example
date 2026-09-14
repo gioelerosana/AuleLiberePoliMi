@@ -1,0 +1,11 @@
+# Token del bot Telegram di test (creato con @BotFather).
+# NON usare il token del bot di produzione.
+BOT_TOKEN=123456789:REPLACE_WITH_TEST_BOT_TOKEN
+
+# Opzionale: se vuoto, `npm run dev:local` ne genera uno nuovo a ogni avvio.
+# Deve avere 16-128 caratteri tra A-Z a-z 0-9 _ -
+WEBHOOK_SECRET=
+
+# Iniettato automaticamente da `npm run dev:local`.
+# Serve solo se usi `npm run dev` da solo con un tunnel già attivo.
+# WEBAPP_URL=https://example.trycloudflare.com

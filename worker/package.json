@@ -11,6 +11,8 @@
     "pretest": "npm run data:check",
     "test": "vitest run",
     "dev": "wrangler dev",
+    "dev:local": "node scripts/dev-local.mjs",
+    "dev:webapp": "node scripts/dev-local.mjs --webapp-only",
     "predeploy": "npm run data:check",
     "deploy": "wrangler deploy --keep-vars"
   },
