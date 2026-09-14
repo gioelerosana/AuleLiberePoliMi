@@ -64,7 +64,7 @@ stack moderno e architettura stateless.
 - `npm run dev:local` avvia Mini App + Worker + due quick tunnel Cloudflare +
   webhook sul **bot di test** (token in `worker/.dev.vars`)
 - `npm run dev:webapp` per provare la Mini App nel browser
-- Verifiche prima del commit: `npm run check`, `npm test`, `npm run data:check`
+- Workflow completo nella sezione "Workflow di sviluppo (dev → main)"
 
 ### Logging
 - Solo stdout, visibile nei log Cloudflare / `wrangler tail`
@@ -78,6 +78,61 @@ stack moderno e architettura stateless.
 - Repository: `github.com/JoelShepard/AuleLiberePoliMi`
 - Credits a Daniele Ferrazzo per il lavoro originale
 - Licenza: MIT (invariata)
+
+---
+
+## 🔀 Workflow di sviluppo (dev → main)
+
+`main` è la produzione: ci si arriva **solo** con merge da `dev`.
+Passi usati finora (seguirli nell'ordine):
+
+1. Aggiorna e lavora su `dev`:
+   ```bash
+   git switch dev && git pull --ff-only
+   ```
+2. Sviluppa e prova in locale con il bot di test:
+   ```bash
+   cd worker && npm run dev:local
+   ```
+3. Check obbligatori prima del commit (dalla cartella `worker/`):
+   ```bash
+   npm run check && npm test && npm run data:check
+   ```
+4. Commit su `dev` con prefisso conventional e messaggio conciso:
+   - `fix:` correzione di comportamento
+   - `feat:` funzionalità nuova
+   - `docs:`/`chore:` documentazione e manutenzione
+   - mai committare `.dev.vars`, `.tools/`, `.wrangler/`
+5. Push del branch:
+   ```bash
+   git push origin dev
+   ```
+6. Merge lineare in `main` (niente merge commit):
+   ```bash
+   git switch main && git pull --ff-only
+   git merge --ff-only dev
+   git push origin main
+   ```
+7. Deploy del Worker (da `worker/`):
+   ```bash
+   npm run deploy
+   ```
+   `predeploy` esegue `data:check`; `--keep-vars` conserva `WEBAPP_URL`.
+8. Smoke test in produzione:
+   ```bash
+   curl https://aule-libere-poli-mi.gioelegr3.workers.dev/health
+   ```
+   poi `/start`, `🔍Cerca` e `🕒Ora` sul bot di produzione. In caso di errori:
+   `wrangler tail`.
+
+**Regole**
+- Mai committare o pushare direttamente su `main`
+- Mai fare deploy da `dev`: si deploya solo ciò che è su `main`
+- Il merge deve restare `--ff-only` per mantenere la storia lineare
+- `dev:local` usa esclusivamente il bot di test, mai quello di produzione
+- La Mini App su Cloudflare Pages si aggiorna via Git integration: le
+  modifiche a `webapp/settings/` seguono lo stesso percorso `dev` → `main`,
+  senza comandi di deploy manuali
 
 ---
 
