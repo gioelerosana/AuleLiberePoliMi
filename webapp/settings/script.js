@@ -107,12 +107,22 @@ function populateCampuses() {
     });
 }
 
+// ── Match a saved campus to one of the main campuses ──────────
+// Older preferences could hold a single site (e.g. "Milano Città Studi -
+// Via Golgi 40"); the menu now lists only main campuses, so map those to the
+// parent campus instead of losing the selection.
+function matchCampusName(saved) {
+    if (!saved) return null;
+    if (CAMPUSES.includes(saved)) return saved;
+    return CAMPUSES.find((name) => saved.startsWith(name + " - ")) || null;
+}
+
 // ── Apply loaded preferences to form ──────────────────────────
 function applyPrefs(prefs) {
     console.log("Applying preferences:", prefs);
     if (prefs.lang) setSelectedLang(prefs.lang);
-    if (prefs.campus && CAMPUSES.includes(prefs.campus))
-        campusSelect.value = prefs.campus;
+    const campus = matchCampusName(prefs.campus);
+    if (campus) campusSelect.value = campus;
     if (prefs.duration >= 1 && prefs.duration <= 8) {
         durationSlider.value = prefs.duration;
     }

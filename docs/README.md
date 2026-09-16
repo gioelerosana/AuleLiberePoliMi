@@ -99,9 +99,10 @@ AuleLiberePoliMi/
 1. L'utente avvia il bot con `/start`
 2. Sceglie tra **Cerca**, **Ora**, **Info** e **Preferenze**
 3. **Cerca**: seleziona campus → giorno → ora inizio → ora fine → risultati
-4. **Ora**: ricerca rapida da adesso. Dalla tastiera persistente chiede campus
-   e durata inline; dopo il salvataggio in Mini App usa il pulsante rapido a un
-   tap inviato dal bot
+4. **Ora**: ricerca rapida da adesso usando le preferenze salvate, lette da un
+   messaggio pinnato dal bot (nessuno stato lato server); senza preferenze
+   chiede campus e durata inline. Dopo il salvataggio invia anche un pulsante
+   rapido a un tap
 5. **Preferenze**: apre la Mini App (bottone `web_app` nella tastiera)
    - Nella Mini App: lingua, campus preferito, durata ricerca rapida
    - I dati sono salvati in Telegram CloudStorage, con fallback `localStorage`

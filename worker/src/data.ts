@@ -45,6 +45,20 @@ export const LOCATIONS = {
   "Piacenza - Via Scalabrini 76": "PCL01"
 } as const;
 
+/** Campuses shown in the search menus: one entry per campus, no single sites. */
+export const CAMPUSES = {
+  "Milano Città Studi": "MIA",
+  "Milano Bovisa": "MIB",
+  "Como": "COE",
+  "Cremona": "CRG",
+  "Genova": "GEM",
+  "Piacenza": "PCL",
+  "Lecco": "LCF",
+  "Mantova": "MNI",
+  "Milano Tortona": "MIF",
+  "Sesto Ulteriano": "MID"
+} as const;
+
 export const ROOM_IDS_WITH_POWER = [
   4657,
   4658,
@@ -201,5 +215,8 @@ export const ROOM_IDS_WITH_POWER = [
 
 export type LocationName = keyof typeof LOCATIONS;
 export type LocationCode = (typeof LOCATIONS)[LocationName];
+export type CampusName = keyof typeof CAMPUSES;
+export type CampusCode = (typeof CAMPUSES)[CampusName];
 
 export const LOCATION_CODES = new Set<string>(Object.values(LOCATIONS));
+export const CAMPUS_CODES = new Set<string>(Object.values(CAMPUSES));

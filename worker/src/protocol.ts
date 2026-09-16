@@ -1,13 +1,16 @@
 import type { Language } from "./i18n";
-import { LOCATIONS } from "./data";
+import { CAMPUSES, LOCATION_CODES, LOCATIONS } from "./data";
 
 export const MIN_HOUR = 8;
 export const MAX_HOUR = 20;
 
-// The values are the canonical location codes accepted by the PoliMi endpoint.
-export const CAMPUSES = LOCATIONS;
+// CAMPUSES drives the search menus (one entry per campus). LOCATIONS still
+// holds every PoliMi site so preferences saved before the menu was trimmed to
+// main campuses keep resolving, and so callback data can be validated.
+export { CAMPUSES };
 
 export type CampusName = keyof typeof CAMPUSES;
+export type LocationName = keyof typeof LOCATIONS;
 
 export type CallbackState =
   | { action: "search"; lang: Language }
@@ -124,12 +127,12 @@ export function decodeCallback(value: string): CallbackState | null {
 }
 
 export function isCampusCode(value: string): boolean {
-  return Object.values(CAMPUSES).includes(value as (typeof CAMPUSES)[CampusName]);
+  return LOCATION_CODES.has(value);
 }
 
 export function campusCodeFromName(value: unknown): string | null {
-  return typeof value === "string" && value in CAMPUSES
-    ? CAMPUSES[value as CampusName]
+  return typeof value === "string" && value in LOCATIONS
+    ? LOCATIONS[value as LocationName]
     : null;
 }
 

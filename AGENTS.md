@@ -51,13 +51,17 @@ stack moderno e architettura stateless.
 - Niente dominio personalizzato per ora
 
 ### Ricerca rapida "Ora"
-- Il pulsante `🕒Ora` della tastiera persistente **non può leggere** le
-  preferenze Mini App (Worker stateless): avvia il flusso rapido inline
-  campus → durata → ricerca
-- Dopo il salvataggio della Mini App il bot invia un pulsante `🕒Ora` inline
-  con le preferenze codificate in `callback_data`: un tap per la ricerca
-- La lingua si ottiene da `message.from.language_code`; la lingua scelta nella
-  Mini App vale per il flusso immediato (callback e tastiera post-salvataggio)
+- Un pulsante della tastiera persistente non può trasportare dati, quindi le
+  preferenze salvate vengono conservate in un **messaggio pinnato dal bot**
+  (nessun KV/DB: lo stato resta su Telegram)
+- Dopo il salvataggio la Mini App invia `web_app_data`: il bot aggiorna la
+  tastiera, invia/fissa il messaggio preferenze con il pulsante `🕒Ora` inline
+  (preferenze in `callback_data`) e lo modifica ai salvataggi successivi
+- Il pulsante `🕒Ora` della tastiera persistente legge le preferenze dal
+  messaggio pinnato (`getChat`) e fa la ricerca; se manca (o l'utente ha
+  pinnato altro) ripiega sul flusso inline campus → durata
+- La lingua si ottiene da `message.from.language_code`; la lingua salvata è
+  codificata nel messaggio pinnato e usata per la ricerca rapida
 
 ### Sviluppo
 - `main` = produzione (bot di tutti); si sviluppa su `dev`
@@ -69,10 +73,16 @@ stack moderno e architettura stateless.
 ### Logging
 - Solo stdout, visibile nei log Cloudflare / `wrangler tail`
 
-### roomsWithPower.json
-- Sorgente unica in `json/`, genera `worker/src/data.ts` e
-  `webapp/settings/data.js` con `npm run data:generate`
-- Check, test e deploy falliscono se le copie generate non sono aggiornate
+### Dati statici (`json/`)
+- `location.json`: tutte le sedi PoliMi note (nome → codice `csic`)
+- `campuses.json`: campus mostrati nei menu, una voce per campus e niente
+  singole vie; deve restare un sottoinsieme di `location.json`
+- `roomsWithPower.json`: ID delle aule con prese
+- Generano `worker/src/data.ts` e `webapp/settings/data.js` con
+  `npm run data:generate`; check, test e deploy falliscono se le copie generate
+  non sono aggiornate
+- I codici delle singole sedi (es. `MIA11`) restano validi per le preferenze
+  già salvate, ma non vengono più mostrati nel menu
 
 ### Ownership
 - Repository: `github.com/JoelShepard/AuleLiberePoliMi`

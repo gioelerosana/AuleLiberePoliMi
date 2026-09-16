@@ -11,6 +11,7 @@ import {
   translations,
   type Language,
 } from "./i18n";
+import { LOCATIONS } from "./data";
 
 export interface TelegramEnv {
   BOT_TOKEN: string;
@@ -139,8 +140,48 @@ export async function handleTelegramUpdate(
     return;
   }
   if (isLabel(text, "now")) {
-    await sendCampusPicker(message.chat.id, lang, api, "quickCampus");
+    await sendQuickSearch(message.chat.id, lang, api, deps);
   }
+}
+
+/**
+ * Quick search from the persistent keyboard. The Worker keeps no state, so the
+ * saved preferences are read back from the bot's pinned message; when there is
+ * none (or the user pinned something else) fall back to the inline flow.
+ */
+async function sendQuickSearch(
+  chatId: number,
+  fallbackLang: Language,
+  api: ReturnType<typeof createTelegramApi>,
+  deps: TelegramDependencies,
+): Promise<void> {
+  let preferences: Preferences | null = null;
+  try {
+    const chat = await api.getChat(chatId);
+    preferences = parsePinnedPreferences(chat.pinned_message?.text);
+  } catch (error) {
+    console.error("Unable to read pinned preferences", error);
+  }
+
+  if (!preferences) {
+    await sendCampusPicker(chatId, fallbackLang, api, "quickCampus");
+    return;
+  }
+
+  const t = translations[preferences.lang];
+  const slot = quickSearchSlot(deps.now?.() ?? new Date(), preferences.duration);
+  if (slot.closed) await api.sendMessage(chatId, t.closed);
+  await performSearch(
+    chatId,
+    {
+      ...preferences,
+      date: slot.date,
+      startHour: slot.startHour,
+      endHour: slot.endHour,
+    },
+    api,
+    deps,
+  );
 }
 
 async function handleCallback(
@@ -264,24 +305,71 @@ async function handleWebAppData(
   await api.sendMessage(message.chat.id, t.menuReady, {
     reply_markup: mainKeyboard(preferences.lang, env.WEBAPP_URL),
   });
-  // Send the one-tap quick search last so it stays the most recent message.
-  await api.sendMessage(message.chat.id, t.success, {
-    reply_markup: {
-      inline_keyboard: [
-        [
-          {
-            text: t.now,
-            callback_data: encodeCallback({
-              action: "quick",
-              lang: preferences.lang,
-              campus: preferences.campus,
-              duration: preferences.duration,
-            }),
-          },
-        ],
+  // The preferences message carries the one-tap quick button and is pinned so
+  // the persistent 🕒Ora button can read it back later without server state.
+  await publishPreferences(message.chat.id, preferences, api, t);
+}
+
+function pinnedPreferencesText(preferences: Preferences): string {
+  const flag = preferences.lang === "it" ? "🇮🇹" : "🇬🇧";
+  return `${campusLabel(preferences.campus)} · ${preferences.duration}h · ${flag}`;
+}
+
+function parsePinnedPreferences(text: string | undefined): Preferences | null {
+  if (!text) return null;
+  const match = /^(.+?) · (\d{1,2})h · (🇮🇹|🇬🇧)$/mu.exec(text);
+  if (!match) return null;
+  const campus = campusCodeFromName(match[1]!.trim());
+  const duration = Number(match[2]);
+  const lang: Language = match[3] === "🇮🇹" ? "it" : "en";
+  if (!campus || !Number.isInteger(duration) || duration < 1 || duration > 8) return null;
+  return { lang, campus, duration };
+}
+
+async function publishPreferences(
+  chatId: number,
+  preferences: Preferences,
+  api: ReturnType<typeof createTelegramApi>,
+  t: (typeof translations)[Language],
+): Promise<void> {
+  const text = `${pinnedPreferencesText(preferences)}\n${t.success}`;
+  const reply_markup = {
+    inline_keyboard: [
+      [
+        {
+          text: t.now,
+          callback_data: encodeCallback({
+            action: "quick",
+            lang: preferences.lang,
+            campus: preferences.campus,
+            duration: preferences.duration,
+          }),
+        },
       ],
-    },
-  });
+    ],
+  };
+
+  try {
+    const chat = await api.getChat(chatId);
+    const pinned = chat.pinned_message;
+    if (pinned?.from?.is_bot && parsePinnedPreferences(pinned.text)) {
+      if (pinned.text !== text) {
+        await api.editMessageText(chatId, pinned.message_id, text, { reply_markup });
+      }
+      return;
+    }
+  } catch (error) {
+    console.error("Unable to look up the pinned preferences message", error);
+  }
+
+  try {
+    const sent = await api.sendMessage(chatId, text, { reply_markup });
+    if (sent.message_id !== undefined) {
+      await api.pinChatMessage(chatId, sent.message_id);
+    }
+  } catch (error) {
+    console.error("Unable to pin the preferences message", error);
+  }
 }
 
 function parsePreferences(raw: string | undefined): Preferences | null {
@@ -438,7 +526,7 @@ function romeParts(date: Date) {
 }
 
 function campusLabel(code: string): string {
-  return Object.entries(CAMPUSES).find(([, value]) => value === code)?.[0] ?? code;
+  return Object.entries(LOCATIONS).find(([, value]) => value === code)?.[0] ?? code;
 }
 
 function isLabel(text: string, key: "search" | "now" | "infoButton"): boolean {
@@ -455,23 +543,49 @@ function pad(value: number): string {
   return String(value).padStart(2, "0");
 }
 
+interface ChatInfo {
+  pinned_message?: {
+    message_id: number;
+    text?: string;
+    from?: { is_bot?: boolean };
+  };
+}
+
+interface SentMessage {
+  message_id?: number;
+}
+
 function createTelegramApi(token: string, fetchImpl: typeof fetch) {
-  const call = async (method: string, body: Record<string, unknown>) => {
+  const call = async (method: string, body: Record<string, unknown>): Promise<unknown> => {
     const response = await fetchImpl(`https://api.telegram.org/bot${token}/${method}`, {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify(body),
     });
     if (!response.ok) throw new Error(`Telegram ${method} failed with HTTP ${response.status}`);
-    const result = (await response.json()) as { ok?: boolean; description?: string };
+    const result = (await response.json()) as {
+      ok?: boolean;
+      description?: string;
+      result?: unknown;
+    };
     if (!result.ok) throw new Error(result.description ?? `Telegram ${method} failed`);
+    return result.result;
   };
   return {
     sendMessage: (chat_id: number, text: string, options: Record<string, unknown> = {}) =>
-      call("sendMessage", { chat_id, text, ...options }),
+      call("sendMessage", { chat_id, text, ...options }) as Promise<SentMessage>,
     sendChatAction: (chat_id: number, action: string) =>
       call("sendChatAction", { chat_id, action }),
     answerCallbackQuery: (callback_query_id: string) =>
       call("answerCallbackQuery", { callback_query_id }),
+    getChat: (chat_id: number) => call("getChat", { chat_id }) as Promise<ChatInfo>,
+    editMessageText: (
+      chat_id: number,
+      message_id: number,
+      text: string,
+      options: Record<string, unknown> = {},
+    ) => call("editMessageText", { chat_id, message_id, text, ...options }),
+    pinChatMessage: (chat_id: number, message_id: number) =>
+      call("pinChatMessage", { chat_id, message_id, disable_notification: true }),
   };
 }

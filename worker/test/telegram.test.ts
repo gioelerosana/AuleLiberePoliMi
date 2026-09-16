@@ -1,5 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
-import { CAMPUSES, decodeCallback, encodeCallback } from "../src/protocol";
+import {
+  CAMPUSES,
+  campusCodeFromName,
+  decodeCallback,
+  encodeCallback,
+} from "../src/protocol";
 import {
   handleTelegramUpdate,
   type TelegramDependencies,
@@ -11,14 +16,15 @@ const env = {
   WEBAPP_URL: "https://settings.example.test",
 };
 
-function telegramFetch() {
+function telegramFetch(results: Record<string, unknown> = {}) {
   const calls: Array<{ method: string; body: Record<string, unknown> }> = [];
   const mock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    const method = String(input).split("/").at(-1) ?? "";
     calls.push({
-      method: String(input).split("/").at(-1) ?? "",
+      method,
       body: JSON.parse(String(init?.body)) as Record<string, unknown>,
     });
-    return new Response(JSON.stringify({ ok: true, result: {} }), {
+    return new Response(JSON.stringify({ ok: true, result: results[method] ?? {} }), {
       headers: { "content-type": "application/json" },
     });
   }) as unknown as typeof fetch;
@@ -85,6 +91,24 @@ describe("stateless callback protocol", () => {
     expect(decodeCallback("e:en:MIA:20260828:12:10")).toBeNull();
     expect(decodeCallback("qc:en:NOPE")).toBeNull();
   });
+
+  it("offers only main campuses while resolving legacy site preferences", () => {
+    expect(Object.keys(CAMPUSES)).toEqual([
+      "Milano Città Studi",
+      "Milano Bovisa",
+      "Como",
+      "Cremona",
+      "Genova",
+      "Piacenza",
+      "Lecco",
+      "Mantova",
+      "Milano Tortona",
+      "Sesto Ulteriano",
+    ]);
+    expect(campusCodeFromName("Milano Città Studi")).toBe("MIA");
+    expect(campusCodeFromName("Milano Città Studi - Via Golgi 40")).toBe("MIA04");
+    expect(campusCodeFromName("not a campus")).toBeNull();
+  });
 });
 
 describe("Telegram handler", () => {
@@ -103,8 +127,8 @@ describe("Telegram handler", () => {
     expect(JSON.stringify(body?.reply_markup)).toContain("https://settings.example.test");
   });
 
-  it("validates Mini App data and returns a self-contained quick-search button", async () => {
-    const api = telegramFetch();
+  it("validates Mini App data and pins the self-contained quick-search button", async () => {
+    const api = telegramFetch({ sendMessage: { message_id: 55 } });
     const update = messageUpdate("");
     if (!update.message) throw new Error("fixture error");
     delete update.message.text;
@@ -120,10 +144,13 @@ describe("Telegram handler", () => {
       search: vi.fn(async () => []),
     });
 
-    expect(api.calls).toHaveLength(2);
     // The reply keyboard is restored first so the quick button is the last message.
     expect(api.calls[0]?.body.reply_markup).toHaveProperty("keyboard");
-    const markup = api.calls[1]?.body.reply_markup as {
+    const prefsMessage = api.calls.find(
+      (call) => call.method === "sendMessage" && String(call.body.text).includes("Milano Città Studi"),
+    );
+    expect(String(prefsMessage?.body.text)).toContain("3h");
+    const markup = prefsMessage?.body.reply_markup as {
       inline_keyboard: Array<Array<{ callback_data: string }>>;
     };
     const callback = markup.inline_keyboard[0]?.[0]?.callback_data;
@@ -133,17 +160,51 @@ describe("Telegram handler", () => {
       campus: "MIA11",
       duration: 3,
     });
+    expect(
+      api.calls.some(
+        (call) => call.method === "pinChatMessage" && call.body.message_id === 55,
+      ),
+    ).toBe(true);
   });
 
-  it("starts the inline quick flow when the 🕒Ora keyboard button is pressed", async () => {
+  it("updates the pinned message instead of pinning a new one", async () => {
+    const api = telegramFetch({
+      getChat: {
+        pinned_message: {
+          message_id: 9,
+          text: "Milano Città Studi · 2h · 🇬🇧\nold",
+          from: { is_bot: true },
+        },
+      },
+    });
+    const update = messageUpdate("");
+    if (!update.message) throw new Error("fixture error");
+    delete update.message.text;
+    update.message.web_app_data = {
+      data: JSON.stringify({ lang: "it", campus: "Milano Bovisa", duration: 4 }),
+    };
+    await handleTelegramUpdate(update, env, {
+      fetch: api.mock,
+      search: vi.fn(async () => []),
+    });
+
+    const edited = api.calls.find((call) => call.method === "editMessageText");
+    expect(edited?.body.message_id).toBe(9);
+    expect(String(edited?.body.text)).toContain("Milano Bovisa");
+    expect(String(edited?.body.text)).toContain("4h");
+    expect(api.calls.some((call) => call.method === "pinChatMessage")).toBe(false);
+  });
+
+  it("falls back to the inline quick flow without pinned preferences", async () => {
     const api = telegramFetch();
     await handleTelegramUpdate(messageUpdate("🕒Ora", "it"), env, {
       fetch: api.mock,
       search: vi.fn(async () => []),
     });
 
-    expect(api.calls).toHaveLength(1);
-    const markup = api.calls[0]?.body.reply_markup as {
+    expect(api.calls.map((call) => call.method)).toEqual(["getChat", "sendMessage"]);
+    const message = api.calls.find((call) => call.method === "sendMessage");
+    const markup = message?.body.reply_markup as {
       inline_keyboard: Array<Array<{ text: string; callback_data: string }>>;
     };
     const campusButton = markup.inline_keyboard[1]?.[0];
@@ -152,6 +213,37 @@ describe("Telegram handler", () => {
       lang: "it",
       campus: CAMPUSES["Milano Città Studi"],
     });
+  });
+
+  it("uses the pinned preferences for the persistent 🕒Ora button", async () => {
+    const api = telegramFetch({
+      getChat: {
+        pinned_message: {
+          message_id: 9,
+          text: "Milano Città Studi · 3h · 🇮🇹\nPreferenze salvate 👍🏻",
+          from: { is_bot: true },
+        },
+      },
+    });
+    const search = vi.fn(async () => []);
+    await handleTelegramUpdate(messageUpdate("🕒Ora", "it"), env, {
+      fetch: api.mock,
+      search,
+      now: () => new Date("2026-08-28T07:30:00.000Z"), // 09:30 in Rome
+    });
+
+    expect(search).toHaveBeenCalledWith({
+      campus: "MIA",
+      date: "28/08/2026",
+      startHour: 9,
+      endHour: 12,
+      lang: "it",
+    });
+    expect(
+      api.calls.some(
+        (call) => call.method === "sendMessage" && String(call.body.text).includes("Seleziona"),
+      ),
+    ).toBe(false);
   });
 
   it("asks for the duration after a quick campus choice", async () => {

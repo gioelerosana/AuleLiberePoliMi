@@ -43,8 +43,10 @@ usano codici brevi, la data usa `YYYYMMDD` nel callback e viene convertita in
 
 Le preferenze restano nella Mini App. Quando `web_app_data` arriva al Worker,
 il payload viene validato e la risposta include un pulsante di ricerca rapida
-che incorpora campus, durata e lingua. Dopo un nuovo avvio della Mini App viene
-generato un nuovo pulsante; il server non memorizza le preferenze.
+che incorpora campus, durata e lingua. Lo stesso messaggio viene fissato dal
+bot: il pulsante `🕒Ora` della tastiera persistente, che non può trasportare
+dati, rilegge le preferenze dal messaggio pinnato con `getChat`. Il Worker non
+memorizza nulla: lo stato resta su Telegram.
 
 ## Moduli Worker
 

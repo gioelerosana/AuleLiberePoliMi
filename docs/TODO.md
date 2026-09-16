@@ -98,9 +98,11 @@ Legenda: `[ ]` da fare · `[~]` in corso · `[x]` fatto
       Cloudflare + `setWebhook` automatico sul bot di test
 - [x] `npm run dev:webapp` per provare la Mini App nel browser
 - [x] `worker/.dev.vars.example` e download automatico di `cloudflared` in `.tools/`
-- [x] Fix “🕒Ora”: la tastiera persistente avvia il flusso rapido inline
-      (campus → durata → ricerca); il pulsante inline dopo il salvataggio resta
-      la scorciatoia a un tap
+- [x] Fix “🕒Ora”: la tastiera persistente legge le preferenze dal messaggio
+      pinnato (stateless) e fa la ricerca a un tap; se il pin manca ripiega sul
+      flusso inline campus → durata
+- [x] Menù campus limitato ai 10 campus principali (`json/campuses.json`); i
+      codici delle singole sedi restano validi per le preferenze già salvate
 - [x] Messaggi post-salvataggio riordinati: la tastiera si aggiorna prima,
       il pulsante rapido resta l'ultimo messaggio
 - [x] Test end-to-end con bot di test in locale

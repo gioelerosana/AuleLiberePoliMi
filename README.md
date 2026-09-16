@@ -82,9 +82,9 @@ Per sviluppo e deploy del Worker vedi [worker/README.md](worker/README.md) e il
 1. L'utente avvia il bot con `/start`
 2. Sceglie tra **Cerca**, **Ora**, **Info** e **Preferenze**
 3. **Cerca**: seleziona campus → giorno → ora inizio → ora fine → risultati
-4. **Ora**: ricerca rapida da adesso. Dalla tastiera persistente il bot chiede
-   campus e durata inline; dopo il salvataggio in Mini App invia un pulsante
-   rapido a un tap con campus e durata incorporati
+4. **Ora**: ricerca rapida da adesso usando le preferenze salvate. Il bot le
+   conserva in un messaggio pinnato (nessuno stato lato server) e invia anche
+   un pulsante rapido a un tap; senza preferenze chiede campus e durata inline
 5. **Preferenze**: apre la Mini App (bottone `web_app` nella tastiera)
    - Nella Mini App: lingua, campus preferito, durata ricerca rapida
    - I dati sono salvati in Telegram CloudStorage, con fallback `localStorage`

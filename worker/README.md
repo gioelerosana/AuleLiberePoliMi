@@ -23,11 +23,14 @@ Il server locale espone `GET /health`. Il webhook è
 un oggetto con `update_id` intero. Il processing viene atteso prima della
 risposta: un errore restituisce HTTP 500, permettendo a Telegram di ritentare.
 
-I dati di `json/location.json` e `json/roomsWithPower.json` generano sia
-`src/data.ts` per il Worker sia `webapp/settings/data.js` per la Mini App. In
-questo modo le sedi hanno un'unica sorgente. Dopo una modifica ai JSON eseguire
+I dati di `json/location.json` (tutte le sedi PoliMi), `json/campuses.json`
+(campus mostrati nei menu, sottoinsieme di `location.json`) e
+`json/roomsWithPower.json` generano sia `src/data.ts` per il Worker sia
+`webapp/settings/data.js` per la Mini App. In questo modo le sedi hanno
+un'unica sorgente. I codici delle singole vie restano validi per preferenze già
+salvate, ma non compaiono più nei menu. Dopo una modifica ai JSON eseguire
 `npm run data:generate`; check, test e deploy falliscono se una copia generata
-non è aggiornata.
+non è aggiornata o se un campus non esiste in `location.json`.
 
 ## Test locale
 
