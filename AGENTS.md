@@ -51,17 +51,20 @@ stack moderno e architettura stateless.
 - Niente dominio personalizzato per ora
 
 ### Ricerca rapida "Ora"
-- Un pulsante della tastiera persistente non può trasportare dati, quindi le
-  preferenze salvate vengono conservate in un **messaggio pinnato dal bot**
-  (nessun KV/DB: lo stato resta su Telegram)
-- Dopo il salvataggio la Mini App invia `web_app_data`: il bot aggiorna la
-  tastiera, invia/fissa il messaggio preferenze con il pulsante `🕒Ora` inline
-  (preferenze in `callback_data`) e lo modifica ai salvataggi successivi
-- Il pulsante `🕒Ora` della tastiera persistente legge le preferenze dal
-  messaggio pinnato (`getChat`) e fa la ricerca; se manca (o l'utente ha
-  pinnato altro) ripiega sul flusso inline campus → durata
-- La lingua si ottiene da `message.from.language_code`; la lingua salvata è
-  codificata nel messaggio pinnato e usata per la ricerca rapida
+- Un pulsante della tastiera persistente non può trasportare dati, ma il suo
+  **testo viene rimandato al bot come messaggio**: le preferenze salvate sono
+  quindi codificate nel label del pulsante `🕒Ora` (es.
+  `🕒Ora · Milano Bovisa 2h 🇮🇹`), nessun KV/DB e nessun messaggio pinnato
+- Dopo il salvataggio la Mini App invia `web_app_data`: il bot ricostruisce la
+  tastiera persistente con le preferenze nel label e invia un messaggio
+  preferenze con il pulsante `🕒Ora` inline (preferenze in `callback_data`)
+- Al tap del pulsante persistente il bot ricava campus/durata/lingua dal testo
+  del messaggio con `parseNowLabel` e fa la ricerca; se il label è assente,
+  malformato o è il semplice `🕒Ora`, ripiega sul flusso inline campus → durata
+- I codici delle singole sedi (es. `MIA11`) restano trasportabili perché il
+  label usa il nome esteso che `campusCodeFromName` sa ricondurre al codice
+- La lingua di fallback si ottiene da `message.from.language_code`; nei label
+  validi vince la lingua codificata nel pulsante
 
 ### Sviluppo
 - `main` = produzione (bot di tutti); si sviluppa su `dev`

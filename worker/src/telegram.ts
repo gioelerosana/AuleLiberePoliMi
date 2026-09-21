@@ -139,30 +139,31 @@ export async function handleTelegramUpdate(
     });
     return;
   }
+  if (nowLabelPrefix(text)) {
+    // The label is the only carrier of the saved preferences. A malformed one
+    // (stale keyboard, edited text) still falls back to the inline flow.
+    const preferences = parseNowLabel(text);
+    await sendQuickSearch(message.chat.id, preferences, lang, api, deps);
+    return;
+  }
   if (isLabel(text, "now")) {
-    await sendQuickSearch(message.chat.id, lang, api, deps);
+    await sendQuickSearch(message.chat.id, null, lang, api, deps);
   }
 }
 
 /**
- * Quick search from the persistent keyboard. The Worker keeps no state, so the
- * saved preferences are read back from the bot's pinned message; when there is
- * none (or the user pinned something else) fall back to the inline flow.
+ * Quick search from the persistent keyboard. The Worker keeps no state: the
+ * preferences travel inside the label of the 🕒Ora reply-keyboard button, which
+ * Telegram echoes back as the message text. When the label has none (or the
+ * user typed the plain button text) fall back to the inline flow.
  */
 async function sendQuickSearch(
   chatId: number,
+  preferences: Preferences | null,
   fallbackLang: Language,
   api: ReturnType<typeof createTelegramApi>,
   deps: TelegramDependencies,
 ): Promise<void> {
-  let preferences: Preferences | null = null;
-  try {
-    const chat = await api.getChat(chatId);
-    preferences = parsePinnedPreferences(chat.pinned_message?.text);
-  } catch (error) {
-    console.error("Unable to read pinned preferences", error);
-  }
-
   if (!preferences) {
     await sendCampusPicker(chatId, fallbackLang, api, "quickCampus");
     return;
@@ -300,24 +301,37 @@ async function handleWebAppData(
     return;
   }
   const t = translations[preferences.lang];
-  // Restore the translated persistent keyboard in a separate message: Telegram
-  // cannot attach an inline keyboard and a reply keyboard to the same message.
+  // Restore the translated persistent keyboard with the preferences encoded in
+  // the 🕒Ora label: the Worker keeps no state, Telegram echoes the label back.
+  // It is a separate message because Telegram cannot attach an inline keyboard
+  // and a reply keyboard to the same message.
   await api.sendMessage(message.chat.id, t.menuReady, {
-    reply_markup: mainKeyboard(preferences.lang, env.WEBAPP_URL),
+    reply_markup: mainKeyboard(preferences.lang, env.WEBAPP_URL, preferences),
   });
-  // The preferences message carries the one-tap quick button and is pinned so
-  // the persistent 🕒Ora button can read it back later without server state.
-  await publishPreferences(message.chat.id, preferences, api, t);
+  await sendPreferences(message.chat.id, preferences, api, t);
 }
 
-function pinnedPreferencesText(preferences: Preferences): string {
+function preferencesSummary(preferences: Preferences): string {
   const flag = preferences.lang === "it" ? "🇮🇹" : "🇬🇧";
   return `${campusLabel(preferences.campus)} · ${preferences.duration}h · ${flag}`;
 }
 
-function parsePinnedPreferences(text: string | undefined): Preferences | null {
-  if (!text) return null;
-  const match = /^(.+?) · (\d{1,2})h · (🇮🇹|🇬🇧)$/mu.exec(text);
+function nowButtonLabel(preferences: Preferences, now: string): string {
+  const flag = preferences.lang === "it" ? "🇮🇹" : "🇬🇧";
+  return `${now} · ${campusLabel(preferences.campus)} ${preferences.duration}h ${flag}`;
+}
+
+function nowLabelPrefix(text: string): string | null {
+  return [translations.it.now, translations.en.now]
+    .map((label) => `${label} · `)
+    .find((prefix) => text.startsWith(prefix)) ?? null;
+}
+
+function parseNowLabel(text: string): Preferences | null {
+  const prefix = nowLabelPrefix(text);
+  if (!prefix) return null;
+  const suffix = text.slice(prefix.length);
+  const match = /^(.+?) (\d{1,2})h (🇮🇹|🇬🇧)$/u.exec(suffix);
   if (!match) return null;
   const campus = campusCodeFromName(match[1]!.trim());
   const duration = Number(match[2]);
@@ -326,13 +340,13 @@ function parsePinnedPreferences(text: string | undefined): Preferences | null {
   return { lang, campus, duration };
 }
 
-async function publishPreferences(
+async function sendPreferences(
   chatId: number,
   preferences: Preferences,
   api: ReturnType<typeof createTelegramApi>,
   t: (typeof translations)[Language],
 ): Promise<void> {
-  const text = `${pinnedPreferencesText(preferences)}\n${t.success}`;
+  const text = `${preferencesSummary(preferences)}\n${t.success}`;
   const reply_markup = {
     inline_keyboard: [
       [
@@ -348,27 +362,10 @@ async function publishPreferences(
       ],
     ],
   };
-
   try {
-    const chat = await api.getChat(chatId);
-    const pinned = chat.pinned_message;
-    if (pinned?.from?.is_bot && parsePinnedPreferences(pinned.text)) {
-      if (pinned.text !== text) {
-        await api.editMessageText(chatId, pinned.message_id, text, { reply_markup });
-      }
-      return;
-    }
+    await api.sendMessage(chatId, text, { reply_markup });
   } catch (error) {
-    console.error("Unable to look up the pinned preferences message", error);
-  }
-
-  try {
-    const sent = await api.sendMessage(chatId, text, { reply_markup });
-    if (sent.message_id !== undefined) {
-      await api.pinChatMessage(chatId, sent.message_id);
-    }
-  } catch (error) {
-    console.error("Unable to pin the preferences message", error);
+    console.error("Unable to send the preferences message", error);
   }
 }
 
@@ -477,12 +474,17 @@ function cancelRow(lang: Language): InlineButton[] {
   return [{ text: translations[lang].back, callback_data: encodeCallback({ action: "cancel", lang }) }];
 }
 
-function mainKeyboard(lang: Language, webappUrl = DEFAULT_WEBAPP_URL) {
+function mainKeyboard(
+  lang: Language,
+  webappUrl = DEFAULT_WEBAPP_URL,
+  preferences?: Preferences,
+) {
   const t = translations[lang];
+  const now = preferences ? nowButtonLabel(preferences, t.now) : t.now;
   return {
     keyboard: [
       [{ text: t.search }],
-      [{ text: t.now }],
+      [{ text: now }],
       [{ text: t.infoButton }, { text: t.preferences, web_app: { url: webappUrl } }],
     ],
     resize_keyboard: true,
@@ -543,18 +545,6 @@ function pad(value: number): string {
   return String(value).padStart(2, "0");
 }
 
-interface ChatInfo {
-  pinned_message?: {
-    message_id: number;
-    text?: string;
-    from?: { is_bot?: boolean };
-  };
-}
-
-interface SentMessage {
-  message_id?: number;
-}
-
 function createTelegramApi(token: string, fetchImpl: typeof fetch) {
   const call = async (method: string, body: Record<string, unknown>): Promise<unknown> => {
     const response = await fetchImpl(`https://api.telegram.org/bot${token}/${method}`, {
@@ -573,19 +563,10 @@ function createTelegramApi(token: string, fetchImpl: typeof fetch) {
   };
   return {
     sendMessage: (chat_id: number, text: string, options: Record<string, unknown> = {}) =>
-      call("sendMessage", { chat_id, text, ...options }) as Promise<SentMessage>,
+      call("sendMessage", { chat_id, text, ...options }),
     sendChatAction: (chat_id: number, action: string) =>
       call("sendChatAction", { chat_id, action }),
     answerCallbackQuery: (callback_query_id: string) =>
       call("answerCallbackQuery", { callback_query_id }),
-    getChat: (chat_id: number) => call("getChat", { chat_id }) as Promise<ChatInfo>,
-    editMessageText: (
-      chat_id: number,
-      message_id: number,
-      text: string,
-      options: Record<string, unknown> = {},
-    ) => call("editMessageText", { chat_id, message_id, text, ...options }),
-    pinChatMessage: (chat_id: number, message_id: number) =>
-      call("pinChatMessage", { chat_id, message_id, disable_notification: true }),
   };
 }

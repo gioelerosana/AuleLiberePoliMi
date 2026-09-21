@@ -127,8 +127,8 @@ describe("Telegram handler", () => {
     expect(JSON.stringify(body?.reply_markup)).toContain("https://settings.example.test");
   });
 
-  it("validates Mini App data and pins the self-contained quick-search button", async () => {
-    const api = telegramFetch({ sendMessage: { message_id: 55 } });
+  it("encodes Mini App preferences in the persistent keyboard without pinning", async () => {
+    const api = telegramFetch();
     const update = messageUpdate("");
     if (!update.message) throw new Error("fixture error");
     delete update.message.text;
@@ -144,8 +144,16 @@ describe("Telegram handler", () => {
       search: vi.fn(async () => []),
     });
 
-    // The reply keyboard is restored first so the quick button is the last message.
-    expect(api.calls[0]?.body.reply_markup).toHaveProperty("keyboard");
+    // The reply keyboard label itself carries the preferences, so the Worker
+    // needs no server state when the user taps 🕒Ora again.
+    const keyboard = api.calls[0]?.body.reply_markup as {
+      keyboard: Array<Array<{ text: string }>>;
+    };
+    expect(keyboard.keyboard[1]?.[0]?.text).toBe(
+      "🕒Ora · Milano Città Studi - Piazza Leonardo da Vinci 26 3h 🇮🇹",
+    );
+    expect(api.calls.some((call) => call.method === "pinChatMessage")).toBe(false);
+
     const prefsMessage = api.calls.find(
       (call) => call.method === "sendMessage" && String(call.body.text).includes("Milano Città Studi"),
     );
@@ -160,49 +168,84 @@ describe("Telegram handler", () => {
       campus: "MIA11",
       duration: 3,
     });
-    expect(
-      api.calls.some(
-        (call) => call.method === "pinChatMessage" && call.body.message_id === 55,
-      ),
-    ).toBe(true);
   });
 
-  it("updates the pinned message instead of pinning a new one", async () => {
-    const api = telegramFetch({
-      getChat: {
-        pinned_message: {
-          message_id: 9,
-          text: "Milano Città Studi · 2h · 🇬🇧\nold",
-          from: { is_bot: true },
-        },
+  it("round-trips the keyboard label into a quick search", async () => {
+    const api = telegramFetch();
+    const search = vi.fn(async () => []);
+    await handleTelegramUpdate(
+      messageUpdate("🕒Ora · Milano Città Studi 4h 🇮🇹", "it"),
+      env,
+      {
+        fetch: api.mock,
+        search,
+        now: () => new Date("2026-08-28T07:30:00.000Z"), // 09:30 in Rome
       },
-    });
-    const update = messageUpdate("");
-    if (!update.message) throw new Error("fixture error");
-    delete update.message.text;
-    update.message.web_app_data = {
-      data: JSON.stringify({ lang: "it", campus: "Milano Bovisa", duration: 4 }),
-    };
-    await handleTelegramUpdate(update, env, {
-      fetch: api.mock,
-      search: vi.fn(async () => []),
-    });
+    );
 
-    const edited = api.calls.find((call) => call.method === "editMessageText");
-    expect(edited?.body.message_id).toBe(9);
-    expect(String(edited?.body.text)).toContain("Milano Bovisa");
-    expect(String(edited?.body.text)).toContain("4h");
-    expect(api.calls.some((call) => call.method === "pinChatMessage")).toBe(false);
+    expect(search).toHaveBeenCalledWith({
+      campus: "MIA",
+      date: "28/08/2026",
+      startHour: 9,
+      endHour: 13,
+      lang: "it",
+    });
+    expect(api.calls.some((call) => call.method === "getChat")).toBe(false);
   });
 
-  it("falls back to the inline quick flow without pinned preferences", async () => {
+  it("keeps legacy site codes searchable from the keyboard label", async () => {
+    const api = telegramFetch();
+    const search = vi.fn(async () => []);
+    await handleTelegramUpdate(
+      messageUpdate("🕒Ora · Milano Città Studi - Via Golgi 40 2h 🇬🇧", "en"),
+      env,
+      {
+        fetch: api.mock,
+        search,
+        now: () => new Date("2026-08-28T07:30:00.000Z"), // 09:30 in Rome
+      },
+    );
+
+    expect(search).toHaveBeenCalledWith({
+      campus: "MIA04",
+      date: "28/08/2026",
+      startHour: 9,
+      endHour: 11,
+      lang: "en",
+    });
+  });
+
+  it("falls back to the inline flow for a malformed 🕒Ora label", async () => {
+    const api = telegramFetch();
+    const search = vi.fn(async () => []);
+    for (const text of ["🕒Ora · NOPE 3h 🇮🇹", "🕒Ora · Milano Bovisa 12h 🇮🇹"]) {
+      api.calls.length = 0;
+      await handleTelegramUpdate(messageUpdate(text, "it"), env, {
+        fetch: api.mock,
+        search,
+      });
+      expect(api.calls.map((call) => call.method)).toEqual(["sendMessage"]);
+      const markup = api.calls[0]?.body.reply_markup as {
+        inline_keyboard: Array<Array<{ callback_data: string }>>;
+      };
+      const campusButton = markup.inline_keyboard[1]?.[0];
+      expect(campusButton && decodeCallback(campusButton.callback_data)).toEqual({
+        action: "quickCampus",
+        lang: "it",
+        campus: CAMPUSES["Milano Città Studi"],
+      });
+    }
+    expect(search).not.toHaveBeenCalled();
+  });
+
+  it("falls back to the inline quick flow for the plain 🕒Ora text", async () => {
     const api = telegramFetch();
     await handleTelegramUpdate(messageUpdate("🕒Ora", "it"), env, {
       fetch: api.mock,
       search: vi.fn(async () => []),
     });
 
-    expect(api.calls.map((call) => call.method)).toEqual(["getChat", "sendMessage"]);
+    expect(api.calls.map((call) => call.method)).toEqual(["sendMessage"]);
     const message = api.calls.find((call) => call.method === "sendMessage");
     const markup = message?.body.reply_markup as {
       inline_keyboard: Array<Array<{ text: string; callback_data: string }>>;
@@ -213,37 +256,6 @@ describe("Telegram handler", () => {
       lang: "it",
       campus: CAMPUSES["Milano Città Studi"],
     });
-  });
-
-  it("uses the pinned preferences for the persistent 🕒Ora button", async () => {
-    const api = telegramFetch({
-      getChat: {
-        pinned_message: {
-          message_id: 9,
-          text: "Milano Città Studi · 3h · 🇮🇹\nPreferenze salvate 👍🏻",
-          from: { is_bot: true },
-        },
-      },
-    });
-    const search = vi.fn(async () => []);
-    await handleTelegramUpdate(messageUpdate("🕒Ora", "it"), env, {
-      fetch: api.mock,
-      search,
-      now: () => new Date("2026-08-28T07:30:00.000Z"), // 09:30 in Rome
-    });
-
-    expect(search).toHaveBeenCalledWith({
-      campus: "MIA",
-      date: "28/08/2026",
-      startHour: 9,
-      endHour: 12,
-      lang: "it",
-    });
-    expect(
-      api.calls.some(
-        (call) => call.method === "sendMessage" && String(call.body.text).includes("Seleziona"),
-      ),
-    ).toBe(false);
   });
 
   it("asks for the duration after a quick campus choice", async () => {

@@ -100,13 +100,26 @@ Legenda: `[ ]` da fare · `[~]` in corso · `[x]` fatto
 - [x] `worker/.dev.vars.example` e download automatico di `cloudflared` in `.tools/`
 - [x] Fix “🕒Ora”: la tastiera persistente legge le preferenze dal messaggio
       pinnato (stateless) e fa la ricerca a un tap; se il pin manca ripiega sul
-      flusso inline campus → durata
+      flusso inline campus → durata (superato in Fase 7)
 - [x] Menù campus limitato ai 10 campus principali (`json/campuses.json`); i
       codici delle singole sedi restano validi per le preferenze già salvate
 - [x] Messaggi post-salvataggio riordinati: la tastiera si aggiorna prima,
       il pulsante rapido resta l'ultimo messaggio
 - [x] Test end-to-end con bot di test in locale
 - [x] Merge su `main`, deploy del Worker e `/health` di produzione verificato
+
+## 🟨 Fase 7 — Preferenze nel label di “Ora” (IN CORSO)
+
+- [x] Abbandonato il messaggio pinnato: le preferenze vivono nel label del
+      pulsante persistente `🕒Ora` (es. `🕒Ora · Milano Bovisa 2h 🇮🇹`)
+- [x] `parseNowLabel` ricava campus/durata/lingua dal testo rimandato da
+      Telegram; i codici delle singole sedi restano validi
+- [x] Fallback inline campus → durata per label assente, malformato o semplice
+      `🕒Ora`
+- [x] Rimossi `getChat`, `pinChatMessage` e `editMessageText` dal Worker
+- [x] Test aggiornati (label, sede legacy, label malformato) e `npm run check`
+- [ ] Verifica end-to-end sul bot di test
+- [ ] Merge su `main` e deploy del Worker
 
 ## 📝 Note
 
