@@ -133,7 +133,7 @@ Passi usati finora (seguirli nell'ordine):
    `predeploy` esegue `data:check`; `--keep-vars` conserva `WEBAPP_URL`.
 8. Smoke test in produzione:
    ```bash
-   curl https://aule-libere-poli-mi.gioelegr3.workers.dev/health
+   curl https://aule-libere-polimi.gioelegr3.workers.dev/health
    ```
    poi `/start`, `🔍Cerca` e `🕒Ora` sul bot di produzione. In caso di errori:
    `wrangler tail`.

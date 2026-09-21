@@ -108,7 +108,7 @@ Legenda: `[ ]` da fare · `[~]` in corso · `[x]` fatto
 - [x] Test end-to-end con bot di test in locale
 - [x] Merge su `main`, deploy del Worker e `/health` di produzione verificato
 
-## 🟨 Fase 7 — Preferenze nel label di “Ora” (IN CORSO)
+## ✅ Fase 7 — Preferenze nel label di “Ora” (COMPLETATA)
 
 - [x] Abbandonato il messaggio pinnato: le preferenze vivono nel label del
       pulsante persistente `🕒Ora` (es. `🕒Ora · Milano Bovisa 2h 🇮🇹`)
@@ -118,8 +118,8 @@ Legenda: `[ ]` da fare · `[~]` in corso · `[x]` fatto
       `🕒Ora`
 - [x] Rimossi `getChat`, `pinChatMessage` e `editMessageText` dal Worker
 - [x] Test aggiornati (label, sede legacy, label malformato) e `npm run check`
-- [ ] Verifica end-to-end sul bot di test
-- [ ] Merge su `main` e deploy del Worker
+- [x] Verifica end-to-end sul bot di test
+- [x] Merge su `main` e deploy del Worker
 
 ## 📝 Note
 
