@@ -85,6 +85,35 @@ describe("stateless callback protocol", () => {
     });
   });
 
+  it("round-trips the campus submenu navigation", () => {
+    const state = { action: "campusMenu", lang: "en", quick: true, more: true } as const;
+    expect(decodeCallback(encodeCallback(state))).toEqual(state);
+    expect(decodeCallback("m:en:x:1")).toBeNull();
+  });
+
+  it("shows main campuses first and the others in a submenu", async () => {
+    const send = async (data: string) => {
+      const api = telegramFetch();
+      await handleTelegramUpdate(callbackUpdate(data), env, {
+        fetch: api.mock,
+        search: vi.fn(async () => []),
+      });
+      const markup = api.calls.find((call) => call.method === "sendMessage")?.body
+        .reply_markup as { inline_keyboard: Array<Array<{ text: string }>> };
+      return markup.inline_keyboard.map((row) => row[0]?.text);
+    };
+
+    const main = await send(encodeCallback({ action: "search", lang: "it" }));
+    expect(main.slice(1)).toEqual(["Milano Città Studi", "Milano Bovisa", "Altri campus ➡"]);
+
+    const more = await send(
+      encodeCallback({ action: "campusMenu", lang: "it", quick: false, more: true }),
+    );
+    expect(more[1]).toBe("⬅ Campus principali");
+    expect(more).toContain("Como");
+    expect(more).not.toContain("Milano Bovisa");
+  });
+
   it("rejects forged campuses, invalid dates and time ranges", () => {
     expect(decodeCallback("e:en:NOPE:20260828:8:10")).toBeNull();
     expect(decodeCallback("e:en:MIA:20260231:8:10")).toBeNull();

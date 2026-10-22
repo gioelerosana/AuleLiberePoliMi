@@ -22,6 +22,8 @@ export interface Translation {
   today: string;
   tomorrow: string;
   back: string;
+  otherCampuses: string;
+  backToMainCampuses: string;
   searching: string;
   menuReady: string;
 }
@@ -51,6 +53,8 @@ export const translations: Record<Language, Translation> = {
     today: "Oggi",
     tomorrow: "Domani",
     back: "Annulla",
+    otherCampuses: "Altri campus ➡",
+    backToMainCampuses: "⬅ Campus principali",
     searching: "Ricerca in corso…",
     menuReady: "Menu aggiornato.",
   },
@@ -78,6 +82,8 @@ export const translations: Record<Language, Translation> = {
     today: "Today",
     tomorrow: "Tomorrow",
     back: "Cancel",
+    otherCampuses: "Other campuses ➡",
+    backToMainCampuses: "⬅ Main campuses",
     searching: "Searching…",
     menuReady: "Menu updated.",
   },

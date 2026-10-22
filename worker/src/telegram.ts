@@ -244,6 +244,15 @@ async function handleCallback(
       );
       return;
     }
+    case "campusMenu":
+      await sendCampusPicker(
+        chatId,
+        state.lang,
+        api,
+        state.quick ? "quickCampus" : "campus",
+        state.more,
+      );
+      return;
     case "info":
       await sendInfo(chatId, state.lang, api);
       return;
@@ -393,17 +402,30 @@ function parsePreferences(raw: string | undefined): Preferences | null {
   }
 }
 
+const MAIN_CAMPUS_NAMES = ["Milano Città Studi", "Milano Bovisa"];
+
 async function sendCampusPicker(
   chatId: number,
   lang: Language,
   api: ReturnType<typeof createTelegramApi>,
   action: "campus" | "quickCampus" = "campus",
+  more = false,
 ): Promise<void> {
-  const rows: InlineButton[][] = Object.entries(CAMPUSES).map(([name, campus]) => [
+  const t = translations[lang];
+  const quick = action === "quickCampus";
+  const entries = Object.entries(CAMPUSES).filter(
+    ([name]) => MAIN_CAMPUS_NAMES.includes(name) !== more,
+  );
+  const rows: InlineButton[][] = entries.map(([name, campus]) => [
     { text: name, callback_data: encodeCallback({ action, lang, campus }) },
   ]);
+  const menuButton = (text: string, toMore: boolean): InlineButton[] => [
+    { text, callback_data: encodeCallback({ action: "campusMenu", lang, quick, more: toMore }) },
+  ];
+  if (more) rows.unshift(menuButton(t.backToMainCampuses, false));
+  else rows.push(menuButton(t.otherCampuses, true));
   rows.unshift(cancelRow(lang));
-  await api.sendMessage(chatId, translations[lang].location, {
+  await api.sendMessage(chatId, t.location, {
     reply_markup: { inline_keyboard: rows },
   });
 }
