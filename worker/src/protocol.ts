@@ -33,6 +33,7 @@ export type CallbackState =
     }
   | { action: "quickCampus"; lang: Language; campus: string }
   | { action: "quick"; lang: Language; campus: string; duration: number }
+  | { action: "campusMenu"; lang: Language; quick: boolean; more: boolean }
   | { action: "info" | "cancel"; lang: Language };
 
 const actionCodes: Record<CallbackState["action"], string> = {
@@ -43,6 +44,7 @@ const actionCodes: Record<CallbackState["action"], string> = {
   end: "e",
   quickCampus: "qc",
   quick: "q",
+  campusMenu: "m",
   info: "i",
   cancel: "x",
 };
@@ -57,6 +59,9 @@ export function encodeCallback(state: CallbackState): string {
     case "campus":
     case "quickCampus":
       base.push(state.campus);
+      break;
+    case "campusMenu":
+      base.push(state.quick ? "q" : "s", state.more ? "1" : "0");
       break;
     case "date":
       base.push(state.campus, compactDate(state.date));
@@ -91,6 +96,12 @@ export function decodeCallback(value: string): CallbackState | null {
   if (code === "s" && parts.length === 2) return { action: "search", lang };
   if (code === "i" && parts.length === 2) return { action: "info", lang };
   if (code === "x" && parts.length === 2) return { action: "cancel", lang };
+
+  if (code === "m" && parts.length === 4) {
+    const [, , scope, page] = parts;
+    if ((scope !== "q" && scope !== "s") || (page !== "0" && page !== "1")) return null;
+    return { action: "campusMenu", lang, quick: scope === "q", more: page === "1" };
+  }
 
   const campus = parts[2];
   if (!campus || !isCampusCode(campus)) return null;

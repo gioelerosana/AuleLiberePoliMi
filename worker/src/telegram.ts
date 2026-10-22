@@ -1,3 +1,4 @@
+import { formatTime } from "./format";
 import {
   CAMPUSES,
   MAX_HOUR,
@@ -243,6 +244,15 @@ async function handleCallback(
       );
       return;
     }
+    case "campusMenu":
+      await sendCampusPicker(
+        chatId,
+        state.lang,
+        api,
+        state.quick ? "quickCampus" : "campus",
+        state.more,
+      );
+      return;
     case "info":
       await sendInfo(chatId, state.lang, api);
       return;
@@ -275,7 +285,7 @@ async function performSearch(
     });
     await api.sendMessage(
       chatId,
-      `${state.date}  ${campusLabel(state.campus)}  ${state.startHour}-${state.endHour}`,
+      `${state.date}  ${campusLabel(state.campus)}  ${formatTime(state.startHour)}-${formatTime(state.endHour)}`,
     );
     for (const result of messages.length ? messages : [t.noRooms]) {
       await api.sendMessage(chatId, result, {
@@ -392,17 +402,30 @@ function parsePreferences(raw: string | undefined): Preferences | null {
   }
 }
 
+const MAIN_CAMPUS_NAMES = ["Milano Città Studi", "Milano Bovisa"];
+
 async function sendCampusPicker(
   chatId: number,
   lang: Language,
   api: ReturnType<typeof createTelegramApi>,
   action: "campus" | "quickCampus" = "campus",
+  more = false,
 ): Promise<void> {
-  const rows: InlineButton[][] = Object.entries(CAMPUSES).map(([name, campus]) => [
+  const t = translations[lang];
+  const quick = action === "quickCampus";
+  const entries = Object.entries(CAMPUSES).filter(
+    ([name]) => MAIN_CAMPUS_NAMES.includes(name) !== more,
+  );
+  const rows: InlineButton[][] = entries.map(([name, campus]) => [
     { text: name, callback_data: encodeCallback({ action, lang, campus }) },
   ]);
+  const menuButton = (text: string, toMore: boolean): InlineButton[] => [
+    { text, callback_data: encodeCallback({ action: "campusMenu", lang, quick, more: toMore }) },
+  ];
+  if (more) rows.unshift(menuButton(t.backToMainCampuses, false));
+  else rows.push(menuButton(t.otherCampuses, true));
   rows.unshift(cancelRow(lang));
-  await api.sendMessage(chatId, translations[lang].location, {
+  await api.sendMessage(chatId, t.location, {
     reply_markup: { inline_keyboard: rows },
   });
 }
@@ -494,7 +517,9 @@ function mainKeyboard(
 function quickSearchSlot(now: Date, duration: number) {
   const parts = romeParts(now);
   let date = `${pad(parts.day)}/${pad(parts.month)}/${parts.year}`;
-  let startHour = parts.hour;
+  // Lessons run :15 to :15, so truncating to the hour would still see a lesson
+  // that ended minutes ago; floor to the quarter hour instead.
+  let startHour = parts.hour + Math.floor(parts.minute / 15) / 4;
   let closed = false;
   if (startHour < MIN_HOUR) {
     startHour = MIN_HOUR;
@@ -520,11 +545,12 @@ function romeParts(date: Date) {
     month: "2-digit",
     day: "2-digit",
     hour: "2-digit",
+    minute: "2-digit",
     hourCycle: "h23",
   }).formatToParts(date);
   const value = (type: Intl.DateTimeFormatPartTypes) =>
     Number(parts.find((part) => part.type === type)?.value);
-  return { year: value("year"), month: value("month"), day: value("day"), hour: value("hour") };
+  return { year: value("year"), month: value("month"), day: value("day"), hour: value("hour"), minute: value("minute") };
 }
 
 function campusLabel(code: string): string {
