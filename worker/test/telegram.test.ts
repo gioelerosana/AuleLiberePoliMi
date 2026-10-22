@@ -186,8 +186,8 @@ describe("Telegram handler", () => {
     expect(search).toHaveBeenCalledWith({
       campus: "MIA",
       date: "28/08/2026",
-      startHour: 9,
-      endHour: 13,
+      startHour: 9.5,
+      endHour: 13.5,
       lang: "it",
     });
     expect(api.calls.some((call) => call.method === "getChat")).toBe(false);
@@ -209,8 +209,8 @@ describe("Telegram handler", () => {
     expect(search).toHaveBeenCalledWith({
       campus: "MIA04",
       date: "28/08/2026",
-      startHour: 9,
-      endHour: 11,
+      startHour: 9.5,
+      endHour: 11.5,
       lang: "en",
     });
   });
@@ -329,6 +329,29 @@ describe("Telegram handler", () => {
     });
   });
 
+  it("floors the quick slot to the quarter hour, not the hour", async () => {
+    const api = telegramFetch();
+    const search = vi.fn(async () => []);
+    await handleTelegramUpdate(
+      callbackUpdate(
+        encodeCallback({ action: "quick", lang: "it", campus: "MIA", duration: 2 }),
+      ),
+      env,
+      {
+        fetch: api.mock,
+        search,
+        now: () => new Date("2026-10-22T10:21:00.000Z"), // 12:21 in Rome
+      },
+    );
+    expect(search).toHaveBeenCalledWith({
+      campus: "MIA",
+      date: "22/10/2026",
+      startHour: 12.25,
+      endHour: 14.25,
+      lang: "it",
+    });
+  });
+
   it("derives a Rome-time quick slot from callback preferences", async () => {
     const api = telegramFetch();
     const search = vi.fn(async () => []);
@@ -346,8 +369,8 @@ describe("Telegram handler", () => {
     expect(search).toHaveBeenCalledWith({
       campus: "MIB",
       date: "28/08/2026",
-      startHour: 9,
-      endHour: 13,
+      startHour: 9.5,
+      endHour: 13.5,
       lang: "it",
     });
     expect(api.calls.at(-1)?.body.text).toContain("Non sono state trovate");

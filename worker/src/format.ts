@@ -9,6 +9,13 @@ export interface FormatRoomMessagesOptions {
   maxLength?: number;
 }
 
+/** Format fractional hours (14.25) as HH:MM. */
+export function formatTime(hours: number): string {
+  const totalMinutes = Math.round(hours * 60);
+  const pad = (value: number) => String(value).padStart(2, "0");
+  return `${pad(Math.floor(totalMinutes / 60))}:${pad(totalMinutes % 60)}`;
+}
+
 export function escapeTelegramHtml(value: unknown, quote = false): string {
   let escaped = String(value)
     .replaceAll("&", "&amp;")
@@ -40,7 +47,7 @@ function makeRoomLine(
   untilLabel: string,
   availableLength: number,
 ): string {
-  const suffix = ` (${escapeTelegramHtml(untilLabel)} ${escapeTelegramHtml(room.until)}) ${room.powerPlugs ? "🔌" : ""}\n`;
+  const suffix = ` (${escapeTelegramHtml(untilLabel)} ${escapeTelegramHtml(formatTime(room.until))}) ${room.powerPlugs ? "🔌" : ""}\n`;
   const escapedName = escapeTelegramHtml(room.name);
   const escapedLink = escapeTelegramHtml(room.link, true);
   const linked = ` <a href="${escapedLink}">${escapedName}</a>${suffix}`;
@@ -57,7 +64,7 @@ function makeRoomLine(
   return plain.length <= availableLength
     ? plain
     : truncateEscaped(
-        `${room.name} ${untilLabel} ${room.until}${room.powerPlugs ? " 🔌" : ""}`,
+        `${room.name} ${untilLabel} ${formatTime(room.until)}${room.powerPlugs ? " 🔌" : ""}`,
         availableLength,
       );
 }
@@ -101,7 +108,7 @@ export function formatRoomMessages(
       if (line.length === 0 || current.length + prefix.length + line.length > maxLength) {
         // This only occurs with an exceptionally long localized suffix.
         if (current) messages.push(current);
-        current = truncateEscaped(`${room.name} ${options.untilLabel} ${room.until}`, maxLength);
+        current = truncateEscaped(`${room.name} ${options.untilLabel} ${formatTime(room.until)}`, maxLength);
         needsHeader = true;
       } else {
         current += prefix + line;

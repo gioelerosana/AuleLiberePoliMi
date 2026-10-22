@@ -1,3 +1,4 @@
+import { formatTime } from "./format";
 import {
   CAMPUSES,
   MAX_HOUR,
@@ -275,7 +276,7 @@ async function performSearch(
     });
     await api.sendMessage(
       chatId,
-      `${state.date}  ${campusLabel(state.campus)}  ${state.startHour}-${state.endHour}`,
+      `${state.date}  ${campusLabel(state.campus)}  ${formatTime(state.startHour)}-${formatTime(state.endHour)}`,
     );
     for (const result of messages.length ? messages : [t.noRooms]) {
       await api.sendMessage(chatId, result, {
@@ -494,7 +495,9 @@ function mainKeyboard(
 function quickSearchSlot(now: Date, duration: number) {
   const parts = romeParts(now);
   let date = `${pad(parts.day)}/${pad(parts.month)}/${parts.year}`;
-  let startHour = parts.hour;
+  // Lessons run :15 to :15, so truncating to the hour would still see a lesson
+  // that ended minutes ago; floor to the quarter hour instead.
+  let startHour = parts.hour + Math.floor(parts.minute / 15) / 4;
   let closed = false;
   if (startHour < MIN_HOUR) {
     startHour = MIN_HOUR;
@@ -520,11 +523,12 @@ function romeParts(date: Date) {
     month: "2-digit",
     day: "2-digit",
     hour: "2-digit",
+    minute: "2-digit",
     hourCycle: "h23",
   }).formatToParts(date);
   const value = (type: Intl.DateTimeFormatPartTypes) =>
     Number(parts.find((part) => part.type === type)?.value);
-  return { year: value("year"), month: value("month"), day: value("day"), hour: value("hour") };
+  return { year: value("year"), month: value("month"), day: value("day"), hour: value("hour"), minute: value("minute") };
 }
 
 function campusLabel(code: string): string {
