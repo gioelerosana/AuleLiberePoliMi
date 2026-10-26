@@ -27,7 +27,7 @@ const I18N = {
         campusLabel: "Preferred campus",
         durationLabel: "Search duration (hours)",
         lookaheadLabel: "Look ahead for rooms freeing up (hours)",
-        lookaheadHint: "Results also list rooms that free up between 1 hour and this many hours from the start.",
+        lookaheadHint: "Results also list rooms that free up within this many hours from the start.",
         campusPlaceholder: "— Select a campus —",
         saveBtn: "Save preferences",
         footer: "Preferences are stored on your device.",
@@ -41,7 +41,7 @@ const I18N = {
         campusLabel: "Campus preferito",
         durationLabel: "Durata ricerca (ore)",
         lookaheadLabel: "Guarda avanti per le aule che si liberano (ore)",
-        lookaheadHint: "I risultati elencano anche le aule che si liberano tra 1 ora e questo numero di ore dall'inizio.",
+        lookaheadHint: "I risultati elencano anche le aule che si liberano entro questo numero di ore dall'inizio.",
         campusPlaceholder: "— Seleziona un campus —",
         saveBtn: "Salva preferenze",
         footer: "Le preferenze sono salvate sul tuo dispositivo.",
@@ -137,7 +137,7 @@ function applyPrefs(prefs) {
         durationSlider.value = prefs.duration;
     }
     // Older saved preferences have no lookahead: keep the slider default.
-    if (prefs.lookahead >= 2 && prefs.lookahead <= 8) {
+    if (prefs.lookahead >= 1 && prefs.lookahead <= 8) {
         lookaheadSlider.value = prefs.lookahead;
     }
     updateSliderDisplays();

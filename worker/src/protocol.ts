@@ -3,11 +3,10 @@ import { CAMPUSES, LOCATION_CODES, LOCATIONS } from "./data";
 
 export const MIN_HOUR = 8;
 export const MAX_HOUR = 20;
-// How far ahead (hours) the "freeing up" section looks. It starts one hour
-// after the search start, so the smallest useful value is 2.
-export const MIN_LOOKAHEAD = 2;
+// How far ahead (hours after the search start) the "freeing up" section looks.
+export const MIN_LOOKAHEAD = 1;
 export const MAX_LOOKAHEAD = 8;
-export const DEFAULT_LOOKAHEAD = MIN_LOOKAHEAD;
+export const DEFAULT_LOOKAHEAD = 2;
 
 // CAMPUSES drives the search menus (one entry per campus). LOCATIONS still
 // holds every PoliMi site so preferences saved before the menu was trimmed to

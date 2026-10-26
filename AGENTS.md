@@ -33,8 +33,8 @@ stack moderno e architettura stateless.
   - Lingua preferita (it/en)
   - Campus preferito
   - Durata della ricerca rapida (1-8 ore)
-  - Quante ore guardare avanti per le aule che si liberano (2-8, default 2):
-    la sezione "⏳ Si liberano tra 1 e N ore" in fondo ai risultati
+  - Quante ore guardare avanti per le aule che si liberano (1-8, default 2):
+    la sezione "⏳ Si liberano entro N ore" in fondo ai risultati
 - La Mini App è hostata su **Cloudflare Pages** (statica)
 - I dati arrivano al bot via `web_app_data` quando l'utente salva
 - La Mini App è solo per le *impostazioni* — il bot rimane **inline**

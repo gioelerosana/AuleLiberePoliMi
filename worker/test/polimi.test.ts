@@ -155,7 +155,7 @@ describe("PoliMi occupancy scraper", () => {
     expect(freeingTime([], 9)).toBeNull();
   });
 
-  it("lists rooms freeing up between one hour and the lookahead", async () => {
+  it("lists rooms freeing up within the lookahead", async () => {
     // Grid starts at 07:45: one empty cell reaches 08:00, a slot cell is
     // colspan / 4 hours long.
     const row = (id: number, name: string, cells: string) =>
@@ -194,15 +194,18 @@ describe("PoliMi occupancy scraper", () => {
     expect(byDefault.free["Edificio 1"]?.map((room) => room.name)).toEqual([
       "already-free",
     ]);
-    // Default window: one to two hours after the 09:00 start.
+    // Default window: up to two hours after the 09:00 start.
     expect(freeing(byDefault)).toEqual([
       ["frees-1h30", 10.5],
+      ["frees-in-30m", 9.5],
       ["chained", 10.5],
     ]);
+    expect(freeing(await search(1))).toEqual([["frees-in-30m", 9.5]]);
     // Frees at 12:30, three and a half hours after the start.
     expect(freeing(await search(4))).toEqual([
       ["frees-1h30", 10.5],
       ["frees-in-3h", 12.5],
+      ["frees-in-30m", 9.5],
       ["chained", 10.5],
     ]);
     expect(freeing(await search(3))).toEqual(freeing(byDefault));

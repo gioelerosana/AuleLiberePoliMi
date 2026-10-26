@@ -101,7 +101,8 @@ describe("stateless callback protocol", () => {
       duration: 3,
       lookahead: 2,
     });
-    expect(decodeCallback("q:en:MIA11:3:1")).toBeNull();
+    expect(decodeCallback("q:en:MIA11:3:1")).toMatchObject({ lookahead: 1 });
+    expect(decodeCallback("q:en:MIA11:3:0")).toBeNull();
     expect(decodeCallback("q:en:MIA11:3:9")).toBeNull();
   });
 
@@ -290,7 +291,7 @@ describe("Telegram handler", () => {
     for (const text of [
       "🕒Ora · NOPE 3h 🇮🇹",
       "🕒Ora · Milano Bovisa 12h 🇮🇹",
-      "🕒Ora · Milano Bovisa 3h ⏳1h 🇮🇹",
+      "🕒Ora · Milano Bovisa 3h ⏳0h 🇮🇹",
       "🕒Ora · Milano Bovisa 3h ⏳9h 🇮🇹",
     ]) {
       api.calls.length = 0;

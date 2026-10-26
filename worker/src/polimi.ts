@@ -6,8 +6,6 @@ const POLIMI_CONTROLLER_URL =
 const QUARTER_HOUR = 0.25;
 const FIRST_GRID_TIME = 7.75;
 const LAST_OPENING_TIME = 20;
-// Rooms freeing up at least this many hours after the search start are listed.
-const FREEING_WINDOW_FROM = 1;
 const DEFAULT_LOOKAHEAD_HOURS = 2;
 const DEFAULT_TIMEOUT_MS = 20_000;
 const GARBAGE_ROOMS = new Set(["PROVA_ASICT", "2.2.1-D.I.", "OSVALDODEDONATO"]);
@@ -50,8 +48,8 @@ export type FreeRoomsByBuilding = Record<string, FreeRoom[]>;
 export interface RoomSearchResult {
   free: FreeRoomsByBuilding;
   /**
-   * Rooms busy at `startTime` that become free between one hour and
-   * `lookaheadHours` later. `until` holds the time the room frees up, not the end of a gap.
+   * Rooms busy at `startTime` that become free within `lookaheadHours` of it.
+   * `until` holds the time the room frees up, not the end of a gap.
    */
   freeingUp: FreeRoomsByBuilding;
 }
@@ -63,7 +61,7 @@ export interface SearchFreeRoomsInput {
   year: number;
   startTime: number;
   endTime: number;
-  /** Latest time, in hours after `startTime`, to list rooms freeing up. */
+  /** How many hours after `startTime` to look for rooms freeing up. */
   lookaheadHours?: number;
   /** Static contents of roomsWithPower.json, bundled by the caller. */
   roomsWithPower: readonly number[];
@@ -342,8 +340,8 @@ export async function searchFreeRooms(
 }
 
 /**
- * Like {@link searchFreeRooms}, and also lists the rooms that free up between
- * one hour and `lookaheadHours` after `startTime`, from the same upstream fetch.
+ * Like {@link searchFreeRooms}, and also lists the rooms that free up within
+ * `lookaheadHours` of `startTime`, from the same upstream fetch.
  */
 export async function searchRooms(
   input: SearchFreeRoomsInput,
@@ -408,7 +406,6 @@ export async function searchRooms(
         const freeAt = freeingTime(room.lessons, input.startTime);
         if (
           freeAt !== null &&
-          freeAt >= input.startTime + FREEING_WINDOW_FROM &&
           freeAt <= input.startTime + lookaheadHours &&
           freeAt < LAST_OPENING_TIME
         ) {
