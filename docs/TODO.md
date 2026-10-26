@@ -138,6 +138,8 @@ Legenda: `[ ]` da fare · `[~]` in corso · `[x]` fatto
 - [x] Esclusi corridoi, laboratori e sale non usabili
 - [x] Classificazione aule da `json/roomTypes.json` (`npm run rooms:fetch`):
       escluse le aule non didattiche, aule da disegno dietro `✏️`
+- [x] Zona centrale di Città Studi (`json/campusZones.json`) di default,
+      altre sedi contate e dietro `🗺️ Tutte le zone`
 - [ ] Verifica end-to-end sul bot di test
 - [ ] Merge su `main`, `npm run commands:set` e deploy del Worker
 

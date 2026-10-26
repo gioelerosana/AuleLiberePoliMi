@@ -11,6 +11,7 @@ import {
   type CallbackState,
 } from "./protocol";
 import {
+  DEFAULT_FILTERS,
   campusScreen,
   dayScreen,
   durationScreen,
@@ -44,6 +45,8 @@ export interface SearchRequest {
   powerOnly: boolean;
   /** Drawing rooms instead of lecture rooms. */
   drawing: boolean;
+  /** The whole campus instead of its central zone. */
+  allZones: boolean;
 }
 
 export interface TelegramDependencies {
@@ -210,7 +213,7 @@ export async function handleTelegramUpdate(
     if (nowLabel.preferences) {
       const { lang: labelLang, campus, duration, lookahead } = nowLabel.preferences;
       const source: SearchSource = { kind: "quick", campus, duration, lookahead };
-      await performSearch(api, deps, { chatId }, labelLang, source, { powerOnly: false, drawing: false });
+      await performSearch(api, deps, { chatId }, labelLang, source, DEFAULT_FILTERS);
     } else {
       await showScreen(api, { chatId }, campusScreen(nowLabel.lang, true, false));
     }
@@ -460,7 +463,11 @@ function parsePreferences(raw: string | undefined): Preferences | null {
 }
 
 function searchFilters(flags: CallbackFlags): SearchFilters {
-  return { powerOnly: Boolean(flags.powerOnly), drawing: Boolean(flags.drawing) };
+  return {
+    powerOnly: Boolean(flags.powerOnly),
+    drawing: Boolean(flags.drawing),
+    allZones: Boolean(flags.allZones),
+  };
 }
 
 function isValidDuration(duration: number): boolean {

@@ -108,7 +108,8 @@ stack moderno e architettura stateless.
 - `campuses.json`: campus mostrati nei menu, una voce per campus e niente
   singole vie; deve restare un sottoinsieme di `location.json`
 - `roomsWithPower.json`: ID delle aule con prese
-- `roomTypes.json`: per ogni ID aula PoliMi campus, categoria e tipologia,
+- `roomTypes.json`: per ogni ID aula PoliMi campus, sede ("Dove"), edificio,
+  categoria e tipologia,
   scaricate dalle schede aula con `npm run rooms:fetch` (snapshot statico,
   da rilanciare quando il PoliMi aggiunge aule). `worker/src/rooms.ts`
   classifica: *aula didattica* con platea frontale o informatizzata =
@@ -117,6 +118,12 @@ stack moderno e architettura stateless.
   (laboratori, aule convegni, aule magne, dipartimentali, aule studio, spazi
   espositivi) viene scartato. Le aule assenti dallo snapshot contano come
   normali
+- `campusZones.json`: per campus, le sedi della "zona centrale" mostrate di
+  default (Città Studi: Piazza Leonardo da Vinci 32 e Via Bonardi, cioè
+  campus storico, Trifoglio, Nave, Architettura). Le aule delle altre sedi
+  sono solo contate in fondo ai risultati e si vedono con `🗺️ Tutte le zone`
+  (flag `z`). Vale solo per le ricerche sull'intero campus, non per le sedi
+  singole delle preferenze legacy; i campus senza voce non hanno zone
 - `excludedRooms.json`: esclusioni manuali per nome, solo per i casi che le
   categorie non coprono (es. le aule `-D.I.`, che risultano aule da disegno)
 - Generano `worker/src/data.ts` e `webapp/settings/data.js` con
@@ -197,7 +204,7 @@ Passi usati finora (seguirli nell'ordine):
 | `worker/src/telegram.ts` | Handler update, routing, scheda e ricerca |
 | `worker/src/screens.ts` | Schermate inline, tastiera persistente, label |
 | `worker/src/clock.ts` | Orari e date nel fuso Europe/Rome |
-| `worker/src/rooms.ts` | Classificazione aule: normali, disegno, escluse |
+| `worker/src/rooms.ts` | Classificazione aule (normali, disegno, escluse) e zone |
 | `worker/src/protocol.ts` | Callback compatti encode/decode, campus |
 | `worker/src/i18n.ts` | Traduzioni it/en |
 | `worker/src/polimi.ts` | Scraper aule libere (`fetch` + `HTMLRewriter`) |

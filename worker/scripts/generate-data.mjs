@@ -24,16 +24,34 @@ const roomTypes = JSON.parse(
   await readFile(resolve(repositoryRoot, "json/roomTypes.json"), "utf8"),
 );
 
+const campusZones = JSON.parse(
+  await readFile(resolve(repositoryRoot, "json/campusZones.json"), "utf8"),
+);
+
 const invalidRoomType = Object.entries(roomTypes).find(
   ([id, room]) =>
     !/^\d+$/.test(id) ||
     typeof room?.campus !== "string" ||
+    typeof room?.site !== "string" ||
     typeof room?.category !== "string" ||
     typeof room?.type !== "string",
 );
 if (invalidRoomType) {
   console.error(`json/roomTypes.json: voce non valida per l'aula ${invalidRoomType[0]}`);
   process.exit(1);
+}
+
+const knownSites = new Set(Object.values(roomTypes).map((room) => `${room.campus}|${room.site}`));
+for (const [campus, sites] of Object.entries(campusZones)) {
+  if (!Object.values(campuses).includes(campus) || !Array.isArray(sites)) {
+    console.error(`json/campusZones.json: "${campus}" deve essere un codice di json/campuses.json con un array di sedi`);
+    process.exit(1);
+  }
+  const unknown = sites.filter((site) => !knownSites.has(`${campus}|${site}`));
+  if (unknown.length > 0) {
+    console.error(`json/campusZones.json: sedi assenti da json/roomTypes.json per ${campus}: ${unknown.join(", ")}`);
+    process.exit(1);
+  }
 }
 
 if (
@@ -66,12 +84,15 @@ export const ROOM_IDS_WITH_POWER = ${JSON.stringify(roomsWithPower, null, 2)} as
 /** Manual exclusions by room name, for cases the PoliMi categories miss. */
 export const EXCLUDED_ROOMS = new Set<string>(${JSON.stringify(excludedRooms, null, 2)});
 
-/** PoliMi room id → [campus code, category, typology] (json/roomTypes.json). */
-export const ROOM_TYPES: Record<string, readonly [string, string, string]> = ${JSON.stringify(
+/** PoliMi room id → [campus code, category, typology, site] (json/roomTypes.json). */
+export const ROOM_TYPES: Record<string, readonly [string, string, string, string]> = ${JSON.stringify(
   Object.fromEntries(
-    Object.entries(roomTypes).map(([id, room]) => [id, [room.campus, room.category, room.type]]),
+    Object.entries(roomTypes).map(([id, room]) => [id, [room.campus, room.category, room.type, room.site]]),
   ),
 )};
+
+/** Sites forming the central zone of a campus, shown by default (json/campusZones.json). */
+export const CAMPUS_ZONES: Record<string, readonly string[]> = ${JSON.stringify(campusZones, null, 2)};
 
 export type LocationName = keyof typeof LOCATIONS;
 export type LocationCode = (typeof LOCATIONS)[LocationName];

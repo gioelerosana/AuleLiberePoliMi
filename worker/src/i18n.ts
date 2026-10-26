@@ -40,6 +40,10 @@ export interface Translation {
   drawingRooms: string;
   lectureRooms: string;
   drawingFilterActive: string;
+  allZones: string;
+  centralZone: string;
+  allZonesActive: string;
+  otherZonesHint: (count: number) => string;
   changeTime: string;
 }
 
@@ -96,6 +100,13 @@ export const translations: Record<Language, Translation> = {
     drawingRooms: "✏️ Aule da disegno",
     lectureRooms: "🏫 Aule normali",
     drawingFilterActive: "✏️ Aule da disegno",
+    allZones: "🗺️ Tutte le zone",
+    centralZone: "🎯 Zona centrale",
+    allZonesActive: "🗺️ Tutte le zone del campus",
+    otherZonesHint: (count) =>
+      count === 1
+        ? "🗺️ C'è un'altra aula libera fuori dalla zona centrale."
+        : `🗺️ Ci sono altre ${count} aule libere fuori dalla zona centrale.`,
     changeTime: "🕐 Cambia orario",
   },
   en: {
@@ -148,6 +159,13 @@ export const translations: Record<Language, Translation> = {
     drawingRooms: "✏️ Drawing rooms",
     lectureRooms: "🏫 Lecture rooms",
     drawingFilterActive: "✏️ Drawing rooms",
+    allZones: "🗺️ All zones",
+    centralZone: "🎯 Central zone",
+    allZonesActive: "🗺️ All campus zones",
+    otherZonesHint: (count) =>
+      count === 1
+        ? "🗺️ One more free room outside the central zone."
+        : `🗺️ ${count} more free rooms outside the central zone.`,
     changeTime: "🕐 Change time",
   },
 };

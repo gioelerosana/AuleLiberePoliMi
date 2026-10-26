@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Downloads category and typology of every room listed by PoliMi in the
+ * Downloads site, building, category and typology of every room listed by PoliMi in the
  * campuses of json/campuses.json and writes them to json/roomTypes.json.
  *
  * The bot never fetches room details at runtime: this snapshot is static data
@@ -84,7 +84,7 @@ async function campusRooms(code, { day, month, year }) {
   return rooms;
 }
 
-/** "Categoria" and "Tipologia" fields of a room detail page. */
+/** Site ("Dove"), building, category and typology from a room detail page. */
 async function roomDetails(id) {
   const html = await fetchText(`${CONTROLLER_URL}Aula.do?evn_init=espandi&idaula=${id}`);
   const lines = decodeHtml(html.replace(/<(script|style)[\s\S]*?<\/\1>/g, "").replace(/<[^>]+>/g, "\n"))
@@ -95,7 +95,12 @@ async function roomDetails(id) {
     const index = lines.indexOf(label);
     return index >= 0 ? lines[index + 1] ?? "" : "";
   };
-  return { category: field("Categoria"), type: field("Tipologia") };
+  return {
+    site: field("Dove"),
+    building: field("Edificio"),
+    category: field("Categoria"),
+    type: field("Tipologia"),
+  };
 }
 
 async function mapConcurrently(items, worker) {
@@ -131,7 +136,7 @@ const details = await mapConcurrently(ids, async (id, index) => {
     return await roomDetails(id);
   } catch (error) {
     console.warn(`  scheda ${id} non disponibile: ${error.message}`);
-    return { category: "", type: "" };
+    return { site: "", building: "", category: "", type: "" };
   }
 });
 

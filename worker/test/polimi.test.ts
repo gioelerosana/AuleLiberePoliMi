@@ -4,7 +4,13 @@ import { describe, expect, it, vi } from "vitest";
 // @ts-ignore Vite raw imports are resolved by the test runner.
 import fixtureHtml from "./fixtures/occupancies.html?raw";
 import { formatRoomMessages } from "../src/format";
-import { campusHasDrawingRooms, classifyRoom, type RoomKind } from "../src/rooms";
+import {
+  campusHasDrawingRooms,
+  campusHasZones,
+  classifyRoom,
+  zoneOf,
+  type RoomKind,
+} from "../src/rooms";
 import {
   freeingTime,
   isRoomFree,
@@ -114,13 +120,14 @@ describe("PoliMi occupancy scraper", () => {
       ${row(4, "L.05-D.I.")}
     </table></div>`;
     const kinds: Record<number, RoomKind> = { 1: "standard", 2: "excluded", 3: "drawing", 4: "drawing" };
-    const parsed = await parseOccupancyResponse(new Response(html), [], RuntimeHTMLRewriter, (id) =>
-      id === undefined ? "standard" : kinds[id] ?? "standard",
-    );
+    const parsed = await parseOccupancyResponse(new Response(html), [], RuntimeHTMLRewriter, (id) => ({
+      kind: id === undefined ? "standard" : kinds[id] ?? "standard",
+      zone: id === 3 ? "other" : "main",
+    }));
     const building = parsed["Edificio BL27"] ?? {};
     // L.05-D.I. is excluded by name in json/excludedRooms.json.
     expect(Object.keys(building)).toEqual(["BL.27.1.1", "T.0.1"]);
-    expect(building["T.0.1"]?.kind).toBe("drawing");
+    expect(building["T.0.1"]).toMatchObject({ kind: "drawing", zone: "other" });
   });
 
   it("keeps the first building, parses quarter-hour slots and power plugs", async () => {
@@ -141,6 +148,7 @@ describe("PoliMi occupancy scraper", () => {
       ],
       powerPlugs: true,
       kind: "standard",
+      zone: "main",
     });
     expect(building["2.0.2"]?.powerPlugs).toBe(false);
     expect(building.PROVA_ASICT).toBeUndefined();
@@ -298,6 +306,17 @@ describe("room classification", () => {
     expect(classifyRoom("AULA MAGNA", "PLATEA FRONTALE")).toBe("excluded");
   });
 
+  it("puts Leonardo and Bonardi in the central zone of Città Studi", () => {
+    expect(zoneOf("MIA", "Milano Città Studi - Piazza Leonardo da Vinci 32")).toBe("main");
+    expect(zoneOf("MIA", "Milano Città Studi - Via Bonardi")).toBe("main");
+    expect(zoneOf("MIA", "Milano Città Studi - Via Golgi 40")).toBe("other");
+    // Campuses without a configured zone keep every room.
+    expect(zoneOf("MIB", "Milano Bovisa - Via Durando")).toBe("main");
+    expect(campusHasZones("MIA")).toBe(true);
+    // A single site is already a narrow area.
+    expect(campusHasZones("MIA04")).toBe(false);
+  });
+
   it("knows which campuses have drawing rooms", () => {
     expect(campusHasDrawingRooms("MIA")).toBe(true);
     expect(campusHasDrawingRooms("MIA11")).toBe(true);
@@ -320,6 +339,7 @@ describe("Telegram room formatting", () => {
             until: 12,
             powerPlugs: true,
             kind: "standard",
+            zone: "main",
           },
         ],
       },
@@ -341,6 +361,7 @@ describe("Telegram room formatting", () => {
           until: 20,
           powerPlugs: false,
           kind: "standard",
+          zone: "main",
         })),
       },
       {},

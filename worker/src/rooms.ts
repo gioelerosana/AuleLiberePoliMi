@@ -1,4 +1,4 @@
-import { ROOM_TYPES } from "./data";
+import { CAMPUS_ZONES, ROOM_TYPES } from "./data";
 
 /**
  * - standard: ordinary lecture rooms, shown by default
@@ -8,6 +8,14 @@ import { ROOM_TYPES } from "./data";
 export type RoomKind = "standard" | "drawing" | "excluded";
 
 export type ListedRoomKind = Exclude<RoomKind, "excluded">;
+
+/** "main" rooms sit in the central zone of their campus (json/campusZones.json). */
+export type RoomZone = "main" | "other";
+
+export interface RoomInfo {
+  kind: RoomKind;
+  zone: RoomZone;
+}
 
 const DIDACTIC_CATEGORY = "AULA DIDATTICA";
 const DRAWING_TYPE = "DISEGNO";
@@ -21,10 +29,18 @@ export function classifyRoom(category: string, type: string): RoomKind {
   return STANDARD_TYPES.has(type) ? "standard" : "excluded";
 }
 
-export function roomKind(roomId: number | undefined): RoomKind {
+/** Campuses without a configured central zone have only "main" rooms. */
+export function zoneOf(campus: string, site: string): RoomZone {
+  const mainSites = CAMPUS_ZONES[campus];
+  return !mainSites || mainSites.includes(site) ? "main" : "other";
+}
+
+export function roomInfo(roomId: number | undefined): RoomInfo {
   const entry = roomId === undefined ? undefined : ROOM_TYPES[String(roomId)];
-  // Rooms added after the last `npm run rooms:fetch` count as standard.
-  return entry ? classifyRoom(entry[1], entry[2]) : "standard";
+  // Rooms added after the last `npm run rooms:fetch` count as standard and central.
+  if (!entry) return { kind: "standard", zone: "main" };
+  const [campus, category, type, site] = entry;
+  return { kind: classifyRoom(category, type), zone: zoneOf(campus, site) };
 }
 
 const DRAWING_CAMPUSES = new Set(
@@ -36,4 +52,12 @@ const DRAWING_CAMPUSES = new Set(
 /** Single-site codes (MIA11) belong to the campus of their prefix (MIA). */
 export function campusHasDrawingRooms(campus: string): boolean {
   return DRAWING_CAMPUSES.has(campus.slice(0, CAMPUS_CODE_LENGTH));
+}
+
+/**
+ * Only whole-campus searches are narrowed to the central zone: a single-site
+ * code (MIA04) already names the area the user wants.
+ */
+export function campusHasZones(campus: string): boolean {
+  return campus in CAMPUS_ZONES;
 }

@@ -169,6 +169,7 @@ describe("stateless callback protocol", () => {
     expect(decodeCallback("q:en:MIA11:3:5:pn")).toMatchObject({ lookahead: 5, powerOnly: true, fresh: true });
     expect(decodeCallback("q:en:MIA11:3:5:pdn")).toMatchObject({ powerOnly: true, drawing: true, fresh: true });
     expect(decodeCallback("q:en:MIA11:3:5:dp")).toBeNull();
+    expect(decodeCallback("q:en:MIA11:3:5:zn")).toMatchObject({ allZones: true, fresh: true });
   });
 
   it("offers only main campuses while resolving legacy site preferences", () => {
@@ -286,6 +287,7 @@ describe("persistent keyboard", () => {
       lookahead,
       powerOnly: false,
       drawing: false,
+      allZones: false,
     });
     // One "searching" message, then edited into the results.
     expect(methods(api.calls)).toEqual(["sendMessage", "editMessageText"]);
@@ -476,6 +478,7 @@ describe("search card", () => {
       lookahead: 2,
       powerOnly: false,
       drawing: false,
+      allZones: false,
     });
     expect(methods(api.calls)).toEqual(["answerCallbackQuery", "editMessageText", "editMessageText"]);
     const header = "<b>📍 Città Studi · Fri 28/08 · 09:00–11:00</b>";
@@ -485,7 +488,8 @@ describe("search card", () => {
     const keyboard = keyboardOf(results);
     expect(labels(keyboard)).toEqual([
       ["🔄 Refresh", "🔌 Power plugs only"],
-      ["✏️ Drawing rooms", "🕐 Change time"],
+      ["✏️ Drawing rooms", "🗺️ All zones"],
+      ["🕐 Change time"],
     ]);
     expect(decodeCallback(keyboard[0]![1]!.callback_data)).toEqual({
       ...state,
@@ -493,7 +497,8 @@ describe("search card", () => {
       fresh: true,
     });
     expect(decodeCallback(keyboard[1]![0]!.callback_data)).toEqual({ ...state, drawing: true, fresh: true });
-    expect(decodeCallback(keyboard[1]![1]!.callback_data)).toEqual({
+    expect(decodeCallback(keyboard[1]![1]!.callback_data)).toEqual({ ...state, allZones: true, fresh: true });
+    expect(decodeCallback(keyboard[2]![0]!.callback_data)).toEqual({
       action: "date",
       lang: "en",
       campus: "MIA",
@@ -565,15 +570,17 @@ describe("search card", () => {
     } as const;
     await handleTelegramUpdate(callbackUpdate(encodeCallback(state)), env, deps(api, { search }));
 
-    expect(search).toHaveBeenCalledWith(expect.objectContaining({ drawing: true, powerOnly: false }));
+    expect(search).toHaveBeenCalledWith(
+      expect.objectContaining({ drawing: true, powerOnly: false, allZones: false }),
+    );
     const results = api.calls.at(-1);
     expect(String(results?.body.text)).toContain("</b>\n✏️ Aule da disegno");
     const keyboard = keyboardOf(results);
-    expect(labels(keyboard)[1]).toEqual(["🏫 Aule normali", "🕐 Cambia orario"]);
+    expect(labels(keyboard).slice(1)).toEqual([["🏫 Aule normali", "🗺️ Tutte le zone"], ["🕐 Cambia orario"]]);
     expect(decodeCallback(keyboard[1]![0]!.callback_data)).toEqual({ ...state, drawing: undefined });
   });
 
-  it("hides the drawing rooms button where a campus has none", async () => {
+  it("hides the drawing and zone buttons where a campus has neither", async () => {
     const api = telegramFetch();
     await handleTelegramUpdate(
       callbackUpdate(
@@ -583,6 +590,26 @@ describe("search card", () => {
       deps(api),
     );
     expect(labels(keyboardOf(api.calls.at(-1)))[1]).toEqual(["🕐 Cambia orario"]);
+  });
+
+  it("widens the search to every zone of the campus", async () => {
+    const api = telegramFetch();
+    const search = vi.fn(async () => []);
+    const state = {
+      action: "end",
+      lang: "it",
+      campus: "MIA",
+      date: "28/10/2026",
+      startHour: 10,
+      endHour: 12,
+      allZones: true,
+      fresh: true,
+    } as const;
+    await handleTelegramUpdate(callbackUpdate(encodeCallback(state)), env, deps(api, { search }));
+    expect(search).toHaveBeenCalledWith(expect.objectContaining({ allZones: true }));
+    const results = api.calls.at(-1);
+    expect(String(results?.body.text)).toContain("</b>\n🗺️ Tutte le zone del campus");
+    expect(labels(keyboardOf(results))[1]).toEqual(["✏️ Aule da disegno", "🎯 Zona centrale"]);
   });
 
   it("offers a retry button when the search fails", async () => {
@@ -638,6 +665,7 @@ describe("search card", () => {
       lookahead: 2,
       powerOnly: false,
       drawing: false,
+      allZones: false,
     });
   });
 

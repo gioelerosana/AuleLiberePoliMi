@@ -1,5 +1,5 @@
 import { EXCLUDED_ROOMS } from "./data";
-import type { ListedRoomKind, RoomKind } from "./rooms";
+import type { ListedRoomKind, RoomInfo, RoomZone } from "./rooms";
 
 export const POLIMI_OCCUPANCY_URL =
   "https://onlineservices.polimi.it/spazi/spazi/controller/OccupazioniGiornoEsatto.do";
@@ -31,11 +31,12 @@ export interface RoomOccupancy {
   lessons: Lesson[];
   powerPlugs: boolean;
   kind: ListedRoomKind;
+  zone: RoomZone;
 }
 
-export type RoomClassifier = (roomId: number | undefined) => RoomKind;
+export type RoomClassifier = (roomId: number | undefined) => RoomInfo;
 
-const EVERY_ROOM_STANDARD: RoomClassifier = () => "standard";
+const EVERY_ROOM_STANDARD: RoomClassifier = () => ({ kind: "standard", zone: "main" });
 
 export type OccupanciesByBuilding = Record<
   string,
@@ -48,6 +49,7 @@ export interface FreeRoom {
   until: number;
   powerPlugs: boolean;
   kind: ListedRoomKind;
+  zone: RoomZone;
 }
 
 export type FreeRoomsByBuilding = Record<string, FreeRoom[]>;
@@ -73,8 +75,8 @@ export interface SearchFreeRoomsInput {
   lookaheadHours?: number;
   /** Static contents of roomsWithPower.json, bundled by the caller. */
   roomsWithPower: readonly number[];
-  /** Room classification from json/roomTypes.json; excluded rooms are dropped. */
-  roomKind?: RoomClassifier;
+  /** Room kind and zone from json/roomTypes.json; excluded rooms are dropped. */
+  roomInfo?: RoomClassifier;
 }
 
 interface RewriterElement {
@@ -184,7 +186,7 @@ function consumeRow(
       if (!currentRoom || !cell.href) continue;
 
       const roomId = roomIdFromHref(cell.href);
-      const kind = classify(roomId);
+      const { kind, zone } = classify(roomId);
       // Its lesson cells find no room below and are skipped.
       if (kind === "excluded") continue;
       const rooms = (occupancies[currentBuilding.value] ??= {});
@@ -193,6 +195,7 @@ function consumeRow(
         lessons: [],
         powerPlugs: roomId !== undefined && poweredRoomIds.has(roomId),
         kind,
+        zone,
       };
     } else if (cell.classes.includes("slot") && currentRoom) {
       const duration = Number.isFinite(cell.colspan) && cell.colspan > 0
@@ -397,7 +400,7 @@ export async function searchRooms(
       response,
       input.roomsWithPower,
       dependencies.htmlRewriter,
-      input.roomKind,
+      input.roomInfo,
     );
     const free: FreeRoomsByBuilding = {};
     const freeingUp: FreeRoomsByBuilding = {};
@@ -415,6 +418,7 @@ export async function searchRooms(
             until: availability.until,
             powerPlugs: room.powerPlugs,
             kind: room.kind,
+            zone: room.zone,
           });
           continue;
         }
@@ -431,6 +435,7 @@ export async function searchRooms(
             until: freeAt,
             powerPlugs: room.powerPlugs,
             kind: room.kind,
+            zone: room.zone,
           });
         }
       }

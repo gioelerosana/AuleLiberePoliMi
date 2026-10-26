@@ -1,7 +1,7 @@
 import { addRomeDays, romeQuarterHour, weekdayOf } from "./clock";
 import { formatTime } from "./format";
 import { escapeHtml, translations, type Language } from "./i18n";
-import { campusHasDrawingRooms } from "./rooms";
+import { campusHasDrawingRooms, campusHasZones } from "./rooms";
 import {
   CAMPUSES,
   DEFAULT_LOOKAHEAD,
@@ -44,7 +44,10 @@ export type SearchSource =
 export interface SearchFilters {
   powerOnly: boolean;
   drawing: boolean;
+  allZones: boolean;
 }
+
+export const DEFAULT_FILTERS: SearchFilters = { powerOnly: false, drawing: false, allZones: false };
 
 export interface ResultContext extends SearchFilters {
   lang: Language;
@@ -149,6 +152,7 @@ export function resultHeader(context: ResultContext): string {
       `${formatTime(context.startHour)}–${formatTime(context.endHour)}</b>`,
   ];
   if (context.closed) lines.push(t.closed);
+  if (context.allZones && campusHasZones(context.campus)) lines.push(t.allZonesActive);
   if (context.drawing) lines.push(t.drawingFilterActive);
   if (context.powerOnly) lines.push(t.powerFilterActive);
   return lines.join("\n");
@@ -156,24 +160,27 @@ export function resultHeader(context: ResultContext): string {
 
 export function resultsKeyboard(lang: Language, source: SearchSource, filters: SearchFilters): InlineKeyboard {
   const t = translations[lang];
-  const { powerOnly, drawing } = filters;
+  const { powerOnly, drawing, allZones } = filters;
+  const toggle = (text: string, changed: Partial<SearchFilters>) =>
+    button(text, repeatSearch(lang, source, { ...filters, ...changed }));
   const changeTime = button(
     t.changeTime,
     source.kind === "range"
       ? { action: "date", lang, campus: source.campus, date: source.date, fresh: true }
       : { action: "quickCampus", lang, campus: source.campus, fresh: true },
   );
-  // Campuses without drawing rooms would only ever show an empty list.
+  // Campuses without drawing rooms or zones would only show a useless toggle.
   const roomKindToggle = campusHasDrawingRooms(source.campus)
-    ? [button(drawing ? t.lectureRooms : t.drawingRooms, repeatSearch(lang, source, { powerOnly, drawing: !drawing }))]
+    ? [toggle(drawing ? t.lectureRooms : t.drawingRooms, { drawing: !drawing })]
+    : [];
+  const zoneToggle = campusHasZones(source.campus)
+    ? [toggle(allZones ? t.centralZone : t.allZones, { allZones: !allZones })]
     : [];
   return [
-    [
-      button(t.refresh, repeatSearch(lang, source, filters)),
-      button(powerOnly ? t.allRooms : t.powerOnly, repeatSearch(lang, source, { powerOnly: !powerOnly, drawing })),
-    ],
-    [...roomKindToggle, changeTime],
-  ];
+    [button(t.refresh, repeatSearch(lang, source, filters)), toggle(powerOnly ? t.allRooms : t.powerOnly, { powerOnly: !powerOnly })],
+    [...roomKindToggle, ...zoneToggle],
+    [changeTime],
+  ].filter((row) => row.length > 0);
 }
 
 export function retryKeyboard(lang: Language, source: SearchSource, filters: SearchFilters): InlineKeyboard {
