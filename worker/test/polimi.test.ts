@@ -12,6 +12,7 @@ import {
   type RoomKind,
 } from "../src/rooms";
 import {
+  freeingGap,
   freeingTime,
   isRoomFree,
   parseOccupancyResponse,
@@ -183,22 +184,38 @@ describe("PoliMi occupancy scraper", () => {
     expect(freeingTime(lessons, 11)).toBeNull();
     expect(freeingTime(lessons, 7)).toBeNull();
     expect(freeingTime([], 9)).toBeNull();
+    expect(freeingGap(lessons, 9, 2)).toEqual({ from: 11, until: 12 });
+    // A 30-minute gap before the next lesson is too short to suggest.
+    expect(
+      freeingGap(
+        [
+          { name: "first", from: 8, to: 10 },
+          { name: "next", from: 10.5, to: 12 },
+        ],
+        9,
+        2,
+      ),
+    ).toBeNull();
+    // Frees at 19:15: less than an hour left before the 20:00 closing.
+    expect(freeingGap([{ name: "late", from: 18, to: 19.25 }], 18.25, 2)).toBeNull();
   });
 
-  it("lists rooms freeing up within the lookahead", async () => {
+  it("lists rooms freeing up within the lookahead with their free range", async () => {
     // Grid starts at 07:45: one empty cell reaches 08:00, a slot cell is
     // colspan / 4 hours long.
     const row = (id: number, name: string, cells: string) =>
       `<tr class="normalRow"><td class="dove"><a href="DettaglioAula.do?idaula=${id}">${name}</a></td>${cells}</tr>`;
     const slot = (quarters: number) =>
       `<td class="slot" colspan="${quarters}"><a>Lezione</a></td>`;
+    const empty = (quarters: number) => "<td></td>".repeat(quarters);
     const html = `<div id="tableContainer"><table>
       <tr><td class="innerEdificio">Milano - Via - Edificio 1</td></tr>
-      ${row(1, "frees-1h30", `<td></td>${slot(10)}`)}
+      ${row(1, "frees-1h30", `<td></td>${slot(10)}${empty(8)}${slot(4)}`)}
       ${row(2, "frees-in-3h", `<td></td>${slot(18)}`)}
       ${row(3, "frees-in-30m", `<td></td>${slot(6)}`)}
       ${row(4, "chained", `<td></td>${slot(8)}${slot(2)}`)}
-      ${row(5, "already-free", "")}
+      ${row(5, "short-gap", `<td></td>${slot(6)}${empty(2)}${slot(4)}`)}
+      ${row(6, "already-free", "")}
     </table></div>`;
     const search = (lookaheadHours?: number) =>
       searchRooms(
@@ -218,25 +235,26 @@ describe("PoliMi occupancy scraper", () => {
         },
       );
     const freeing = (result: Awaited<ReturnType<typeof search>>) =>
-      result.freeingUp["Edificio 1"]?.map((room) => [room.name, room.until]);
+      result.freeingUp["Edificio 1"]?.map((room) => [room.name, room.from, room.until]);
 
     const byDefault = await search();
     expect(byDefault.free["Edificio 1"]?.map((room) => room.name)).toEqual([
       "already-free",
     ]);
-    // Default window: up to two hours after the 09:00 start.
+    // Default window: up to two hours after the 09:00 start; short-gap (free
+    // 09:30–10:00) is dropped because it stays free for less than an hour.
     expect(freeing(byDefault)).toEqual([
-      ["frees-1h30", 10.5],
-      ["frees-in-30m", 9.5],
-      ["chained", 10.5],
+      ["frees-1h30", 10.5, 12.5],
+      ["frees-in-30m", 9.5, 20],
+      ["chained", 10.5, 20],
     ]);
-    expect(freeing(await search(1))).toEqual([["frees-in-30m", 9.5]]);
+    expect(freeing(await search(1))).toEqual([["frees-in-30m", 9.5, 20]]);
     // Frees at 12:30, three and a half hours after the start.
     expect(freeing(await search(4))).toEqual([
-      ["frees-1h30", 10.5],
-      ["frees-in-3h", 12.5],
-      ["frees-in-30m", 9.5],
-      ["chained", 10.5],
+      ["frees-1h30", 10.5, 12.5],
+      ["frees-in-3h", 12.5, 20],
+      ["frees-in-30m", 9.5, 20],
+      ["chained", 10.5, 20],
     ]);
     expect(freeing(await search(3))).toEqual(freeing(byDefault));
   });
@@ -359,6 +377,7 @@ describe("Telegram room formatting", () => {
           {
             name: "A&<1>",
             link: 'https://example.test/?x=1&y="2"',
+            from: 9,
             until: 12,
             powerPlugs: true,
             kind: "standard",
@@ -381,6 +400,7 @@ describe("Telegram room formatting", () => {
         Edificio: Array.from({ length: 200 }, (_, index) => ({
           name: `Aula-${String(index).padStart(4, "0")}-${"x".repeat(40)}`,
           link: "https://example.test/room",
+          from: 9,
           until: 20,
           powerPlugs: false,
           kind: "standard",
