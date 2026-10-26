@@ -4,9 +4,11 @@ export const TELEGRAM_MAX_MESSAGE_LENGTH = 4096;
 /** Room left in the first result message for the search summary header. */
 export const RESULT_HEADER_RESERVE = 512;
 
+type Room = FreeRoomsByBuilding[string][number];
+
 export interface FormatRoomMessagesOptions {
-  /** Shown before each room's time: "→" (free until) by default. */
-  timeLabel?: string;
+  /** Plain text after each room name: "→ 14:15" (free until) by default. */
+  timeText?: (room: Room) => string;
   /** Returned as the sole message when the search has no results. */
   noResultsText?: string;
   maxLength?: number;
@@ -45,18 +47,14 @@ function makeHeader(building: string, maxLength: number): string {
   return `\n<b>${truncateEscaped(building, maxLength - wrapperLength)}</b>\n`;
 }
 
-const DEFAULT_TIME_LABEL = "→";
+const freeUntil = (room: Room): string => `→ ${formatTime(room.until)}`;
 
-function plainRoomLine(room: FreeRoomsByBuilding[string][number], timeLabel: string): string {
-  return `${room.name} ${timeLabel} ${formatTime(room.until)}${room.powerPlugs ? " 🔌" : ""}`;
+function plainRoomLine(room: Room, time: string): string {
+  return `${room.name} ${time}${room.powerPlugs ? " 🔌" : ""}`;
 }
 
-function makeRoomLine(
-  room: FreeRoomsByBuilding[string][number],
-  timeLabel: string,
-  availableLength: number,
-): string {
-  const suffix = ` ${escapeTelegramHtml(timeLabel)} ${formatTime(room.until)}${room.powerPlugs ? " 🔌" : ""}\n`;
+function makeRoomLine(room: Room, time: string, availableLength: number): string {
+  const suffix = ` ${escapeTelegramHtml(time)}${room.powerPlugs ? " 🔌" : ""}\n`;
   const escapedName = escapeTelegramHtml(room.name);
   const escapedLink = escapeTelegramHtml(room.link, true);
   const linked = `• <a href="${escapedLink}">${escapedName}</a>${suffix}`;
@@ -72,7 +70,7 @@ function makeRoomLine(
   const plain = `${plainPrefix}${truncateEscaped(room.name, roomNameBudget)}${suffix}`;
   return plain.length <= availableLength
     ? plain
-    : truncateEscaped(plainRoomLine(room, timeLabel), availableLength);
+    : truncateEscaped(plainRoomLine(room, time), availableLength);
 }
 
 /** Format free rooms as valid Telegram HTML messages of at most 4096 chars. */
@@ -81,7 +79,7 @@ export function formatRoomMessages(
   options: FormatRoomMessagesOptions,
 ): string[] {
   const maxLength = options.maxLength ?? TELEGRAM_MAX_MESSAGE_LENGTH;
-  const timeLabel = options.timeLabel ?? DEFAULT_TIME_LABEL;
+  const timeText = options.timeText ?? freeUntil;
   if (!Number.isInteger(maxLength) || maxLength < 32) {
     throw new RangeError("maxLength must be an integer of at least 32");
   }
@@ -101,7 +99,8 @@ export function formatRoomMessages(
     let needsHeader = true;
     for (const room of rooms) {
       let prefix = needsHeader ? header : "";
-      const line = makeRoomLine(room, timeLabel, maxLength - header.length);
+      const time = timeText(room);
+      const line = makeRoomLine(room, time, maxLength - header.length);
       if (current && current.length + prefix.length + line.length > maxLength) {
         messages.push(current);
         current = "";
@@ -111,7 +110,7 @@ export function formatRoomMessages(
       if (line.length === 0 || current.length + prefix.length + line.length > maxLength) {
         // This only occurs with an exceptionally long localized suffix.
         if (current) messages.push(current);
-        current = truncateEscaped(plainRoomLine(room, timeLabel), maxLength);
+        current = truncateEscaped(plainRoomLine(room, time), maxLength);
         needsHeader = true;
       } else {
         current += prefix + line;

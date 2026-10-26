@@ -2,7 +2,8 @@ import { ROOM_IDS_WITH_POWER } from "./data";
 import {
   RESULT_HEADER_RESERVE,
   TELEGRAM_MAX_MESSAGE_LENGTH,
-  formatRoomMessages
+  formatRoomMessages,
+  formatTime
 } from "./format";
 import { translations } from "./i18n";
 import { searchRooms, type FreeRoomsByBuilding } from "./polimi";
@@ -83,7 +84,7 @@ export async function searchAndFormat(request: SearchRequest): Promise<string[]>
 
   const freeMessages = formatRoomMessages(shownFree, { maxLength: MESSAGE_BUDGET });
   const freeingUpMessages = formatRoomMessages(shownFreeingUp, {
-    timeLabel: t.freeingUpLabel,
+    timeText: (room) => t.freeingUpRange(formatTime(room.from), formatTime(room.until)),
     // Leave room for the section title prepended to the first message.
     maxLength: MESSAGE_BUDGET - FREEING_UP_TITLE_RESERVE
   });

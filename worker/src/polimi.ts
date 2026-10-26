@@ -10,6 +10,8 @@ const QUARTER_HOUR = 0.25;
 const FIRST_GRID_TIME = 7.75;
 const LAST_OPENING_TIME = 20;
 const DEFAULT_LOOKAHEAD_HOURS = 2;
+// Rooms freeing up for a shorter gap are not worth walking to.
+const MIN_FREEING_UP_HOURS = 1;
 const DEFAULT_TIMEOUT_MS = 20_000;
 const UPSTREAM_HEADERS = {
   Accept: "text/html,application/xhtml+xml",
@@ -46,6 +48,8 @@ export type OccupanciesByBuilding = Record<
 export interface FreeRoom {
   name: string;
   link: string;
+  /** The room is free from `from` to `until`. */
+  from: number;
   until: number;
   powerPlugs: boolean;
   kind: ListedRoomKind;
@@ -58,8 +62,9 @@ export type FreeRoomsByBuilding = Record<string, FreeRoom[]>;
 export interface RoomSearchResult {
   free: FreeRoomsByBuilding;
   /**
-   * Rooms busy at `startTime` that become free within `lookaheadHours` of it.
-   * `until` holds the time the room frees up, not the end of a gap.
+   * Rooms busy at `startTime` that become free within `lookaheadHours` of it
+   * for at least an hour: `from` is when the room frees up, `until` when it
+   * is busy again (or PoliMi closes).
    */
   freeingUp: FreeRoomsByBuilding;
 }
@@ -335,6 +340,22 @@ export function freeingTime(
   return busy ? freeAt : null;
 }
 
+/**
+ * The free gap of a room busy at `time` that frees up within `lookaheadHours`,
+ * or null when the room never frees up in time or only for a short gap.
+ */
+export function freeingGap(
+  lessons: readonly Lesson[],
+  time: number,
+  lookaheadHours: number,
+): { from: number; until: number } | null {
+  const from = freeingTime(lessons, time);
+  if (from === null || from > time + lookaheadHours) return null;
+  // Back-to-back lessons are followed, so the room is free right at `from`.
+  const { until } = isRoomFree(lessons, from, from + QUARTER_HOUR);
+  return until !== null && until - from >= MIN_FREEING_UP_HOURS ? { from, until } : null;
+}
+
 function validateSearchInput(input: SearchFreeRoomsInput): void {
   if (!input.location.trim()) throw new TypeError("location must not be empty");
   for (const key of ["day", "month", "year", "startTime", "endTime"] as const) {
@@ -415,6 +436,7 @@ export async function searchRooms(
           (free[building] ??= []).push({
             name,
             link: room.link,
+            from: input.startTime,
             until: availability.until,
             powerPlugs: room.powerPlugs,
             kind: room.kind,
@@ -423,16 +445,12 @@ export async function searchRooms(
           continue;
         }
 
-        const freeAt = freeingTime(room.lessons, input.startTime);
-        if (
-          freeAt !== null &&
-          freeAt <= input.startTime + lookaheadHours &&
-          freeAt < LAST_OPENING_TIME
-        ) {
+        const gap = freeingGap(room.lessons, input.startTime, lookaheadHours);
+        if (gap) {
           (freeingUp[building] ??= []).push({
             name,
             link: room.link,
-            until: freeAt,
+            ...gap,
             powerPlugs: room.powerPlugs,
             kind: room.kind,
             zone: room.zone,

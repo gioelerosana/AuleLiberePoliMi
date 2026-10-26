@@ -17,7 +17,8 @@ export interface Translation {
   invalidPreferences: string;
   noRooms: string;
   freeingUpTitle: (hours: number) => string;
-  freeingUpLabel: string;
+  /** When a room freeing up is free: "dalle 13:15 alle 16:15". */
+  freeingUpRange: (from: string, until: string) => string;
   searchError: string;
   searching: string;
   search: string;
@@ -77,7 +78,7 @@ export const translations: Record<Language, Translation> = {
     invalidPreferences: "❌ Preferenze non valide. Riapri ⚙️ Preferenze e riprova.",
     noRooms: "😕 Nessuna aula libera in questa fascia oraria.",
     freeingUpTitle: (hours) => `⏳ Si liberano entro ${hours} ${hours === 1 ? "ora" : "ore"}`,
-    freeingUpLabel: "dalle",
+    freeingUpRange: (from, until) => `dalle ${from} alle ${until}`,
     searchError: "⚠️ Ricerca non riuscita, riprova tra poco.",
     searching: "🔎 Cerco aule libere…",
     search: "🔍 Cerca",
@@ -136,7 +137,7 @@ export const translations: Record<Language, Translation> = {
     invalidPreferences: "❌ Invalid preferences. Reopen ⚙️ Preferences and try again.",
     noRooms: "😕 No free classrooms in this time slot.",
     freeingUpTitle: (hours) => `⏳ Freeing up within ${hours} ${hours === 1 ? "hour" : "hours"}`,
-    freeingUpLabel: "from",
+    freeingUpRange: (from, until) => `from ${from} to ${until}`,
     searchError: "⚠️ The search failed, try again shortly.",
     searching: "🔎 Looking for free rooms…",
     search: "🔍 Search",
