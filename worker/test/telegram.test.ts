@@ -629,6 +629,19 @@ describe("search card", () => {
     expect(labels(keyboardOf(api.calls.at(-1)))[1]).toEqual(["🕐 Cambia orario"]);
   });
 
+  it("hides the drawing button for a single site without drawing rooms", async () => {
+    const api = telegramFetch({ sendMessage: { message_id: SENT_MESSAGE_ID } });
+    await handleTelegramUpdate(
+      messageUpdate("🕒 Ora · Città Studi - Via Golgi 40 2h"),
+      env,
+      deps(api, { now: () => new Date("2026-10-26T09:00:00.000Z") }),
+    );
+    expect(labels(keyboardOf(api.calls.at(-1)))).toEqual([
+      ["🔄 Aggiorna", "🔌 Solo con prese"],
+      ["🕐 Cambia orario"],
+    ]);
+  });
+
   it("widens the search to every zone of the campus", async () => {
     const api = telegramFetch();
     const search = vi.fn(async () => []);

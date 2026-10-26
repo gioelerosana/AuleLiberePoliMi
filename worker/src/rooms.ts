@@ -1,4 +1,4 @@
-import { CAMPUS_ZONES, ROOM_TYPES } from "./data";
+import { CAMPUS_ZONES, LOCATIONS, ROOM_TYPES } from "./data";
 
 /**
  * - standard: ordinary lecture rooms, shown by default
@@ -20,7 +20,6 @@ export interface RoomInfo {
 const DIDACTIC_CATEGORY = "AULA DIDATTICA";
 const DRAWING_TYPE = "DISEGNO";
 const STANDARD_TYPES = new Set(["PLATEA FRONTALE", "INFORMATIZZATA"]);
-const CAMPUS_CODE_LENGTH = 3;
 
 /** Classify a room from the "Categoria" and "Tipologia" of its PoliMi page. */
 export function classifyRoom(category: string, type: string): RoomKind {
@@ -43,15 +42,21 @@ export function roomInfo(roomId: number | undefined): RoomInfo {
   return { kind: classifyRoom(category, type), zone: zoneOf(campus, site) };
 }
 
-const DRAWING_CAMPUSES = new Set(
+/** Campus (MIA) and single-site (MIA01) codes with at least one drawing room. */
+const DRAWING_LOCATIONS = new Set(
   Object.values(ROOM_TYPES)
     .filter(([, category, type]) => classifyRoom(category, type) === "drawing")
-    .map(([campus]) => campus),
+    .flatMap(([campus, , , site]) => [campus, ...siteCode(site)]),
 );
 
-/** Single-site codes (MIA11) belong to the campus of their prefix (MIA). */
+/** The site names of json/roomTypes.json are the names of json/location.json. */
+function siteCode(site: string): string[] {
+  return site in LOCATIONS ? [LOCATIONS[site as keyof typeof LOCATIONS]] : [];
+}
+
+/** Legacy single-site preferences (MIA04) search only that site. */
 export function campusHasDrawingRooms(campus: string): boolean {
-  return DRAWING_CAMPUSES.has(campus.slice(0, CAMPUS_CODE_LENGTH));
+  return DRAWING_LOCATIONS.has(campus);
 }
 
 /**

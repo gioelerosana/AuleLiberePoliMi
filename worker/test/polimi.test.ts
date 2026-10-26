@@ -339,8 +339,11 @@ describe("room classification", () => {
 
   it("knows which campuses have drawing rooms", () => {
     expect(campusHasDrawingRooms("MIA")).toBe(true);
-    expect(campusHasDrawingRooms("MIA11")).toBe(true);
     expect(campusHasDrawingRooms("PCL")).toBe(false);
+    // Single sites: Leonardo 32 has drawing rooms, Golgi 40 has none.
+    expect(campusHasDrawingRooms("MIA01")).toBe(true);
+    expect(campusHasDrawingRooms("MIA04")).toBe(false);
+    expect(campusHasDrawingRooms("MIB02")).toBe(true);
   });
 });
 
