@@ -34,7 +34,9 @@ stack moderno e architettura stateless.
   - Campus preferito
   - Durata della ricerca rapida (1-8 ore)
   - Quante ore guardare avanti per le aule che si liberano (1-8, default 2):
-    la sezione "⏳ Si liberano entro N ore" in fondo ai risultati
+    la sezione "⏳ Si liberano entro N ore" in fondo ai risultati, che mostra
+    l'intervallo libero (`dalle HH:MM alle HH:MM`) per le aule che restano
+    libere almeno un'ora
 - La Mini App è hostata su **Cloudflare Pages** (statica)
 - I dati arrivano al bot via `web_app_data` quando l'utente salva
 - La Mini App è solo per le *impostazioni* — il bot rimane **inline**
@@ -66,6 +68,9 @@ stack moderno e architettura stateless.
 - Al tap del pulsante persistente il bot ricava campus/durata/lingua dal testo
   con `parseNowLabel` e fa la ricerca; se il label è assente, malformato o è il
   semplice `🕒 Ora`, ripiega sul picker inline campus → durata
+- Quando il PoliMi è chiuso (prima delle 08:00, dopo le 20:00 o la domenica),
+  la ricerca rapida parte dalla riapertura alle 08:00 saltando la domenica
+  (sabato sera e domenica cercano lunedì alle 08:00) e lo segnala nell'intestazione
 - `parseNowLabel` accetta anche il formato legacy `🕒Ora · Milano Bovisa 2h ⏳4h 🇮🇹`
   (con o senza `⏳`)
   e `LABELS` i vecchi `🔍Cerca`/`ℹinfo`: le tastiere vecchie restano sui
@@ -77,16 +82,25 @@ stack moderno e architettura stateless.
 - Una sola "scheda" per ricerca: i passi (campus → giorno → ora inizio → ora
   fine, oppure campus → durata) modificano lo stesso messaggio con
   `editMessageText`, mostrano un riepilogo `📍 · 📅 · 🕐` e hanno
-  `⬅ Indietro` + `✖ Annulla` (che cancella la scheda)
+  `⬅ Indietro` + `✖ Annulla` (che cancella la scheda); se la modifica della
+  scheda fallisce, rimuove i bottoni dalla vecchia in best-effort prima di
+  inviare la nuova
+- Gli orari del picker seguono lo schema `:15` delle lezioni PoliMi (inizio
+  `08:15`–`19:15`, fine `09:15`–`19:15` più `🏁 Fino a chiusura · 20:00`, con
+  le callback a ore intere già inviate che restano valide); dopo le `19:45`
+  "Oggi" scompare dal picker dei giorni
 - La scheda diventa `🔎 Cerco…` e poi il primo messaggio dei risultati; i
   bottoni `🔄 Aggiorna`/`🔌 Solo con prese`/`🕐 Cambia orario` stanno
   sotto l'ultimo messaggio
 - I bottoni sotto i risultati hanno il flag `fresh` (`n` nel callback): non
   modificano i risultati ma ne mandano di nuovi, togliendo i bottoni vecchi;
   il flag `p` attiva il filtro prese, `d` mostra le aule da disegno al posto
-  di quelle normali (il bottone manca nei campus senza aule da disegno)
-- Callback non validi o scaduti: toast con `answerCallbackQuery`, niente
-  messaggi in chat
+  di quelle normali (il bottone manca nei campus o singole sedi senza aule da
+  disegno), `z` mostra tutte le zone del campus. `🕐 Cambia orario` conserva
+  i filtri `p`/`d`/`z` lungo il picker
+- Callback non validi o scaduti: toast con `answerCallbackQuery` (best-effort),
+  niente messaggi in chat; gli errori 4xx non transitori della Bot API
+  chiudono il webhook con 200 per evitare retry infiniti
 - I comandi del menu `/` si registrano con `npm run commands:set`
   (automatico in `dev:local`)
 
@@ -111,7 +125,9 @@ stack moderno e architettura stateless.
 - `roomTypes.json`: per ogni ID aula PoliMi campus, sede ("Dove"), edificio,
   categoria e tipologia,
   scaricate dalle schede aula con `npm run rooms:fetch` (snapshot statico,
-  da rilanciare quando il PoliMi aggiunge aule). `worker/src/rooms.ts`
+  da rilanciare quando il PoliMi aggiunge aule; se una scheda fallisce o un
+  campus non elenca aule in quel giorno vengono mantenute le voci precedenti,
+  e le schede fallite fanno uscire lo script con codice 1). `worker/src/rooms.ts`
   classifica: *aula didattica* con platea frontale o informatizzata =
   normale (mostrata di default), *aula didattica / disegno* = aula da disegno
   (bottone `✏️ Aule da disegno` sotto i risultati), tutto il resto

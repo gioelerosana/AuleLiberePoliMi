@@ -129,17 +129,24 @@ Legenda: `[ ]` da fare · `[~]` in corso · `[x]` fatto
       `🔍 Cerca` e `⚙️ Preferenze`; ℹ info spostato in `/info`
 - [x] Label di "Ora" con nome breve del campus e senza bandiera (la lingua
       deriva dal prefisso); label e pulsanti vecchi restano riconosciuti
-- [x] Picker compatti: campus su due colonne, giorni su tre (senza domenica),
+- [x] Picker compatti: campus su due colonne, giorni su tre (senza domenica e
+      senza "Oggi" dopo le 19:45), orari allineati alle lezioni (`:15`),
       `⏱ Adesso` e solo ore future per oggi, `🏁 Fino a chiusura`
 - [x] Risultati: intestazione nel primo messaggio, righe `• Aula → 14:15 🔌`,
-      bottoni `🔄 Aggiorna`, `🔌 Solo con prese`, `🕐 Cambia orario`
+      sezione `⏳ Si liberano entro N ore` con intervallo libero (`dalle X alle Y`,
+      almeno 1 ora), bottoni `🔄 Aggiorna`, `🔌 Solo con prese`, `🕐 Cambia orario`
+      (che conserva i filtri attivi)
+- [x] Ricerca rapida `🕒 Ora` che salta la domenica quando il PoliMi è chiuso
 - [x] Preferenze salvate in un solo messaggio, benvenuto e `/info` più corti
 - [x] Comandi `/ora`, `/cerca`, `/info` (`npm run commands:set`)
 - [x] Esclusi corridoi, laboratori e sale non usabili
 - [x] Classificazione aule da `json/roomTypes.json` (`npm run rooms:fetch`):
-      escluse le aule non didattiche, aule da disegno dietro `✏️`
+      escluse le aule non didattiche, aule da disegno dietro `✏️` (solo dove
+      il campus o la singola sede ne ha)
 - [x] Zona centrale di Città Studi (`json/campusZones.json`) di default,
       altre sedi contate e dietro `🗺️ Tutte le zone`
+- [x] Revisione completa del codice su `dev` (`docs/REVIEW-2026-10-26.md`) e
+      correzione di B1–B4, I1–I3, I5–I7, Q1–Q9
 - [ ] Verifica end-to-end sul bot di test
 - [ ] Merge su `main`, `npm run commands:set` e deploy del Worker
 

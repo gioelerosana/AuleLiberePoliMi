@@ -21,16 +21,77 @@ Il server locale espone `GET /health`. Il webhook è
 `POST /telegram/webhook`, richiede l'header Telegram
 `X-Telegram-Bot-Api-Secret-Token` con il secret configurato e accetta esclusivamente
 un oggetto con `update_id` intero. Il processing viene atteso prima della
-risposta: un errore restituisce HTTP 500, permettendo a Telegram di ritentare.
+risposta: gli errori transitori (rete o 5xx) restituiscono HTTP 500 così
+Telegram ritenta, mentre gli errori 4xx non transitori della Bot API (es. 400,
+403, 429) vengono loggati e chiusi con HTTP 200 per evitare retry infiniti o
+messaggi duplicati.
 
-I dati di `json/location.json` (tutte le sedi PoliMi), `json/campuses.json`
-(campus mostrati nei menu, sottoinsieme di `location.json`) e
-`json/roomsWithPower.json` generano sia `src/data.ts` per il Worker sia
-`webapp/settings/data.js` per la Mini App. In questo modo le sedi hanno
-un'unica sorgente. I codici delle singole vie restano validi per preferenze già
-salvate, ma non compaiono più nei menu. Dopo una modifica ai JSON eseguire
-`npm run data:generate`; check, test e deploy falliscono se una copia generata
-non è aggiornata o se un campus non esiste in `location.json`.
+### Dati statici e generazione (`json/`)
+
+I file in `json/` sono l'unica sorgente dei dati per il Worker (`src/data.ts`)
+e per la Mini App (`webapp/settings/data.js`):
+
+- `json/location.json`: tutte le sedi PoliMi note (nome → codice `csic`).
+- `json/campuses.json`: i 10 campus principali mostrati nei menu (sottoinsieme
+  di `location.json`). I codici delle singole vie restano validi per le
+  preferenze già salvate, ma non compaiono più nei menu.
+- `json/roomsWithPower.json`: ID delle aule dotate di prese elettriche.
+- `json/roomTypes.json`: snapshot statico di campus, sede ("Dove"), edificio,
+  categoria e tipologia per ogni ID aula PoliMi. Permette a `src/rooms.ts` di
+  distinguere le aule didattiche normali (mostrate di default), le aule da
+  disegno (mostrate con il filtro `✏️ Aule da disegno`) e gli spazi esclusi
+  (laboratori, aule magne, convegni, studio, ecc.). Le aule non presenti nello
+  snapshot vengono trattate come normali.
+- `json/campusZones.json`: per campus, l'elenco delle sedi della "zona
+  centrale" mostrate di default nelle ricerche sull'intero campus (per Città
+  Studi: Piazza Leonardo da Vinci 32 e Via Bonardi); le aule delle altre zone
+  vengono contate in fondo e mostrate attivando `🗺️ Tutte le zone`.
+- `json/excludedRooms.json`: esclusioni manuali per nome aula, per i casi non
+  coperti dalle categorie di `roomTypes.json`.
+
+Dopo qualsiasi modifica ai file in `json/` eseguire:
+
+```bash
+npm run data:generate
+```
+
+`npm run check`, `npm test` e `npm run deploy` eseguono `npm run data:check` e
+falliscono se le copie generate non sono aggiornate, se un campus non esiste in
+`location.json` o se `roomTypes.json` contiene categorie vuote.
+
+### Aggiornamento dello snapshot `json/roomTypes.json`
+
+`json/roomTypes.json` è uno snapshot statico e non viene scaricato a runtime.
+Rilanciare lo script quando il PoliMi aggiunge o riclassifica aule (ad esempio
+all'inizio di ogni semestre):
+
+```bash
+npm run rooms:fetch                 # prossimo giorno feriale (calendario Europe/Rome)
+npm run rooms:fetch -- 27/10/2026   # giorno specifico (gg/mm/aaaa)
+npm run data:generate
+```
+
+Se una scheda aula fallisce il download o un campus non elenca aule nel giorno
+scelto, lo script conserva le voci precedenti in `json/roomTypes.json` (così
+un errore temporaneo non esclude mai un'aula) ed esce con codice `1` elencando
+gli ID non scaricati. Controllare sempre `git diff json/roomTypes.json` prima
+di committare.
+
+### Callback e pulsanti sotto i risultati
+
+I pulsanti inline usano callback compatti (≤ 64 byte) codificati da
+`src/protocol.ts`. I bottoni sotto i risultati di ricerca portano i flag
+combinabili in coda (`p`, `d`, `z`, `n`):
+
+- `p` (`powerOnly`): filtra solo le aule con prese (`🔌`);
+- `d` (`drawing`): mostra le aule da disegno (`✏️`) al posto di quelle normali
+  (mostrato solo nei campus o sedi che hanno aule da disegno);
+- `z` (`allZones`): allarga la ricerca a tutte le zone del campus (`🗺️`);
+- `n` (`fresh`): invia i nuovi risultati in un messaggio nuovo e rimuove i
+  bottoni dal messaggio precedente.
+
+Quando l'utente preme `🕐 Cambia orario`, i filtri attivi (`p`/`d`/`z`) vengono
+propagati lungo i passi del picker fino alla nuova ricerca.
 
 ## Test locale
 
@@ -105,6 +166,13 @@ Prima del deploy autenticarsi con `wrangler login`, quindi:
 ```bash
 npm run deploy
 curl https://aule-libere-polimi.<account>.workers.dev/health
+```
+
+Se i comandi del menu `/` (`/ora`, `/cerca`, `/info`, ecc.) sono cambiati,
+aggiornarli anche sul bot di produzione:
+
+```bash
+BOT_TOKEN=<BOT_TOKEN> npm run commands:set
 ```
 
 Infine registrare il webhook Telegram, sostituendo i placeholder con i valori
