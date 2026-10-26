@@ -7,7 +7,7 @@ import {
 import { translations } from "./i18n";
 import { searchRooms, type FreeRoomsByBuilding } from "./polimi";
 import { campusHasZones, roomInfo, type RoomZone } from "./rooms";
-import { handleTelegramUpdate, validateTelegramSecret } from "./telegram";
+import { handleTelegramUpdate, isRetryableError, validateTelegramSecret } from "./telegram";
 import type {
   Env,
   SearchRequest,
@@ -192,6 +192,8 @@ export function createRequestHandler(
       return json({ ok: true });
     } catch (error) {
       console.error("Telegram update failed", update.update_id, error);
+      // Acknowledge errors a retry cannot fix, so Telegram drops the update.
+      if (!isRetryableError(error)) return json({ ok: false });
       // A non-2xx response asks Telegram to retry the update.
       return json({ error: "update_failed" }, 500);
     }

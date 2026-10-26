@@ -8,6 +8,7 @@ import {
   shortCampusName,
 } from "../src/protocol";
 import {
+  TelegramApiError,
   handleTelegramUpdate,
   type TelegramDependencies,
   type TelegramUpdate,
@@ -626,6 +627,28 @@ describe("search card", () => {
     const last = api.calls.at(-1);
     expect(String(last?.body.text)).toContain("⚠️");
     expect(labels(keyboardOf(last))).toEqual([["🔄 Retry"]]);
+  });
+
+  it("searches even when the callback query is too old to answer", async () => {
+    const api = telegramFetch({}, { answerCallbackQuery: "Bad Request: query is too old" });
+    const search = vi.fn(async () => []);
+    const consoleWarn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    await handleTelegramUpdate(
+      callbackUpdate(encodeCallback({ action: "quick", lang: "en", campus: "MIA", duration: 2, lookahead: 2 })),
+      env,
+      deps(api, { search, now: () => SATURDAY_MORNING }),
+    );
+    expect(search).toHaveBeenCalled();
+    expect(methods(api.calls)).toEqual(["answerCallbackQuery", "editMessageText", "editMessageText"]);
+    expect(consoleWarn).toHaveBeenCalled();
+    consoleWarn.mockRestore();
+  });
+
+  it("reports Bot API failures with their error code", async () => {
+    const api = telegramFetch({}, { sendMessage: "Forbidden: bot was blocked by the user" });
+    const failure = handleTelegramUpdate(messageUpdate("/start"), env, deps(api));
+    await expect(failure).rejects.toBeInstanceOf(TelegramApiError);
+    await expect(failure).rejects.toMatchObject({ method: "sendMessage", status: HTTP_BAD_REQUEST });
   });
 
   it("ignores Telegram's 'message is not modified' error", async () => {

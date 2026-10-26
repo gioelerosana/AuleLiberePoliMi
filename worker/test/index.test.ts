@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { createRequestHandler } from "../src/index";
+import { TelegramApiError } from "../src/telegram";
 import type { Env, TelegramUpdate } from "../src/types";
 
 const env: Env = {
@@ -110,6 +111,33 @@ describe("Cloudflare Worker router", () => {
     );
 
     expect(response.status).toBe(500);
+    expect(consoleError).toHaveBeenCalled();
+    consoleError.mockRestore();
+  });
+
+  it.each([
+    [new TelegramApiError("sendMessage", 403, "Forbidden: bot was blocked by the user"), 200],
+    [new TelegramApiError("answerCallbackQuery", 400, "Bad Request: query is too old"), 200],
+    [new TelegramApiError("sendMessage", 429, "Too Many Requests: retry after 5"), 200],
+    [new TelegramApiError("sendMessage", 502, "Bad Gateway"), 500],
+  ])("acknowledges updates a retry cannot fix (%s)", async (error, status) => {
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const fetch = createRequestHandler({
+      handleUpdate: vi.fn(async () => {
+        throw error;
+      }),
+      search: vi.fn(async () => [])
+    });
+    const response = await fetch(
+      new Request("https://example.test/telegram/webhook", {
+        method: "POST",
+        headers: { "x-telegram-bot-api-secret-token": env.WEBHOOK_SECRET },
+        body: JSON.stringify({ update_id: 10 })
+      }),
+      env
+    );
+
+    expect(response.status).toBe(status);
     expect(consoleError).toHaveBeenCalled();
     consoleError.mockRestore();
   });

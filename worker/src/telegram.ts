@@ -101,6 +101,8 @@ const DEFAULT_WEBAPP_URL = "https://aule-libere-polimi-settings.pages.dev";
 const MAX_WEB_APP_DATA_LENGTH = 2048;
 const LANGUAGES: readonly Language[] = ["it", "en"];
 const HTML_OPTIONS = { parse_mode: "HTML", disable_web_page_preview: true } as const;
+const HTTP_CLIENT_ERROR = 400;
+const HTTP_SERVER_ERROR = 500;
 
 const COMMANDS: Record<string, MenuAction> = {
   "/cerca": "search",
@@ -157,6 +159,31 @@ const NOW_LABEL_FORMATS: readonly NowLabelFormat[] = [
     pattern: /^(.+?) (\d{1,2})h(?: ⏳(\d{1,2})h)? (🇮🇹|🇬🇧)$/u,
   })),
 ];
+
+/** A Bot API call answered with an error, with Telegram's error code. */
+export class TelegramApiError extends Error {
+  constructor(
+    readonly method: string,
+    readonly status: number,
+    description: string,
+  ) {
+    super(description);
+    this.name = "TelegramApiError";
+  }
+}
+
+/**
+ * Telegram 4xx errors (bad request, bot blocked, rate limit) would fail again
+ * on a webhook retry, or resend the result messages already delivered: only
+ * network and 5xx errors are worth a retry.
+ */
+export function isRetryableError(error: unknown): boolean {
+  return !(
+    error instanceof TelegramApiError &&
+    error.status >= HTTP_CLIENT_ERROR &&
+    error.status < HTTP_SERVER_ERROR
+  );
+}
 
 export function validateTelegramSecret(
   request: Request,
@@ -248,10 +275,10 @@ async function handleCallback(
   const chatId = query.message?.chat.id;
   const state = query.data ? decodeCallback(query.data) : null;
   if (!chatId || !state) {
-    await api.answerCallbackQuery(query.id, translations[languageFromCode(query.from.language_code)].error);
+    await answerCallback(api, query.id, translations[languageFromCode(query.from.language_code)].error);
     return;
   }
-  await api.answerCallbackQuery(query.id);
+  await answerCallback(api, query.id);
   const context: CallbackContext = {
     api,
     deps,
@@ -262,6 +289,13 @@ async function handleCallback(
   // TypeScript cannot correlate state.action with its handler's state type.
   const handler = CALLBACK_HANDLERS[state.action] as CallbackHandler<CallbackState>;
   await handler(state, context);
+}
+
+/** Best effort: Telegram refuses answers to queries older than a few seconds. */
+async function answerCallback(api: TelegramApi, queryId: string, text?: string): Promise<void> {
+  await api.answerCallbackQuery(queryId, text).catch((error: unknown) => {
+    console.warn("Unable to answer the callback query", error);
+  });
 }
 
 interface CallbackContext {
@@ -496,11 +530,14 @@ function createTelegramApi(token: string, fetchImpl: typeof fetch) {
     });
     const result = (await response.json().catch(() => ({}))) as {
       ok?: boolean;
+      error_code?: number;
       description?: string;
       result?: unknown;
     };
-    if (!response.ok || !result.ok)
-      throw new Error(result.description ?? `Telegram ${method} failed with HTTP ${response.status}`);
+    if (!response.ok || !result.ok) {
+      const status = result.error_code ?? response.status;
+      throw new TelegramApiError(method, status, result.description ?? `Telegram ${method} failed with HTTP ${status}`);
+    }
     return result.result;
   };
   return {
