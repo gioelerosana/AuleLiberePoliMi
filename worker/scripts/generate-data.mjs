@@ -1,6 +1,7 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
+import { invalidRoomTypeId } from "./room-types.mjs";
 
 const scriptDirectory = dirname(fileURLToPath(import.meta.url));
 const repositoryRoot = resolve(scriptDirectory, "../..");
@@ -28,16 +29,11 @@ const campusZones = JSON.parse(
   await readFile(resolve(repositoryRoot, "json/campusZones.json"), "utf8"),
 );
 
-const invalidRoomType = Object.entries(roomTypes).find(
-  ([id, room]) =>
-    !/^\d+$/.test(id) ||
-    typeof room?.campus !== "string" ||
-    typeof room?.site !== "string" ||
-    typeof room?.category !== "string" ||
-    typeof room?.type !== "string",
-);
-if (invalidRoomType) {
-  console.error(`json/roomTypes.json: voce non valida per l'aula ${invalidRoomType[0]}`);
+const invalidRoomType = invalidRoomTypeId(roomTypes);
+if (invalidRoomType !== undefined) {
+  console.error(
+    `json/roomTypes.json: voce non valida per l'aula ${invalidRoomType} (categoria vuota o campo mancante)`,
+  );
   process.exit(1);
 }
 
