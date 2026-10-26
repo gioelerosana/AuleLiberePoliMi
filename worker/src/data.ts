@@ -220,6 +220,8 @@ export const EXCLUDED_ROOMS = new Set<string>([
   "2.2.1-D.I.",
   "2.2.5-VIRTUALLAB",
   "Z.1D.I.",
+  "G.0.1",
+  "G.0.2",
   "B2.0.1-D.I.",
   "L.04VIRTUALLAB",
   "L.05-D.I.",
