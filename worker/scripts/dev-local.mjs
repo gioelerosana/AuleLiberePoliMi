@@ -16,6 +16,9 @@
  *   npm run dev:local            full stack
  *   npm run dev:webapp           Mini App only (browser, no Telegram)
  *   npm run dev:local -- --no-webhook   start everything but skip setWebhook
+ *   npm run dev:local -- --preview      open the Mini App from the Cloudflare
+ *                                       Pages preview of the current git branch
+ *                                       instead of a local tunnel
  */
 
 import { spawn, spawnSync } from "node:child_process";
@@ -41,6 +44,7 @@ const WEBAPP_PORT = Number(process.env.WEBAPP_PORT ?? 8788);
 const SECRET_PATTERN = /^[A-Za-z0-9_-]{16,128}$/;
 const IS_WEBAPP_ONLY = process.argv.includes("--webapp-only");
 const SKIP_WEBHOOK = process.argv.includes("--no-webhook");
+const USE_PREVIEW = process.argv.includes("--preview");
 const KEEP_WEBHOOK = process.env.KEEP_WEBHOOK === "1";
 
 const MIME_TYPES = {
@@ -247,6 +251,62 @@ function startWebappServer(port) {
   });
 }
 
+/**
+ * Cloudflare Pages builds every non-production branch and serves it at a
+ * stable alias: `<branch>.<project>.pages.dev`, where the branch is lowercased,
+ * every non-alphanumeric run becomes "-" and the label stops at 28 characters.
+ */
+function previewAlias(branch) {
+  return branch
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 28)
+    .replace(/-+$/g, "");
+}
+
+async function pagesProjectName() {
+  const toml = await readFile(join(webappDir, "wrangler.toml"), "utf8");
+  const match = /^name\s*=\s*"([^"]+)"/m.exec(toml);
+  if (!match) throw new Error("name non trovato in webapp/settings/wrangler.toml");
+  return match[1];
+}
+
+function currentGitBranch() {
+  const result = spawnSync("git", ["rev-parse", "--abbrev-ref", "HEAD"], {
+    cwd: repoRoot,
+    encoding: "utf8",
+  });
+  const branch = result.stdout?.trim();
+  if (result.status !== 0 || !branch || branch === "HEAD") {
+    throw new Error("branch git corrente non determinabile (HEAD staccato?)");
+  }
+  return branch;
+}
+
+/** URL of the Pages preview for the current branch, or the reason it is missing. */
+async function resolvePreviewUrl() {
+  if (process.env.PREVIEW_URL) return { url: process.env.PREVIEW_URL.replace(/\/$/, "") };
+
+  const branch = currentGitBranch();
+  if (branch === "main") {
+    return { reason: "main è il branch di produzione: non ha una preview" };
+  }
+  const url = `https://${previewAlias(branch)}.${await pagesProjectName()}.pages.dev`;
+  try {
+    const response = await fetch(`${url}/script.js`);
+    if (!response.ok) {
+      return { reason: `${url} risponde HTTP ${response.status} (build in corso o branch non pushato?)` };
+    }
+    // Pages serves what was pushed: flag a preview behind the local files.
+    const remote = await response.text();
+    const local = await readFile(join(webappDir, "script.js"), "utf8").catch(() => null);
+    return { url, stale: local !== null && remote !== local };
+  } catch (error) {
+    return { reason: `${url} non raggiungibile (${error.message})` };
+  }
+}
+
 function cloudflaredAssetName() {
   const arch = process.arch === "arm64" ? "arm64" : "amd64";
   if (process.platform === "darwin") return `cloudflared-darwin-${arch}.tgz`;
@@ -418,12 +478,34 @@ async function startFullStack() {
   );
   const cloudflared = await ensureCloudflared();
 
-  await startWebappServer(WEBAPP_PORT);
-  const webappTunnel = await startTunnel(
-    cloudflared,
-    "tunnel:webapp",
-    `http://127.0.0.1:${WEBAPP_PORT}`,
-  );
+  let preview = null;
+  if (USE_PREVIEW) {
+    const resolved = await resolvePreviewUrl();
+    if (resolved.url) {
+      preview = resolved;
+      log(`Mini App dalla preview Cloudflare Pages: ${preview.url}`);
+      if (preview.stale) {
+        console.warn(
+          "La preview differisce da webapp/settings/script.js locale: " +
+            "fai push e attendi la build di Pages per vedere le ultime modifiche.",
+        );
+      }
+    } else {
+      console.warn(`Preview non disponibile: ${resolved.reason}.\nRipiego sul tunnel locale.`);
+    }
+  }
+
+  let webappTunnel;
+  if (preview) {
+    webappTunnel = preview.url;
+  } else {
+    await startWebappServer(WEBAPP_PORT);
+    webappTunnel = await startTunnel(
+      cloudflared,
+      "tunnel:webapp",
+      `http://127.0.0.1:${WEBAPP_PORT}`,
+    );
+  }
 
   const workerTunnel = await startTunnel(
     cloudflared,
@@ -481,8 +563,8 @@ async function startFullStack() {
   log("  AuleLiberePoliMi — ambiente locale");
   log("───────────────────────────────────────────────────────────");
   log(`  Bot di test   ${username}  (da worker/.dev.vars)`);
-  log(`  Mini App      ${webappTunnel}`);
-  log(`                http://127.0.0.1:${WEBAPP_PORT}`);
+  log(`  Mini App      ${webappTunnel}${preview ? "  (preview Pages)" : ""}`);
+  if (!preview) log(`                http://127.0.0.1:${WEBAPP_PORT}`);
   log(`  Worker        ${workerTunnel}`);
   log(`                http://127.0.0.1:${WORKER_PORT}/health`);
   log(`  Webhook       ${webhookLine}`);

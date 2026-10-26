@@ -33,6 +33,8 @@ stack moderno e architettura stateless.
   - Lingua preferita (it/en)
   - Campus preferito
   - Durata della ricerca rapida (1-8 ore)
+  - Quante ore guardare avanti per le aule che si liberano (2-8, default 2):
+    la sezione "⏳ Si liberano tra 1 e N ore" in fondo ai risultati
 - La Mini App è hostata su **Cloudflare Pages** (statica)
 - I dati arrivano al bot via `web_app_data` quando l'utente salva
 - La Mini App è solo per le *impostazioni* — il bot rimane **inline**
@@ -54,7 +56,7 @@ stack moderno e architettura stateless.
 - Un pulsante della tastiera persistente non può trasportare dati, ma il suo
   **testo viene rimandato al bot come messaggio**: le preferenze salvate sono
   quindi codificate nel label del pulsante `🕒Ora` (es.
-  `🕒Ora · Milano Bovisa 2h 🇮🇹`), nessun KV/DB e nessun messaggio pinnato
+  `🕒Ora · Milano Bovisa 2h ⏳4h 🇮🇹`; `⏳Nh` è opzionale per i label vecchi), nessun KV/DB e nessun messaggio pinnato
 - Dopo il salvataggio la Mini App invia `web_app_data`: il bot ricostruisce la
   tastiera persistente con le preferenze nel label e invia un messaggio
   preferenze con il pulsante `🕒Ora` inline (preferenze in `callback_data`)
@@ -71,6 +73,9 @@ stack moderno e architettura stateless.
 - `npm run dev:local` avvia Mini App + Worker + due quick tunnel Cloudflare +
   webhook sul **bot di test** (token in `worker/.dev.vars`)
 - `npm run dev:webapp` per provare la Mini App nel browser
+- `npm run dev:preview` come `dev:local`, ma il bot di test apre la preview
+  Cloudflare Pages del branch corrente (`<branch>.aule-libere-polimi-settings.pages.dev`)
+  invece del tunnel locale; richiede branch pushato e build di Pages completata
 - Workflow completo nella sezione "Workflow di sviluppo (dev → main)"
 
 ### Logging

@@ -6,9 +6,9 @@ const POLIMI_CONTROLLER_URL =
 const QUARTER_HOUR = 0.25;
 const FIRST_GRID_TIME = 7.75;
 const LAST_OPENING_TIME = 20;
-// Rooms freeing up this many hours after the search start are worth listing.
+// Rooms freeing up at least this many hours after the search start are listed.
 const FREEING_WINDOW_FROM = 1;
-const FREEING_WINDOW_TO = 2;
+const DEFAULT_LOOKAHEAD_HOURS = 2;
 const DEFAULT_TIMEOUT_MS = 20_000;
 const GARBAGE_ROOMS = new Set(["PROVA_ASICT", "2.2.1-D.I.", "OSVALDODEDONATO"]);
 const UPSTREAM_HEADERS = {
@@ -50,8 +50,8 @@ export type FreeRoomsByBuilding = Record<string, FreeRoom[]>;
 export interface RoomSearchResult {
   free: FreeRoomsByBuilding;
   /**
-   * Rooms busy at `startTime` that become free between one and two hours
-   * later. `until` holds the time the room frees up, not the end of a gap.
+   * Rooms busy at `startTime` that become free between one hour and
+   * `lookaheadHours` later. `until` holds the time the room frees up, not the end of a gap.
    */
   freeingUp: FreeRoomsByBuilding;
 }
@@ -63,6 +63,8 @@ export interface SearchFreeRoomsInput {
   year: number;
   startTime: number;
   endTime: number;
+  /** Latest time, in hours after `startTime`, to list rooms freeing up. */
+  lookaheadHours?: number;
   /** Static contents of roomsWithPower.json, bundled by the caller. */
   roomsWithPower: readonly number[];
 }
@@ -323,6 +325,9 @@ function validateSearchInput(input: SearchFreeRoomsInput): void {
   for (const key of ["day", "month", "year", "startTime", "endTime"] as const) {
     if (!Number.isFinite(input[key])) throw new TypeError(`${key} must be finite`);
   }
+  if (input.lookaheadHours !== undefined && !Number.isFinite(input.lookaheadHours)) {
+    throw new TypeError("lookaheadHours must be finite");
+  }
   if (input.startTime >= input.endTime) {
     throw new RangeError("startTime must be before endTime");
   }
@@ -338,13 +343,14 @@ export async function searchFreeRooms(
 
 /**
  * Like {@link searchFreeRooms}, and also lists the rooms that free up between
- * one and two hours after `startTime`, from the same upstream fetch.
+ * one hour and `lookaheadHours` after `startTime`, from the same upstream fetch.
  */
 export async function searchRooms(
   input: SearchFreeRoomsInput,
   dependencies: SearchDependencies = {},
 ): Promise<RoomSearchResult> {
   validateSearchInput(input);
+  const lookaheadHours = input.lookaheadHours ?? DEFAULT_LOOKAHEAD_HOURS;
   const requestUrl = new URL(
     dependencies.upstreamUrl ?? POLIMI_OCCUPANCY_URL,
   );
@@ -403,7 +409,7 @@ export async function searchRooms(
         if (
           freeAt !== null &&
           freeAt >= input.startTime + FREEING_WINDOW_FROM &&
-          freeAt <= input.startTime + FREEING_WINDOW_TO &&
+          freeAt <= input.startTime + lookaheadHours &&
           freeAt < LAST_OPENING_TIME
         ) {
           (freeingUp[building] ??= []).push({

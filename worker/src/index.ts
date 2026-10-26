@@ -59,6 +59,7 @@ export async function searchAndFormat(request: SearchRequest): Promise<string[]>
     year,
     startTime: request.startHour,
     endTime: request.endHour,
+    lookaheadHours: request.lookahead,
     roomsWithPower: ROOM_IDS_WITH_POWER
   });
   const t = translations[request.lang];
@@ -78,7 +79,7 @@ export async function searchAndFormat(request: SearchRequest): Promise<string[]>
   return [
     ...head,
     ...freeingUpMessages.map((message, index) =>
-      index === 0 ? `<b>${t.freeingUpTitle}</b>\n${message}` : message
+      index === 0 ? `<b>${t.freeingUpTitle(request.lookahead)}</b>\n${message}` : message
     )
   ];
 }

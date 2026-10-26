@@ -1,11 +1,13 @@
 import { formatTime } from "./format";
 import {
   CAMPUSES,
+  DEFAULT_LOOKAHEAD,
   MAX_HOUR,
   MIN_HOUR,
   campusCodeFromName,
   decodeCallback,
   encodeCallback,
+  isValidLookahead,
 } from "./protocol";
 import {
   languageFromCode,
@@ -25,6 +27,8 @@ export interface SearchRequest {
   startHour: number;
   endHour: number;
   lang: Language;
+  /** Hours after `startHour` within which to list rooms freeing up. */
+  lookahead: number;
 }
 
 export interface TelegramDependencies {
@@ -69,6 +73,7 @@ interface Preferences {
   lang: Language;
   campus: string;
   duration: number;
+  lookahead: number;
 }
 
 const DEFAULT_WEBAPP_URL =
@@ -269,6 +274,7 @@ async function performSearch(
     date: string;
     startHour: number;
     endHour: number;
+    lookahead?: number;
   },
   api: ReturnType<typeof createTelegramApi>,
   deps: TelegramDependencies,
@@ -282,6 +288,7 @@ async function performSearch(
       startHour: state.startHour,
       endHour: state.endHour,
       lang: state.lang,
+      lookahead: state.lookahead ?? DEFAULT_LOOKAHEAD,
     });
     await api.sendMessage(
       chatId,
@@ -323,12 +330,12 @@ async function handleWebAppData(
 
 function preferencesSummary(preferences: Preferences): string {
   const flag = preferences.lang === "it" ? "🇮🇹" : "🇬🇧";
-  return `${campusLabel(preferences.campus)} · ${preferences.duration}h · ${flag}`;
+  return `${campusLabel(preferences.campus)} · ${preferences.duration}h · ⏳${preferences.lookahead}h · ${flag}`;
 }
 
 function nowButtonLabel(preferences: Preferences, now: string): string {
   const flag = preferences.lang === "it" ? "🇮🇹" : "🇬🇧";
-  return `${now} · ${campusLabel(preferences.campus)} ${preferences.duration}h ${flag}`;
+  return `${now} · ${campusLabel(preferences.campus)} ${preferences.duration}h ⏳${preferences.lookahead}h ${flag}`;
 }
 
 function nowLabelPrefix(text: string): string | null {
@@ -341,13 +348,16 @@ function parseNowLabel(text: string): Preferences | null {
   const prefix = nowLabelPrefix(text);
   if (!prefix) return null;
   const suffix = text.slice(prefix.length);
-  const match = /^(.+?) (\d{1,2})h (🇮🇹|🇬🇧)$/u.exec(suffix);
+  // The ⏳ part is missing from labels built before the lookahead existed.
+  const match = /^(.+?) (\d{1,2})h(?: ⏳(\d{1,2})h)? (🇮🇹|🇬🇧)$/u.exec(suffix);
   if (!match) return null;
   const campus = campusCodeFromName(match[1]!.trim());
   const duration = Number(match[2]);
-  const lang: Language = match[3] === "🇮🇹" ? "it" : "en";
+  const lookahead = match[3] === undefined ? DEFAULT_LOOKAHEAD : Number(match[3]);
+  const lang: Language = match[4] === "🇮🇹" ? "it" : "en";
   if (!campus || !Number.isInteger(duration) || duration < 1 || duration > 8) return null;
-  return { lang, campus, duration };
+  if (!isValidLookahead(lookahead)) return null;
+  return { lang, campus, duration, lookahead };
 }
 
 async function sendPreferences(
@@ -367,6 +377,7 @@ async function sendPreferences(
             lang: preferences.lang,
             campus: preferences.campus,
             duration: preferences.duration,
+            lookahead: preferences.lookahead,
           }),
         },
       ],
@@ -387,16 +398,19 @@ function parsePreferences(raw: string | undefined): Preferences | null {
     const lang = value.lang;
     const campus = campusCodeFromName(value.campus);
     const duration = value.duration;
+    // Mini App builds without the setting omit it: keep their data valid.
+    const lookahead = value.lookahead ?? DEFAULT_LOOKAHEAD;
     if (
       (lang !== "it" && lang !== "en") ||
       !campus ||
       typeof duration !== "number" ||
       !Number.isInteger(duration) ||
       duration < 1 ||
-      duration > 8
+      duration > 8 ||
+      !isValidLookahead(lookahead)
     )
       return null;
-    return { lang, campus, duration };
+    return { lang, campus, duration, lookahead };
   } catch {
     return null;
   }
@@ -435,7 +449,13 @@ function durationKeyboard(lang: Language, campus: string): InlineButton[][] {
   for (let duration = 1; duration <= 8; duration += 1) {
     buttons.push({
       text: `${duration}h`,
-      callback_data: encodeCallback({ action: "quick", lang, campus, duration }),
+      callback_data: encodeCallback({
+        action: "quick",
+        lang,
+        campus,
+        duration,
+        lookahead: DEFAULT_LOOKAHEAD,
+      }),
     });
   }
   return [cancelRow(lang), ...chunk(buttons, 4)];

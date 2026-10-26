@@ -3,6 +3,11 @@ import { CAMPUSES, LOCATION_CODES, LOCATIONS } from "./data";
 
 export const MIN_HOUR = 8;
 export const MAX_HOUR = 20;
+// How far ahead (hours) the "freeing up" section looks. It starts one hour
+// after the search start, so the smallest useful value is 2.
+export const MIN_LOOKAHEAD = 2;
+export const MAX_LOOKAHEAD = 8;
+export const DEFAULT_LOOKAHEAD = MIN_LOOKAHEAD;
 
 // CAMPUSES drives the search menus (one entry per campus). LOCATIONS still
 // holds every PoliMi site so preferences saved before the menu was trimmed to
@@ -32,7 +37,13 @@ export type CallbackState =
       endHour: number;
     }
   | { action: "quickCampus"; lang: Language; campus: string }
-  | { action: "quick"; lang: Language; campus: string; duration: number }
+  | {
+      action: "quick";
+      lang: Language;
+      campus: string;
+      duration: number;
+      lookahead: number;
+    }
   | { action: "campusMenu"; lang: Language; quick: boolean; more: boolean }
   | { action: "info" | "cancel"; lang: Language };
 
@@ -78,7 +89,7 @@ export function encodeCallback(state: CallbackState): string {
       );
       break;
     case "quick":
-      base.push(state.campus, String(state.duration));
+      base.push(state.campus, String(state.duration), String(state.lookahead));
       break;
   }
   const encoded = base.join(":");
@@ -128,13 +139,28 @@ export function decodeCallback(value: string): CallbackState | null {
       ? { action: "end", lang, campus, date, startHour, endHour }
       : null;
   }
-  if (code === "q" && parts.length === 4) {
+  // Buttons sent before the lookahead existed carry no fifth part.
+  if (code === "q" && (parts.length === 4 || parts.length === 5)) {
     const duration = Number(parts[3]);
-    return Number.isInteger(duration) && duration >= 1 && duration <= 8
-      ? { action: "quick", lang, campus, duration }
+    const lookahead =
+      parts.length === 5 ? Number(parts[4]) : DEFAULT_LOOKAHEAD;
+    return Number.isInteger(duration) &&
+      duration >= 1 &&
+      duration <= 8 &&
+      isValidLookahead(lookahead)
+      ? { action: "quick", lang, campus, duration, lookahead }
       : null;
   }
   return null;
+}
+
+export function isValidLookahead(value: unknown): value is number {
+  return (
+    typeof value === "number" &&
+    Number.isInteger(value) &&
+    value >= MIN_LOOKAHEAD &&
+    value <= MAX_LOOKAHEAD
+  );
 }
 
 export function isCampusCode(value: string): boolean {

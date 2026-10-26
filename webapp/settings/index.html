@@ -51,6 +51,19 @@
                     <span>1h</span><span>8h</span>
                 </div>
             </div>
+
+            <!-- Lookahead: rooms about to free up -->
+            <div class="field">
+                <span class="field__label" data-i18n="lookaheadLabel">Look ahead for rooms freeing up (hours)</span>
+                <div class="slider">
+                    <input type="range" id="lookahead" min="2" max="8" step="1" value="2" aria-describedby="lookahead-hint" />
+                    <span class="slider__value" id="lookahead-value">2h</span>
+                </div>
+                <div class="slider__scale" aria-hidden="true">
+                    <span>2h</span><span>8h</span>
+                </div>
+                <p class="field__hint" id="lookahead-hint" data-i18n="lookaheadHint">Results also list rooms that free up between 1 hour and this many hours from the start.</p>
+            </div>
         </section>
 
         <button id="save-btn" type="button" class="btn btn--filled">

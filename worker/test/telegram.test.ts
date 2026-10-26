@@ -85,6 +85,26 @@ describe("stateless callback protocol", () => {
     });
   });
 
+  it("round-trips the quick search and accepts buttons without a lookahead", () => {
+    const state = {
+      action: "quick",
+      lang: "en",
+      campus: "MIA11",
+      duration: 8,
+      lookahead: 8,
+    } as const;
+    expect(decodeCallback(encodeCallback(state))).toEqual(state);
+    expect(decodeCallback("q:en:MIA11:3")).toEqual({
+      action: "quick",
+      lang: "en",
+      campus: "MIA11",
+      duration: 3,
+      lookahead: 2,
+    });
+    expect(decodeCallback("q:en:MIA11:3:1")).toBeNull();
+    expect(decodeCallback("q:en:MIA11:3:9")).toBeNull();
+  });
+
   it("round-trips the campus submenu navigation", () => {
     const state = { action: "campusMenu", lang: "en", quick: true, more: true } as const;
     expect(decodeCallback(encodeCallback(state))).toEqual(state);
@@ -166,6 +186,7 @@ describe("Telegram handler", () => {
         lang: "it",
         campus: "Milano Città Studi - Piazza Leonardo da Vinci 26",
         duration: 3,
+        lookahead: 5,
       }),
     };
     await handleTelegramUpdate(update, env, {
@@ -179,7 +200,7 @@ describe("Telegram handler", () => {
       keyboard: Array<Array<{ text: string }>>;
     };
     expect(keyboard.keyboard[1]?.[0]?.text).toBe(
-      "🕒Ora · Milano Città Studi - Piazza Leonardo da Vinci 26 3h 🇮🇹",
+      "🕒Ora · Milano Città Studi - Piazza Leonardo da Vinci 26 3h ⏳5h 🇮🇹",
     );
     expect(api.calls.some((call) => call.method === "pinChatMessage")).toBe(false);
 
@@ -196,6 +217,7 @@ describe("Telegram handler", () => {
       lang: "it",
       campus: "MIA11",
       duration: 3,
+      lookahead: 5,
     });
   });
 
@@ -218,8 +240,25 @@ describe("Telegram handler", () => {
       startHour: 9.5,
       endHour: 13.5,
       lang: "it",
+      lookahead: 2,
     });
     expect(api.calls.some((call) => call.method === "getChat")).toBe(false);
+  });
+
+  it("reads the lookahead from the keyboard label", async () => {
+    const api = telegramFetch();
+    const search = vi.fn(async () => []);
+    await handleTelegramUpdate(
+      messageUpdate("🕒Ora · Milano Bovisa 2h ⏳6h 🇬🇧", "en"),
+      env,
+      {
+        fetch: api.mock,
+        search,
+        now: () => new Date("2026-08-28T07:30:00.000Z"), // 09:30 in Rome
+      },
+    );
+
+    expect(search).toHaveBeenCalledWith(expect.objectContaining({ lookahead: 6 }));
   });
 
   it("keeps legacy site codes searchable from the keyboard label", async () => {
@@ -241,13 +280,19 @@ describe("Telegram handler", () => {
       startHour: 9.5,
       endHour: 11.5,
       lang: "en",
+      lookahead: 2,
     });
   });
 
   it("falls back to the inline flow for a malformed 🕒Ora label", async () => {
     const api = telegramFetch();
     const search = vi.fn(async () => []);
-    for (const text of ["🕒Ora · NOPE 3h 🇮🇹", "🕒Ora · Milano Bovisa 12h 🇮🇹"]) {
+    for (const text of [
+      "🕒Ora · NOPE 3h 🇮🇹",
+      "🕒Ora · Milano Bovisa 12h 🇮🇹",
+      "🕒Ora · Milano Bovisa 3h ⏳1h 🇮🇹",
+      "🕒Ora · Milano Bovisa 3h ⏳9h 🇮🇹",
+    ]) {
       api.calls.length = 0;
       await handleTelegramUpdate(messageUpdate(text, "it"), env, {
         fetch: api.mock,
@@ -309,6 +354,7 @@ describe("Telegram handler", () => {
       lang: "en",
       campus: "MIA",
       duration: 4,
+      lookahead: 2,
     });
   });
 
@@ -350,6 +396,7 @@ describe("Telegram handler", () => {
       startHour: 9,
       endHour: 11,
       lang: "en",
+      lookahead: 2,
     });
     expect(api.calls.some((call) => call.method === "sendChatAction")).toBe(true);
     expect(api.calls.at(-1)?.body).toMatchObject({
@@ -363,7 +410,7 @@ describe("Telegram handler", () => {
     const search = vi.fn(async () => []);
     await handleTelegramUpdate(
       callbackUpdate(
-        encodeCallback({ action: "quick", lang: "it", campus: "MIA", duration: 2 }),
+        encodeCallback({ action: "quick", lang: "it", campus: "MIA", duration: 2, lookahead: 2 }),
       ),
       env,
       {
@@ -378,6 +425,7 @@ describe("Telegram handler", () => {
       startHour: 12.25,
       endHour: 14.25,
       lang: "it",
+      lookahead: 2,
     });
   });
 
@@ -386,7 +434,7 @@ describe("Telegram handler", () => {
     const search = vi.fn(async () => []);
     await handleTelegramUpdate(
       callbackUpdate(
-        encodeCallback({ action: "quick", lang: "it", campus: "MIB", duration: 4 }),
+        encodeCallback({ action: "quick", lang: "it", campus: "MIB", duration: 4, lookahead: 2 }),
       ),
       env,
       {
@@ -401,6 +449,7 @@ describe("Telegram handler", () => {
       startHour: 9.5,
       endHour: 13.5,
       lang: "it",
+      lookahead: 2,
     });
     expect(api.calls.at(-1)?.body.text).toContain("Non sono state trovate");
   });

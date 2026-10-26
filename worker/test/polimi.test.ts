@@ -155,7 +155,7 @@ describe("PoliMi occupancy scraper", () => {
     expect(freeingTime([], 9)).toBeNull();
   });
 
-  it("lists rooms freeing up one to two hours after the start", async () => {
+  it("lists rooms freeing up between one hour and the lookahead", async () => {
     // Grid starts at 07:45: one empty cell reaches 08:00, a slot cell is
     // colspan / 4 hours long.
     const row = (id: number, name: string, cells: string) =>
@@ -170,32 +170,42 @@ describe("PoliMi occupancy scraper", () => {
       ${row(4, "chained", `<td></td>${slot(8)}${slot(2)}`)}
       ${row(5, "already-free", "")}
     </table></div>`;
+    const search = (lookaheadHours?: number) =>
+      searchRooms(
+        {
+          location: "MIA",
+          day: 27,
+          month: 8,
+          year: 2026,
+          startTime: 9,
+          endTime: 10,
+          ...(lookaheadHours === undefined ? {} : { lookaheadHours }),
+          roomsWithPower: [],
+        },
+        {
+          fetch: vi.fn<typeof fetch>().mockResolvedValue(new Response(html)),
+          htmlRewriter: RuntimeHTMLRewriter,
+        },
+      );
+    const freeing = (result: Awaited<ReturnType<typeof search>>) =>
+      result.freeingUp["Edificio 1"]?.map((room) => [room.name, room.until]);
 
-    const result = await searchRooms(
-      {
-        location: "MIA",
-        day: 27,
-        month: 8,
-        year: 2026,
-        startTime: 9,
-        endTime: 10,
-        roomsWithPower: [],
-      },
-      {
-        fetch: vi.fn<typeof fetch>().mockResolvedValue(new Response(html)),
-        htmlRewriter: RuntimeHTMLRewriter,
-      },
-    );
-
-    expect(result.free["Edificio 1"]?.map((room) => room.name)).toEqual([
+    const byDefault = await search();
+    expect(byDefault.free["Edificio 1"]?.map((room) => room.name)).toEqual([
       "already-free",
     ]);
-    expect(
-      result.freeingUp["Edificio 1"]?.map((room) => [room.name, room.until]),
-    ).toEqual([
+    // Default window: one to two hours after the 09:00 start.
+    expect(freeing(byDefault)).toEqual([
       ["frees-1h30", 10.5],
       ["chained", 10.5],
     ]);
+    // Frees at 12:30, three and a half hours after the start.
+    expect(freeing(await search(4))).toEqual([
+      ["frees-1h30", 10.5],
+      ["frees-in-3h", 12.5],
+      ["chained", 10.5],
+    ]);
+    expect(freeing(await search(3))).toEqual(freeing(byDefault));
   });
 
   it("checks HTTP status and builds the expected upstream query", async () => {

@@ -71,6 +71,16 @@ Alla chiusura con `Ctrl+C` il webhook del bot di test viene rimosso
 (`KEEP_WEBHOOK=1` per mantenerlo, `--no-webhook` per non registrarlo affatto).
 Il bot di produzione non viene mai toccato.
 
+Per provare la Mini App già costruita da Cloudflare Pages invece di quella
+locale usa `npm run dev:preview` (`dev:local -- --preview`): lo script ricava
+dal branch git corrente l'alias di preview
+`https://<branch>.aule-libere-polimi-settings.pages.dev`, verifica che risponda
+e lo usa come `WEBAPP_URL` del bot di test, senza tunnel per la Mini App. Se la
+preview non esiste ancora (branch non pushato, build in corso) o è indietro
+rispetto ai file locali, lo script lo segnala e, nel primo caso, ripiega sul
+tunnel locale. `PREVIEW_URL` forza un URL specifico (per esempio l'URL per
+commit di Pages). Le modifiche a `webapp/settings/` compaiono dopo push e build.
+
 Variabili utili: `WORKER_PORT` (default 8787), `WEBAPP_PORT` (default 8788),
 `CLOUDFLARED` (percorso del binario).
 

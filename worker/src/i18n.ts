@@ -14,7 +14,7 @@ export interface Translation {
   quickDuration: string;
   invalidPreferences: string;
   noRooms: string;
-  freeingUpTitle: string;
+  freeingUpTitle: (hours: number) => string;
   freeingUpLabel: string;
   searchError: string;
   search: string;
@@ -47,7 +47,7 @@ export const translations: Record<Language, Translation> = {
     invalidPreferences:
       "❌ Le preferenze ricevute non sono valide. Riapri la Mini App e riprova.",
     noRooms: "Non sono state trovate aule libere in questa fascia oraria.",
-    freeingUpTitle: "⏳ Si liberano tra 1 e 2 ore",
+    freeingUpTitle: (hours) => `⏳ Si liberano tra 1 e ${hours} ore`,
     freeingUpLabel: "libera dalle",
     searchError: "C'è stato un problema durante la ricerca. Riprova più tardi.",
     search: "🔍Cerca",
@@ -78,7 +78,7 @@ export const translations: Record<Language, Translation> = {
     invalidPreferences:
       "❌ The received preferences are invalid. Reopen the Mini App and try again.",
     noRooms: "No free classrooms were found for this time slot.",
-    freeingUpTitle: "⏳ Freeing up in 1 to 2 hours",
+    freeingUpTitle: (hours) => `⏳ Freeing up in 1 to ${hours} hours`,
     freeingUpLabel: "free from",
     searchError: "There was a problem during the search. Try again later.",
     search: "🔍Search",
