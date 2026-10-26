@@ -57,7 +57,8 @@ export const translations: Record<Language, Translation> = {
       `Ciao <b>${escapeHtml(name)}</b>! 👋 Trovo le aule libere del PoliMi.\n\n` +
       "🕒 <b>Ora</b> · aule libere da adesso\n" +
       "🔍 <b>Cerca</b> · scegli campus, giorno e orario\n" +
-      "⚙️ <b>Preferenze</b> · campus e durata per «Ora»\n\n" +
+      "⚙️ <b>Preferenze</b> · campus, durata e aule in liberazione per «Ora»\n\n" +
+      "💡 Salva campus e durata in ⚙️ <b>Preferenze</b> per avere la ricerca a un tocco.\n\n" +
       "Crediti e codice sorgente: /info",
     info:
       "<b>Aule Libere PoliMi</b>\n\n" +
@@ -116,7 +117,8 @@ export const translations: Record<Language, Translation> = {
       `Hi <b>${escapeHtml(name)}</b>! 👋 I find free classrooms at PoliMi.\n\n` +
       "🕒 <b>Now</b> · rooms free from now\n" +
       "🔍 <b>Search</b> · pick campus, day and time\n" +
-      "⚙️ <b>Preferences</b> · campus and duration for “Now”\n\n" +
+      "⚙️ <b>Preferences</b> · campus, duration and freeing-up rooms for “Now”\n\n" +
+      "💡 Save campus and duration in ⚙️ <b>Preferences</b> for one-tap searches.\n\n" +
       "Credits and source code: /info",
     info:
       "<b>Aule Libere PoliMi</b>\n\n" +

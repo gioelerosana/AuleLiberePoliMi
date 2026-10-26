@@ -216,6 +216,8 @@ describe("persistent keyboard", () => {
     const body = api.calls[0]?.body;
     expect(body?.text).toContain("Ciao");
     expect(body?.text).toContain("Ada &lt;3");
+    expect(body?.text).toContain("aule in liberazione");
+    expect(body?.text).toContain("ricerca a un tocco");
     expect(body?.reply_markup).toEqual({
       keyboard: [
         [{ text: "🕒 Ora" }],

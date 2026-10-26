@@ -17,12 +17,12 @@
 
 const STORAGE_KEY = "auleliberepolimi_prefs";
 
-// ── Translations ──────────────────────────────────────────────
+// ── Translations ───────────────────────────────────────────────
 const I18N = {
     en: {
         settingsTitle: "AuleLiberePoliMi — Settings",
         title: "Preferences",
-        subtitle: "Campus and duration for the 🕒 Now button.",
+        subtitle: "Campus, duration and freeing-up rooms for the 🕒 Now button.",
         languageLabel: "Language",
         campusLabel: "Preferred campus",
         durationLabel: "Search duration (hours)",
@@ -36,7 +36,7 @@ const I18N = {
     it: {
         settingsTitle: "AuleLiberePoliMi — Impostazioni",
         title: "Preferenze",
-        subtitle: "Campus e durata per il pulsante 🕒 Ora.",
+        subtitle: "Campus, durata e aule in liberazione per il pulsante 🕒 Ora.",
         languageLabel: "Lingua",
         campusLabel: "Campus preferito",
         durationLabel: "Durata ricerca (ore)",
@@ -65,7 +65,7 @@ function applyLanguage(lang) {
     }
 }
 
-// ── DOM refs ──────────────────────────────────────────────────
+// ── DOM refs ───────────────────────────────────────────────────
 const langSegmented = document.getElementById("lang-segmented");
 const langButtons = langSegmented.querySelectorAll(".segmented__btn");
 const campusSelect = document.getElementById("campus");
@@ -80,7 +80,7 @@ const sliders = [
 ];
 const saveBtn = document.getElementById("save-btn");
 
-// ── Language (segmented button) ───────────────────────────────
+// ── Language (segmented button) ────────────────────────────────
 function getSelectedLang() {
     const selected = langSegmented.querySelector(".segmented__btn.is-selected");
     return selected ? selected.dataset.lang : "en";
@@ -103,7 +103,7 @@ langButtons.forEach((btn) => {
     btn.addEventListener("click", () => setSelectedLang(btn.dataset.lang));
 });
 
-// ── Populate campus dropdown ──────────────────────────────────
+// ── Populate campus dropdown ───────────────────────────────────
 function populateCampuses() {
     const placeholder = document.createElement("option");
     placeholder.value = "";
@@ -128,7 +128,7 @@ function matchCampusName(saved) {
     return CAMPUSES.find((name) => saved.startsWith(name + " - ")) || null;
 }
 
-// ── Apply loaded preferences to form ──────────────────────────
+// ── Apply loaded preferences to form ───────────────────────────
 function applyPrefs(prefs) {
     console.log("Applying preferences:", prefs);
     if (prefs.lang) setSelectedLang(prefs.lang);
@@ -283,7 +283,7 @@ function updateSliderDisplay({ input, value, el }) {
     el.style.setProperty("--pct", String(pct));
 }
 
-// ── Apply Telegram theme ──────────────────────────────────────
+// ── Apply Telegram theme ───────────────────────────────────────
 function applyTheme() {
     if (window.Telegram && window.Telegram.WebApp) {
         document.documentElement.style.colorScheme =
@@ -323,7 +323,7 @@ function attachSliderDragBehavior({ input, el }) {
     window.addEventListener("mouseup", end);
 }
 
-// ── Init ──────────────────────────────────────────────────────
+// ── Init ───────────────────────────────────────────────────────
 function init() {
     console.log("Mini App initialized");
     populateCampuses();
