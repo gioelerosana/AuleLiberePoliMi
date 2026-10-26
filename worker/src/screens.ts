@@ -1,4 +1,4 @@
-import { addRomeDays, romeQuarterHour, weekdayOf } from "./clock";
+import { addRomeDays, isOpenDay, romeQuarterHour, weekdayOf } from "./clock";
 import { formatTime } from "./format";
 import { escapeHtml, translations, type Language } from "./i18n";
 import { campusHasDrawingRooms, campusHasZones } from "./rooms";
@@ -66,7 +66,6 @@ const HOUR_COLUMNS = 4;
 const DAYS_AHEAD = 7;
 // PoliMi lessons run from :15 to :15 (08:15–10:15…): the picker follows them.
 const LESSON_OFFSET = QUARTER;
-const SUNDAY = 0;
 // dd/mm of a dd/mm/yyyy date, and its day of month.
 const DAY_MONTH_LENGTH = 5;
 const DAY_LENGTH = 2;
@@ -93,8 +92,7 @@ export function dayScreen(lang: Language, campus: string, now: Date): Screen {
   const relativeDays = [t.today, t.tomorrow];
   const buttons = range(0, DAYS_AHEAD)
     .map((offset) => ({ offset, date: addRomeDays(now, offset) }))
-    // PoliMi is closed on Sundays: every room would look free.
-    .filter(({ date }) => weekdayOf(date) !== SUNDAY)
+    .filter(({ date }) => isOpenDay(date))
     .map(({ offset, date }) => {
       const label =
         relativeDays[offset] ?? `${t.weekdays[weekdayOf(date)]} ${Number(date.slice(0, DAY_LENGTH))}`;
@@ -155,7 +153,7 @@ export function resultHeader(context: ResultContext): string {
     `<b>📍 ${campusCrumb(context.campus)} · ${dayCrumb(context.lang, context.date)} · ` +
       `${formatTime(context.startHour)}–${formatTime(context.endHour)}</b>`,
   ];
-  if (context.closed) lines.push(t.closed);
+  if (context.closed) lines.push(t.closed(dayCrumb(context.lang, context.date), formatTime(context.startHour)));
   if (context.allZones && campusHasZones(context.campus)) lines.push(t.allZonesActive);
   if (context.drawing) lines.push(t.drawingFilterActive);
   if (context.powerOnly) lines.push(t.powerFilterActive);

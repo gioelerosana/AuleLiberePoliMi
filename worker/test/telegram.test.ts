@@ -714,4 +714,36 @@ describe("search card", () => {
     const text = String(api.calls.at(-1)?.body.text);
     expect(text).toContain("<b>📍 Bovisa · Ven 23/10 · 08:00–12:00</b>\n🌙 Il PoliMi è chiuso");
   });
+
+  it.each([
+    ["Saturday 20:30", "2026-10-24T18:30:00.000Z"],
+    ["Sunday 11:00", "2026-10-25T10:00:00.000Z"],
+    ["Sunday 21:00", "2026-10-25T20:00:00.000Z"],
+    ["Sunday 07:00", "2026-10-25T06:00:00.000Z"],
+  ])("skips Sunday in the quick search on %s", async (_label, now) => {
+    const api = telegramFetch();
+    const search = vi.fn(async () => []);
+    await handleTelegramUpdate(
+      callbackUpdate(encodeCallback({ action: "quick", lang: "it", campus: "MIB", duration: 2, lookahead: 2 })),
+      env,
+      deps(api, { search, now: () => new Date(now) }),
+    );
+    expect(search).toHaveBeenCalledWith(
+      expect.objectContaining({ date: "26/10/2026", startHour: 8, endHour: 10 }),
+    );
+    expect(String(api.calls.at(-1)?.body.text)).toContain(
+      "🌙 Il PoliMi è chiuso: cerco dalla riapertura, Lun 26/10 alle 08:00.",
+    );
+  });
+
+  it("searches from today's opening before 08:00", async () => {
+    const api = telegramFetch();
+    const search = vi.fn(async () => []);
+    await handleTelegramUpdate(
+      callbackUpdate(encodeCallback({ action: "quick", lang: "en", campus: "MIB", duration: 3, lookahead: 2 })),
+      env,
+      deps(api, { search, now: () => new Date("2026-10-26T05:00:00.000Z") }), // Monday 06:00 in Rome
+    );
+    expect(search).toHaveBeenCalledWith(expect.objectContaining({ date: "26/10/2026", startHour: 8, endHour: 11 }));
+  });
 });

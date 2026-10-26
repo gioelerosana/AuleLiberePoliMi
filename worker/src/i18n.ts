@@ -9,7 +9,8 @@ export interface Translation {
   endingTime: string;
   quickDuration: string;
   error: string;
-  closed: string;
+  /** PoliMi is closed: the search starts when it reopens, on `day` at `time`. */
+  closed: (day: string, time: string) => string;
   cancelled: string;
   menu: string;
   success: string;
@@ -69,7 +70,7 @@ export const translations: Record<Language, Translation> = {
     endingTime: "Fino a che ora?",
     quickDuration: "Per quante ore?",
     error: "Pulsante non più valido, riprova dal menu.",
-    closed: "🌙 Il PoliMi è chiuso: cerco dalla prossima apertura.",
+    closed: (day, time) => `🌙 Il PoliMi è chiuso: cerco dalla riapertura, ${day} alle ${time}.`,
     cancelled: "Ricerca annullata.",
     menu: "Menu principale 👇",
     success: "✅ Preferenze salvate",
@@ -128,7 +129,7 @@ export const translations: Record<Language, Translation> = {
     endingTime: "Until what time?",
     quickDuration: "For how many hours?",
     error: "This button has expired, start again from the menu.",
-    closed: "🌙 PoliMi is closed: searching from the next opening.",
+    closed: (day, time) => `🌙 PoliMi is closed: searching from the reopening, ${day} at ${time}.`,
     cancelled: "Search cancelled.",
     menu: "Main menu 👇",
     success: "✅ Preferences saved",

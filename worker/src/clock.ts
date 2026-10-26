@@ -5,6 +5,7 @@ const QUARTERS_PER_HOUR = 4;
 // Noon keeps the UTC date stable whatever the Rome DST offset is.
 const SAFE_UTC_HOUR = 12;
 const TWO_DIGITS = 2;
+const SUNDAY = 0;
 
 export interface QuickSlot {
   date: string;
@@ -22,18 +23,22 @@ export function romeQuarterHour(now: Date): number {
 }
 
 export function quickSearchSlot(now: Date, duration: number): QuickSlot {
-  let date = addRomeDays(now, 0);
-  let startHour = romeQuarterHour(now);
-  let closed = false;
-  if (startHour < MIN_HOUR) {
-    startHour = MIN_HOUR;
-    closed = true;
-  } else if (startHour >= MAX_HOUR) {
-    date = addRomeDays(now, 1);
-    startHour = MIN_HOUR;
-    closed = true;
+  const nowHour = romeQuarterHour(now);
+  const today = addRomeDays(now, 0);
+  if (isOpenDay(today) && nowHour >= MIN_HOUR && nowHour < MAX_HOUR) {
+    return { date: today, startHour: nowHour, endHour: Math.min(nowHour + duration, MAX_HOUR), closed: false };
   }
-  return { date, startHour, endHour: Math.min(startHour + duration, MAX_HOUR), closed };
+  // Closed: search from the next opening, today before 08:00, else tomorrow.
+  // Sunday is the only closed day, so skipping one day is always enough.
+  const nextDay = nowHour < MIN_HOUR ? 0 : 1;
+  const offset = isOpenDay(addRomeDays(now, nextDay)) ? nextDay : nextDay + 1;
+  const date = addRomeDays(now, offset);
+  return { date, startHour: MIN_HOUR, endHour: Math.min(MIN_HOUR + duration, MAX_HOUR), closed: true };
+}
+
+/** PoliMi is closed on Sundays: every room would look free. */
+export function isOpenDay(date: string): boolean {
+  return weekdayOf(date) !== SUNDAY;
 }
 
 /** dd/mm/yyyy of the Rome calendar day `offset` days from now. */
