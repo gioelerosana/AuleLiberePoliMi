@@ -6,7 +6,7 @@ import {
   formatTime
 } from "./format";
 import { translations } from "./i18n";
-import { searchRooms, type FreeRoomsByBuilding } from "./polimi";
+import { searchRooms, type FreeRoomsByBuilding, type RoomClassifier, type SearchDependencies } from "./polimi";
 import { campusHasZones, roomInfo, type RoomZone } from "./rooms";
 import { handleTelegramUpdate, isRetryableError, validateTelegramSecret } from "./telegram";
 import type {
@@ -21,6 +21,11 @@ const JSON_HEADERS = { "content-type": "application/json; charset=utf-8" };
 const MESSAGE_BUDGET = TELEGRAM_MAX_MESSAGE_LENGTH - RESULT_HEADER_RESERVE;
 const FREEING_UP_TITLE_RESERVE = 100;
 const SECRET_PATTERN = /^[A-Za-z0-9_-]{16,128}$/;
+
+export interface SearchAndFormatDependencies extends SearchDependencies {
+  roomsWithPower?: readonly number[];
+  roomInfo?: RoomClassifier;
+}
 
 type UpdateHandler = (
   update: TelegramUpdate,
@@ -58,19 +63,25 @@ function parseDate(value: string): { day: number; month: number; year: number } 
   return { day, month, year };
 }
 
-export async function searchAndFormat(request: SearchRequest): Promise<string[]> {
+export async function searchAndFormat(
+  request: SearchRequest,
+  dependencies: SearchAndFormatDependencies = {}
+): Promise<string[]> {
   const { day, month, year } = parseDate(request.date);
-  const { free, freeingUp } = await searchRooms({
-    location: request.campus,
-    day,
-    month,
-    year,
-    startTime: request.startHour,
-    endTime: request.endHour,
-    lookaheadHours: request.lookahead,
-    roomsWithPower: ROOM_IDS_WITH_POWER,
-    roomInfo
-  });
+  const { free, freeingUp } = await searchRooms(
+    {
+      location: request.campus,
+      day,
+      month,
+      year,
+      startTime: request.startHour,
+      endTime: request.endHour,
+      lookaheadHours: request.lookahead,
+      roomsWithPower: dependencies.roomsWithPower ?? ROOM_IDS_WITH_POWER,
+      roomInfo: dependencies.roomInfo ?? roomInfo
+    },
+    dependencies
+  );
   const t = translations[request.lang];
 
   // Whole-campus searches list the central zone unless the user widens them;

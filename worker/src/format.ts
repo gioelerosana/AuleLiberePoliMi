@@ -9,8 +9,6 @@ type Room = FreeRoomsByBuilding[string][number];
 export interface FormatRoomMessagesOptions {
   /** Plain text after each room name: "→ 14:15" (free until) by default. */
   timeText?: (room: Room) => string;
-  /** Returned as the sole message when the search has no results. */
-  noResultsText?: string;
   maxLength?: number;
 }
 
@@ -76,7 +74,7 @@ function makeRoomLine(room: Room, time: string, availableLength: number): string
 /** Format free rooms as valid Telegram HTML messages of at most 4096 chars. */
 export function formatRoomMessages(
   availableRooms: FreeRoomsByBuilding,
-  options: FormatRoomMessagesOptions,
+  options: FormatRoomMessagesOptions = {},
 ): string[] {
   const maxLength = options.maxLength ?? TELEGRAM_MAX_MESSAGE_LENGTH;
   const timeText = options.timeText ?? freeUntil;
@@ -87,10 +85,7 @@ export function formatRoomMessages(
   const nonEmptyBuildings = Object.entries(availableRooms).filter(
     ([, rooms]) => rooms.length > 0,
   );
-  if (nonEmptyBuildings.length === 0) {
-    if (!options.noResultsText) return [];
-    return [truncateEscaped(options.noResultsText, maxLength)];
-  }
+  if (nonEmptyBuildings.length === 0) return [];
 
   const messages: string[] = [];
   let current = "";

@@ -3,12 +3,14 @@ import { describe, expect, it, vi } from "vitest";
 // pulled into the Worker implementation.
 // @ts-ignore Vite raw imports are resolved by the test runner.
 import fixtureHtml from "./fixtures/occupancies.html?raw";
-import { formatRoomMessages } from "../src/format";
+import { RESULT_HEADER_RESERVE, TELEGRAM_MAX_MESSAGE_LENGTH, formatRoomMessages } from "../src/format";
+import { searchAndFormat } from "../src/index";
 import {
   campusHasDrawingRooms,
   campusHasZones,
   classifyRoom,
   zoneOf,
+  type RoomInfo,
   type RoomKind,
 } from "../src/rooms";
 import {
@@ -21,6 +23,7 @@ import {
   type HtmlRewriterConstructor,
   type HtmlRewriterLike,
 } from "../src/polimi";
+import type { SearchRequest } from "../src/types";
 
 type TestHandler = Parameters<HtmlRewriterLike["on"]>[1];
 
@@ -367,9 +370,7 @@ describe("room classification", () => {
 
 describe("Telegram room formatting", () => {
   it("escapes external values and handles no results", () => {
-    expect(
-      formatRoomMessages({}, { noResultsText: "Nessuna <aula>" }),
-    ).toEqual(["Nessuna &lt;aula&gt;"]);
+    expect(formatRoomMessages({})).toEqual([]);
 
     const [message] = formatRoomMessages(
       {
@@ -412,5 +413,132 @@ describe("Telegram room formatting", () => {
     expect(messages.length).toBeGreaterThan(1);
     expect(messages.every((message) => message.length <= 4096)).toBe(true);
     expect(messages.every((message) => message.includes("<b>Edificio</b>"))).toBe(true);
+  });
+});
+
+describe("searchAndFormat", () => {
+  const row = (id: number, name: string, cells = "") =>
+    `<tr class="normalRow"><td class="dove"><a href="DettaglioAula.do?idaula=${id}">${name}</a></td>${cells}</tr>`;
+  const slot = (quarters: number) =>
+    `<td class="slot" colspan="${quarters}"><a>Lezione</a></td>`;
+  const baseRequest: SearchRequest = {
+    campus: "MIA",
+    date: "28/10/2026",
+    startHour: 9,
+    endHour: 11,
+    lang: "it",
+    lookahead: 2,
+    powerOnly: false,
+    drawing: false,
+    allZones: false,
+  };
+
+  it("filters by room kind, power plugs and zone, and packs sections together", async () => {
+    // Grid starts at 07:45: 1 empty cell + 10 quarters = busy 08:00–10:30,
+    // then 8 empty quarters + 4 busy = free 10:30–12:30.
+    const busyUntil1030 = `<td></td>${slot(10)}${"<td></td>".repeat(8)}${slot(4)}`;
+    const html = `<div id="tableContainer"><table>
+      <tr><td class="innerEdificio">Milano - Via - Edificio 1</td></tr>
+      ${row(1, "C.1")}
+      ${row(2, "C.2")}
+      ${row(3, "D.1")}
+      ${row(4, "O.1")}
+      ${row(5, "O.2")}
+      ${row(6, "F.1", busyUntil1030)}
+    </table></div>`;
+    const classifications: Record<number, RoomInfo> = {
+      1: { kind: "standard", zone: "main" },
+      2: { kind: "standard", zone: "main" },
+      3: { kind: "drawing", zone: "main" },
+      4: { kind: "standard", zone: "other" },
+      5: { kind: "standard", zone: "other" },
+      6: { kind: "standard", zone: "main" },
+    };
+    const run = (overrides: Partial<SearchRequest> = {}) =>
+      searchAndFormat(
+        { ...baseRequest, ...overrides },
+        {
+          fetch: vi.fn<typeof fetch>().mockResolvedValue(new Response(html)),
+          htmlRewriter: RuntimeHTMLRewriter,
+          roomsWithPower: [1, 3, 4],
+          roomInfo: (id) => (id !== undefined && classifications[id]) || { kind: "standard", zone: "main" },
+        },
+      );
+
+    // Central zone by default: C.1 (🔌) and C.2 free, F.1 freeing up, 2 in other zones.
+    const defaultResult = await run();
+    expect(defaultResult).toHaveLength(1);
+    expect(defaultResult[0]).toContain("C.1</a> → 20:00 🔌");
+    expect(defaultResult[0]).toContain("C.2</a> → 20:00\n");
+    expect(defaultResult[0]).not.toContain("D.1");
+    expect(defaultResult[0]).not.toContain("O.1");
+    expect(defaultResult[0]).toContain("<b>⏳ Si liberano entro 2 ore</b>");
+    expect(defaultResult[0]).toContain("F.1</a> dalle 10:30 alle 12:30");
+    expect(defaultResult[0]).toContain("<i>🗺️ Ci sono altre 2 aule libere fuori dalla zona centrale.</i>");
+
+    // Power filter: keeps C.1 in central zone and counts only O.1 outside.
+    const powerResult = await run({ powerOnly: true });
+    expect(powerResult[0]).toContain("C.1</a> → 20:00 🔌");
+    expect(powerResult[0]).not.toContain("C.2");
+    expect(powerResult[0]).not.toContain("F.1");
+    expect(powerResult[0]).toContain("<i>🗺️ C'è un'altra aula libera fuori dalla zona centrale.</i>");
+
+    // Drawing filter: only D.1.
+    const drawingResult = await run({ drawing: true });
+    expect(drawingResult[0]).toContain("D.1</a> → 20:00 🔌");
+    expect(drawingResult[0]).not.toContain("C.1");
+    expect(drawingResult[0]).not.toContain("fuori dalla zona centrale");
+
+    // All zones: lists O.1 and O.2 and drops the other-zones hint.
+    const allZonesResult = await run({ allZones: true });
+    expect(allZonesResult[0]).toContain("O.1</a> → 20:00 🔌");
+    expect(allZonesResult[0]).toContain("O.2</a> → 20:00");
+    expect(allZonesResult[0]).not.toContain("fuori dalla zona centrale");
+  });
+
+  it("keeps the no-free-rooms notice when only freeing-up or outer-zone rooms exist", async () => {
+    const busyUntil10 = `<td></td>${slot(8)}`;
+    const html = `<div id="tableContainer"><table>
+      <tr><td class="innerEdificio">Milano - Via - Edificio 1</td></tr>
+      ${row(1, "F.1", busyUntil10)}
+      ${row(2, "O.1")}
+    </table></div>`;
+    const run = (roomInfo: (id: number | undefined) => RoomInfo) =>
+      searchAndFormat(baseRequest, {
+        fetch: vi.fn<typeof fetch>().mockResolvedValue(new Response(html)),
+        htmlRewriter: RuntimeHTMLRewriter,
+        roomsWithPower: [],
+        roomInfo,
+      });
+
+    const [withFreeingAndHint] = await run((id) => ({
+      kind: "standard",
+      zone: id === 2 ? "other" : "main",
+    }));
+    expect(withFreeingAndHint).toMatch(/^😕 Nessuna aula libera in questa fascia oraria\.\n\n<b>⏳ Si liberano/);
+    expect(withFreeingAndHint).toContain("F.1</a> dalle 10:00 alle 20:00");
+    expect(withFreeingAndHint).toContain("<i>🗺️ C'è un'altra aula libera fuori dalla zona centrale.</i>");
+
+    const empty = await run(() => ({ kind: "excluded", zone: "main" }));
+    expect(empty).toEqual([]);
+  });
+
+  it("keeps packed messages within the budget reserved for the result header", async () => {
+    const budget = TELEGRAM_MAX_MESSAGE_LENGTH - RESULT_HEADER_RESERVE;
+    const rows = Array.from({ length: 120 }, (_, index) =>
+      row(index + 1, `Aula-${String(index).padStart(3, "0")}-${"x".repeat(25)}`),
+    ).join("\n");
+    const html = `<div id="tableContainer"><table>
+      <tr><td class="innerEdificio">Milano - Via - Edificio 1</td></tr>
+      ${rows}
+    </table></div>`;
+    const messages = await searchAndFormat(baseRequest, {
+      fetch: vi.fn<typeof fetch>().mockResolvedValue(new Response(html)),
+      htmlRewriter: RuntimeHTMLRewriter,
+      roomsWithPower: [],
+      roomInfo: () => ({ kind: "standard", zone: "main" }),
+    });
+    expect(messages.length).toBeGreaterThan(1);
+    expect(messages.every((message) => message.length <= budget)).toBe(true);
   });
 });
