@@ -391,6 +391,34 @@ describe("search card", () => {
     });
   });
 
+  it.each([
+    ["Monday 20:30", "2026-10-26T19:30:00.000Z", ["Domani", "Mer 28", "Gio 29"]],
+    ["Monday 19:45", "2026-10-26T18:45:00.000Z", ["Domani", "Mer 28", "Gio 29"]],
+    ["Monday 19:30", "2026-10-26T18:30:00.000Z", ["Oggi", "Domani", "Mer 28"]],
+    // Tomorrow is a Sunday: the first day is Monday.
+    ["Saturday 21:00", "2026-10-24T19:00:00.000Z", ["Lun 26", "Mar 27", "Mer 28"]],
+  ])("drops today from the day picker once its last slot is gone (%s)", async (_label, now, firstRow) => {
+    const api = telegramFetch();
+    await handleTelegramUpdate(
+      callbackUpdate(encodeCallback({ action: "campus", lang: "it", campus: "MIA" })),
+      env,
+      deps(api, { now: () => new Date(now) }),
+    );
+    const rows = labels(keyboardOf(api.calls[1]));
+    expect(rows[0]).toEqual(firstRow);
+    expect(rows.flat().filter((label) => label !== "⬅ Indietro" && label !== "✖ Annulla")).toHaveLength(6);
+  });
+
+  it("offers no past hours on a stale 'today' button after closing", async () => {
+    const api = telegramFetch();
+    await handleTelegramUpdate(
+      callbackUpdate(encodeCallback({ action: "date", lang: "it", campus: "MIA", date: "26/10/2026" })),
+      env,
+      deps(api, { now: () => new Date("2026-10-26T19:30:00.000Z") }), // Monday 20:30 in Rome
+    );
+    expect(labels(keyboardOf(api.calls[1]))).toEqual([["⬅ Indietro", "✖ Annulla"]]);
+  });
+
   it("offers 'now' and only upcoming hours when searching today", async () => {
     const api = telegramFetch();
     await handleTelegramUpdate(

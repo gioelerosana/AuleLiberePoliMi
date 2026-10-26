@@ -69,6 +69,7 @@ const HOUR_COLUMNS = 4;
 const DAYS_AHEAD = 7;
 // PoliMi lessons run from :15 to :15 (08:15–10:15…): the picker follows them.
 const LESSON_OFFSET = QUARTER;
+const LAST_START = MAX_HOUR - QUARTER;
 // dd/mm of a dd/mm/yyyy date, and its day of month.
 const DAY_MONTH_LENGTH = 5;
 const DAY_LENGTH = 2;
@@ -98,7 +99,9 @@ export function dayScreen(
 ): Screen {
   const t = translations[lang];
   const relativeDays = [t.today, t.tomorrow];
-  const buttons = range(0, DAYS_AHEAD)
+  // From 19:45 today has no lesson slot left: the week starts tomorrow.
+  const firstDay = romeQuarterHour(now) >= LAST_START ? 1 : 0;
+  const buttons = range(firstDay, firstDay + DAYS_AHEAD)
     .map((offset) => ({ offset, date: addRomeDays(now, offset) }))
     .filter(({ date }) => isOpenDay(date))
     .map(({ offset, date }) => {
@@ -121,7 +124,8 @@ export function startScreen(
 ): Screen {
   const t = translations[lang];
   const nowHour = romeQuarterHour(now);
-  const openNow = date === addRomeDays(now, 0) && nowHour >= MIN_HOUR && nowHour < MAX_HOUR;
+  const isToday = date === addRomeDays(now, 0);
+  const openNow = isToday && nowHour >= MIN_HOUR && nowHour < MAX_HOUR;
   const startState = (startHour: number): CallbackState => ({
     action: "start",
     lang,
@@ -132,7 +136,7 @@ export function startScreen(
   });
   // Earlier hours of today are useless: start from the next lesson slot.
   const hours = lessonTimes(MIN_HOUR)
-    .filter((hour) => !openNow || hour > nowHour)
+    .filter((hour) => !isToday || hour > nowHour)
     .map((hour) => button(formatTime(hour), startState(hour)));
   const rows: InlineKeyboard = openNow
     ? [[button(`${t.fromNow} · ${formatTime(nowHour)}`, startState(nowHour))]]
