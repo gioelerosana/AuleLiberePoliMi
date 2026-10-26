@@ -241,6 +241,26 @@ describe("PoliMi occupancy scraper", () => {
     expect(freeing(await search(3))).toEqual(freeing(byDefault));
   });
 
+  it("sees rooms busy until a :15 lesson end as free in the :15 picker slots", async () => {
+    // Lesson 11:15–13:15: 14 empty quarters from the 07:45 grid start, then 8.
+    const html = `<div id="tableContainer"><table>
+      <tr><td class="innerEdificio">Milano - Via - Edificio 1</td></tr>
+      <tr class="normalRow"><td class="dove"><a href="DettaglioAula.do?idaula=1">1.1</a></td>${"<td></td>".repeat(14)}<td class="slot" colspan="8"><a>Lezione</a></td></tr>
+    </table></div>`;
+    const search = (startTime: number, endTime: number) =>
+      searchRooms(
+        { location: "MIA", day: 28, month: 10, year: 2026, startTime, endTime, roomsWithPower: [] },
+        { fetch: vi.fn<typeof fetch>().mockResolvedValue(new Response(html)), htmlRewriter: RuntimeHTMLRewriter },
+      );
+    // Full hours (the old picker) miss the room by a quarter of an hour…
+    const fullHours = await search(13, 14);
+    expect(fullHours.free["Edificio 1"]).toBeUndefined();
+    expect(fullHours.freeingUp["Edificio 1"]?.map((room) => room.name)).toEqual(["1.1"]);
+    // …the lesson slots of the picker find it free.
+    const lessonSlots = await search(13.25, 14.25);
+    expect(lessonSlots.free["Edificio 1"]?.map((room) => room.name)).toEqual(["1.1"]);
+  });
+
   it("checks HTTP status and builds the expected upstream query", async () => {
     const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
       new Response("upstream unavailable", { status: 503, statusText: "Unavailable" }),

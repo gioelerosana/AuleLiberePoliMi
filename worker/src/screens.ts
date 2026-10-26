@@ -8,6 +8,7 @@ import {
   MAX_DURATION,
   MAX_HOUR,
   MIN_HOUR,
+  QUARTER,
   campusName,
   encodeCallback,
   shortCampusName,
@@ -63,6 +64,8 @@ const CAMPUS_COLUMNS = 2;
 const DAY_COLUMNS = 3;
 const HOUR_COLUMNS = 4;
 const DAYS_AHEAD = 7;
+// PoliMi lessons run from :15 to :15 (08:15–10:15…): the picker follows them.
+const LESSON_OFFSET = QUARTER;
 const SUNDAY = 0;
 // dd/mm of a dd/mm/yyyy date, and its day of month.
 const DAY_MONTH_LENGTH = 5;
@@ -108,9 +111,10 @@ export function startScreen(lang: Language, campus: string, date: string, now: D
   const nowHour = romeQuarterHour(now);
   const openNow = date === addRomeDays(now, 0) && nowHour >= MIN_HOUR && nowHour < MAX_HOUR;
   const startState = (startHour: number): CallbackState => ({ action: "start", lang, campus, date, startHour });
-  // Earlier hours of today are useless: start from the next full hour.
-  const firstHour = openNow ? Math.floor(nowHour) + 1 : MIN_HOUR;
-  const hours = range(firstHour, MAX_HOUR).map((hour) => button(formatTime(hour), startState(hour)));
+  // Earlier hours of today are useless: start from the next lesson slot.
+  const hours = lessonTimes(MIN_HOUR)
+    .filter((hour) => !openNow || hour > nowHour)
+    .map((hour) => button(formatTime(hour), startState(hour)));
   const rows: InlineKeyboard = openNow
     ? [[button(`${t.fromNow} · ${formatTime(nowHour)}`, startState(nowHour))]]
     : [];
@@ -121,9 +125,9 @@ export function startScreen(lang: Language, campus: string, date: string, now: D
 export function endScreen(lang: Language, campus: string, date: string, startHour: number): Screen {
   const t = translations[lang];
   const endState = (endHour: number): CallbackState => ({ action: "end", lang, campus, date, startHour, endHour });
-  const hours = range(Math.floor(startHour) + 1, MAX_HOUR).map((hour) =>
-    button(formatTime(hour), endState(hour)),
-  );
+  const hours = lessonTimes(MIN_HOUR + 1)
+    .filter((hour) => hour > startHour)
+    .map((hour) => button(formatTime(hour), endState(hour)));
   return {
     text: question(breadcrumb(lang, { campus, date, startHour }), t.endingTime),
     keyboard: [
@@ -268,6 +272,11 @@ function navRow(lang: Language, back?: CallbackState): InlineButton[] {
 
 function button(text: string, state: CallbackState): InlineButton {
   return { text, callback_data: encodeCallback(state) };
+}
+
+/** Lesson boundaries from `firstHour`:15 to the last one before closing. */
+function lessonTimes(firstHour: number): number[] {
+  return range(firstHour, MAX_HOUR).map((hour) => hour + LESSON_OFFSET);
 }
 
 /** Integers from `from` (inclusive) to `to` (exclusive). */

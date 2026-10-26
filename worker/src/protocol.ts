@@ -164,7 +164,8 @@ export function decodeCallback(value: string): CallbackState | null {
   if (code === "e") {
     const date = expandDate(parts[3]!);
     const startHour = parseHour(parts[4]!, MIN_HOUR, MAX_HOUR - QUARTER, QUARTER);
-    const endHour = parseHour(parts[5]!, MIN_HOUR + 1, MAX_HOUR, 1);
+    // Quarter hours: the picker ends at :15, older buttons at full hours.
+    const endHour = parseHour(parts[5]!, MIN_HOUR + QUARTER, MAX_HOUR, QUARTER);
     return date && startHour !== null && endHour !== null && endHour > startHour
       ? { action: "end", lang, campus, date, startHour, endHour, ...flags }
       : null;

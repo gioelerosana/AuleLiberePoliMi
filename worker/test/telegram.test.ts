@@ -135,6 +135,11 @@ describe("stateless callback protocol", () => {
     });
   });
 
+  it("decodes the :15 end hours of the picker and the full hours of older buttons", () => {
+    expect(decodeCallback("e:it:MIA:20261028:13.25:14.25")).toMatchObject({ startHour: 13.25, endHour: 14.25 });
+    expect(decodeCallback("e:it:MIA:20261028:13:14")).toMatchObject({ startHour: 13, endHour: 14 });
+  });
+
   it("round-trips flagged quick searches and campus navigation", () => {
     const quick = {
       action: "quick",
@@ -155,7 +160,8 @@ describe("stateless callback protocol", () => {
     expect(decodeCallback("e:en:MIA:20260231:8:10")).toBeNull();
     expect(decodeCallback("e:en:MIA:20260828:12:10")).toBeNull();
     expect(decodeCallback("e:en:MIA:20260828:9.3:10")).toBeNull();
-    expect(decodeCallback("e:en:MIA:20260828:9:10.5")).toBeNull();
+    expect(decodeCallback("e:en:MIA:20260828:9:10.3")).toBeNull();
+    expect(decodeCallback("e:en:MIA:20260828:9.25:9.25")).toBeNull();
     expect(decodeCallback("e:en:MIA:20260828:9:10:x")).toBeNull();
     expect(decodeCallback("e:en:MIA:20260828:9:10:")).toBeNull();
     expect(decodeCallback("qc:en:NOPE")).toBeNull();
@@ -397,9 +403,9 @@ describe("search card", () => {
     const keyboard = keyboardOf(edit);
     expect(labels(keyboard)).toEqual([
       ["⏱ Now · 09:15"],
-      ["10:00", "11:00", "12:00", "13:00"],
-      ["14:00", "15:00", "16:00", "17:00"],
-      ["18:00", "19:00"],
+      ["10:15", "11:15", "12:15", "13:15"],
+      ["14:15", "15:15", "16:15", "17:15"],
+      ["18:15", "19:15"],
       ["⬅ Back", "✖ Cancel"],
     ]);
     expect(decodeCallback(keyboard[0]![0]!.callback_data)).toMatchObject({ action: "start", startHour: 9.25 });
@@ -413,7 +419,8 @@ describe("search card", () => {
       deps(api, { now: () => SATURDAY_MORNING }),
     );
     const rows = labels(keyboardOf(api.calls[1]));
-    expect(rows[0]).toEqual(["08:00", "09:00", "10:00", "11:00"]);
+    expect(rows[0]).toEqual(["08:15", "09:15", "10:15", "11:15"]);
+    expect(rows.flat()).not.toContain("08:00");
     expect(rows.flat()).not.toContain("⏱ Now · 09:15");
   });
 
@@ -430,10 +437,11 @@ describe("search card", () => {
     expect(edit?.body.text).toBe("📍 Città Studi · 📅 Lun 26/10 · 🕐 17:15–…\n<b>Fino a che ora?</b>");
     const keyboard = keyboardOf(edit);
     expect(labels(keyboard)).toEqual([
-      ["18:00", "19:00"],
+      ["18:15", "19:15"],
       ["🏁 Fino a chiusura · 20:00"],
       ["⬅ Indietro", "✖ Annulla"],
     ]);
+    expect(decodeCallback(keyboard[0]![0]!.callback_data)).toMatchObject({ action: "end", endHour: 18.25 });
     expect(decodeCallback(keyboard[1]![0]!.callback_data)).toMatchObject({ action: "end", endHour: 20 });
     expect(decodeCallback(keyboard[2]![0]!.callback_data)).toMatchObject({ action: "date", date: "26/10/2026" });
   });
