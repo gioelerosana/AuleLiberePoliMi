@@ -1,6 +1,7 @@
 import { addRomeDays, romeQuarterHour, weekdayOf } from "./clock";
 import { formatTime } from "./format";
 import { escapeHtml, translations, type Language } from "./i18n";
+import { campusHasDrawingRooms } from "./rooms";
 import {
   CAMPUSES,
   DEFAULT_LOOKAHEAD,
@@ -39,13 +40,18 @@ export type SearchSource =
   | { kind: "range"; campus: string; date: string; startHour: number; endHour: number }
   | { kind: "quick"; campus: string; duration: number; lookahead: number };
 
-export interface ResultContext {
+/** Result filters toggled by the buttons under the results. */
+export interface SearchFilters {
+  powerOnly: boolean;
+  drawing: boolean;
+}
+
+export interface ResultContext extends SearchFilters {
   lang: Language;
   campus: string;
   date: string;
   startHour: number;
   endHour: number;
-  powerOnly: boolean;
   closed: boolean;
 }
 
@@ -143,30 +149,35 @@ export function resultHeader(context: ResultContext): string {
       `${formatTime(context.startHour)}–${formatTime(context.endHour)}</b>`,
   ];
   if (context.closed) lines.push(t.closed);
+  if (context.drawing) lines.push(t.drawingFilterActive);
   if (context.powerOnly) lines.push(t.powerFilterActive);
   return lines.join("\n");
 }
 
-export function resultsKeyboard(lang: Language, source: SearchSource, powerOnly: boolean): InlineKeyboard {
+export function resultsKeyboard(lang: Language, source: SearchSource, filters: SearchFilters): InlineKeyboard {
   const t = translations[lang];
+  const { powerOnly, drawing } = filters;
+  const changeTime = button(
+    t.changeTime,
+    source.kind === "range"
+      ? { action: "date", lang, campus: source.campus, date: source.date, fresh: true }
+      : { action: "quickCampus", lang, campus: source.campus, fresh: true },
+  );
+  // Campuses without drawing rooms would only ever show an empty list.
+  const roomKindToggle = campusHasDrawingRooms(source.campus)
+    ? [button(drawing ? t.lectureRooms : t.drawingRooms, repeatSearch(lang, source, { powerOnly, drawing: !drawing }))]
+    : [];
   return [
     [
-      button(t.refresh, repeatSearch(lang, source, powerOnly)),
-      button(powerOnly ? t.allRooms : t.powerOnly, repeatSearch(lang, source, !powerOnly)),
+      button(t.refresh, repeatSearch(lang, source, filters)),
+      button(powerOnly ? t.allRooms : t.powerOnly, repeatSearch(lang, source, { powerOnly: !powerOnly, drawing })),
     ],
-    [
-      button(
-        t.changeTime,
-        source.kind === "range"
-          ? { action: "date", lang, campus: source.campus, date: source.date, fresh: true }
-          : { action: "quickCampus", lang, campus: source.campus, fresh: true },
-      ),
-    ],
+    [...roomKindToggle, changeTime],
   ];
 }
 
-export function retryKeyboard(lang: Language, source: SearchSource, powerOnly: boolean): InlineKeyboard {
-  return [[button(translations[lang].retry, repeatSearch(lang, source, powerOnly))]];
+export function retryKeyboard(lang: Language, source: SearchSource, filters: SearchFilters): InlineKeyboard {
+  return [[button(translations[lang].retry, repeatSearch(lang, source, filters))]];
 }
 
 export function mainKeyboard(lang: Language, webappUrl: string, preferences?: Preferences) {
@@ -197,16 +208,16 @@ export function preferencesSummary(preferences: Preferences): string {
   return `📍 ${campusCrumb(preferences.campus)} · ${preferences.duration}h · ⏳ ${preferences.lookahead}h`;
 }
 
-function repeatSearch(lang: Language, source: SearchSource, powerOnly: boolean): CallbackState {
+function repeatSearch(lang: Language, source: SearchSource, filters: SearchFilters): CallbackState {
   return source.kind === "range"
-    ? { action: "end", lang, ...source, powerOnly, fresh: true }
+    ? { action: "end", lang, ...source, ...filters, fresh: true }
     : {
         action: "quick",
         lang,
         campus: source.campus,
         duration: source.duration,
         lookahead: source.lookahead,
-        powerOnly,
+        ...filters,
         fresh: true,
       };
 }

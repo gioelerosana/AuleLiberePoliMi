@@ -21,11 +21,13 @@ export type LocationName = keyof typeof LOCATIONS;
 /**
  * Optional flags carried as a trailing callback field:
  * - powerOnly: show only rooms with power plugs
+ * - drawing: show drawing rooms instead of lecture rooms
  * - fresh: the button sits under search results, so answer with a new
  *   message instead of editing the results away
  */
 export interface CallbackFlags {
   powerOnly?: boolean;
+  drawing?: boolean;
   fresh?: boolean;
 }
 
@@ -105,7 +107,7 @@ export function encodeCallback(state: CallbackState): string {
       base.push(state.campus, String(state.duration), String(state.lookahead));
       break;
   }
-  if ("fresh" in state || "powerOnly" in state) {
+  if ("fresh" in state || "powerOnly" in state || "drawing" in state) {
     const flags = encodeFlags(state);
     if (flags) base.push(flags);
   }
@@ -185,14 +187,16 @@ export function isValidLookahead(value: unknown): value is number {
 }
 
 function encodeFlags(flags: CallbackFlags): string {
-  return `${flags.powerOnly ? "p" : ""}${flags.fresh ? "n" : ""}`;
+  return `${flags.powerOnly ? "p" : ""}${flags.drawing ? "d" : ""}${flags.fresh ? "n" : ""}`;
 }
 
 function decodeFlags(raw: string | undefined): CallbackFlags | null {
   if (raw === undefined) return {};
-  if (!/^p?n?$/.test(raw) || raw === "") return null;
+  // Flags in fixed order, each at most once: matches "pdn" and "d", rejects "np".
+  if (!/^p?d?n?$/.test(raw) || raw === "") return null;
   const flags: CallbackFlags = {};
   if (raw.includes("p")) flags.powerOnly = true;
+  if (raw.includes("d")) flags.drawing = true;
   if (raw.includes("n")) flags.fresh = true;
   return flags;
 }

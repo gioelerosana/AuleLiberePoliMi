@@ -6,6 +6,7 @@ import {
 } from "./format";
 import { translations } from "./i18n";
 import { searchRooms, type FreeRoomsByBuilding } from "./polimi";
+import { roomKind } from "./rooms";
 import { handleTelegramUpdate, validateTelegramSecret } from "./telegram";
 import type {
   Env,
@@ -66,14 +67,15 @@ export async function searchAndFormat(request: SearchRequest): Promise<string[]>
     startTime: request.startHour,
     endTime: request.endHour,
     lookaheadHours: request.lookahead,
-    roomsWithPower: ROOM_IDS_WITH_POWER
+    roomsWithPower: ROOM_IDS_WITH_POWER,
+    roomKind
   });
   const t = translations[request.lang];
 
-  const freeMessages = formatRoomMessages(filterRooms(free, request.powerOnly), {
+  const freeMessages = formatRoomMessages(filterRooms(free, request), {
     maxLength: MESSAGE_BUDGET
   });
-  const freeingUpMessages = formatRoomMessages(filterRooms(freeingUp, request.powerOnly), {
+  const freeingUpMessages = formatRoomMessages(filterRooms(freeingUp, request), {
     timeLabel: t.freeingUpLabel,
     // Leave room for the section title prepended to the first message.
     maxLength: MESSAGE_BUDGET - FREEING_UP_TITLE_RESERVE
@@ -88,12 +90,16 @@ export async function searchAndFormat(request: SearchRequest): Promise<string[]>
   return packMessages([...head, ...section], MESSAGE_BUDGET);
 }
 
-function filterRooms(rooms: FreeRoomsByBuilding, powerOnly: boolean): FreeRoomsByBuilding {
-  if (!powerOnly) return rooms;
+/** Lecture or drawing rooms, optionally only those with power plugs. */
+function filterRooms(
+  rooms: FreeRoomsByBuilding,
+  { powerOnly, drawing }: Pick<SearchRequest, "powerOnly" | "drawing">
+): FreeRoomsByBuilding {
+  const kind = drawing ? "drawing" : "standard";
   return Object.fromEntries(
     Object.entries(rooms).map(([building, list]) => [
       building,
-      list.filter((room) => room.powerPlugs)
+      list.filter((room) => room.kind === kind && (!powerOnly || room.powerPlugs))
     ])
   );
 }

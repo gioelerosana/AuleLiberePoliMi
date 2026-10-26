@@ -37,6 +37,9 @@ export interface Translation {
   powerOnly: string;
   allRooms: string;
   powerFilterActive: string;
+  drawingRooms: string;
+  lectureRooms: string;
+  drawingFilterActive: string;
   changeTime: string;
 }
 
@@ -54,7 +57,7 @@ export const translations: Record<Language, Translation> = {
       "<b>Aule Libere PoliMi</b>\n\n" +
       "• <b>🕒 Ora</b>: cerca da adesso con campus e durata salvati nelle Preferenze\n" +
       "• <b>🔍 Cerca</b>: campus → giorno → orario\n" +
-      "• 🔌 indica le aule con prese\n\n" +
+      "• 🔌 indica le aule con prese, ✏️ mostra le aule da disegno\n\n" +
       `Codice su <a href="${GITHUB_URL}">GitHub</a> · bot originale di <b>Daniele Ferrazzo</b>.`,
     location: "Quale campus?",
     day: "Che giorno?",
@@ -90,6 +93,9 @@ export const translations: Record<Language, Translation> = {
     powerOnly: "🔌 Solo con prese",
     allRooms: "📋 Tutte le aule",
     powerFilterActive: "🔌 Solo aule con prese",
+    drawingRooms: "✏️ Aule da disegno",
+    lectureRooms: "🏫 Aule normali",
+    drawingFilterActive: "✏️ Aule da disegno",
     changeTime: "🕐 Cambia orario",
   },
   en: {
@@ -103,7 +109,7 @@ export const translations: Record<Language, Translation> = {
       "<b>Aule Libere PoliMi</b>\n\n" +
       "• <b>🕒 Now</b>: search from now with the campus and duration saved in Preferences\n" +
       "• <b>🔍 Search</b>: campus → day → time\n" +
-      "• 🔌 marks rooms with power plugs\n\n" +
+      "• 🔌 marks rooms with power plugs, ✏️ shows drawing rooms\n\n" +
       `Code on <a href="${GITHUB_URL}">GitHub</a> · original bot by <b>Daniele Ferrazzo</b>.`,
     location: "Which campus?",
     day: "Which day?",
@@ -139,6 +145,9 @@ export const translations: Record<Language, Translation> = {
     powerOnly: "🔌 Power plugs only",
     allRooms: "📋 All rooms",
     powerFilterActive: "🔌 Rooms with power plugs only",
+    drawingRooms: "✏️ Drawing rooms",
+    lectureRooms: "🏫 Lecture rooms",
+    drawingFilterActive: "✏️ Drawing rooms",
     changeTime: "🕐 Change time",
   },
 };

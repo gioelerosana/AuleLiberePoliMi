@@ -83,7 +83,8 @@ stack moderno e architettura stateless.
   sotto l'ultimo messaggio
 - I bottoni sotto i risultati hanno il flag `fresh` (`n` nel callback): non
   modificano i risultati ma ne mandano di nuovi, togliendo i bottoni vecchi;
-  il flag `p` attiva il filtro prese
+  il flag `p` attiva il filtro prese, `d` mostra le aule da disegno al posto
+  di quelle normali (il bottone manca nei campus senza aule da disegno)
 - Callback non validi o scaduti: toast con `answerCallbackQuery`, niente
   messaggi in chat
 - I comandi del menu `/` si registrano con `npm run commands:set`
@@ -107,9 +108,17 @@ stack moderno e architettura stateless.
 - `campuses.json`: campus mostrati nei menu, una voce per campus e niente
   singole vie; deve restare un sottoinsieme di `location.json`
 - `roomsWithPower.json`: ID delle aule con prese
-- `excludedRooms.json`: nomi delle aule pubblicate dal PoliMi ma non usabili
-  dagli studenti (corridoi, atri, laboratori, sale riunioni, biblioteca…);
-  il parser le scarta per nome in ogni campus
+- `roomTypes.json`: per ogni ID aula PoliMi campus, categoria e tipologia,
+  scaricate dalle schede aula con `npm run rooms:fetch` (snapshot statico,
+  da rilanciare quando il PoliMi aggiunge aule). `worker/src/rooms.ts`
+  classifica: *aula didattica* con platea frontale o informatizzata =
+  normale (mostrata di default), *aula didattica / disegno* = aula da disegno
+  (bottone `✏️ Aule da disegno` sotto i risultati), tutto il resto
+  (laboratori, aule convegni, aule magne, dipartimentali, aule studio, spazi
+  espositivi) viene scartato. Le aule assenti dallo snapshot contano come
+  normali
+- `excludedRooms.json`: esclusioni manuali per nome, solo per i casi che le
+  categorie non coprono (es. le aule `-D.I.`, che risultano aule da disegno)
 - Generano `worker/src/data.ts` e `webapp/settings/data.js` con
   `npm run data:generate`; check, test e deploy falliscono se le copie generate
   non sono aggiornate
@@ -188,11 +197,13 @@ Passi usati finora (seguirli nell'ordine):
 | `worker/src/telegram.ts` | Handler update, routing, scheda e ricerca |
 | `worker/src/screens.ts` | Schermate inline, tastiera persistente, label |
 | `worker/src/clock.ts` | Orari e date nel fuso Europe/Rome |
+| `worker/src/rooms.ts` | Classificazione aule: normali, disegno, escluse |
 | `worker/src/protocol.ts` | Callback compatti encode/decode, campus |
 | `worker/src/i18n.ts` | Traduzioni it/en |
 | `worker/src/polimi.ts` | Scraper aule libere (`fetch` + `HTMLRewriter`) |
 | `worker/scripts/dev-local.mjs` | Stack di sviluppo locale end-to-end |
 | `worker/scripts/set-commands.mjs` | Registra i comandi del menu `/` |
+| `worker/scripts/fetch-room-types.mjs` | Scarica categorie e tipologie aule |
 | `webapp/settings/` | Mini App statica (Cloudflare Pages) |
 | `worker/README.md` | Deploy, test locale, limiti Free |
 | `docs/TODO.md` | Tracking del rinnovamento |

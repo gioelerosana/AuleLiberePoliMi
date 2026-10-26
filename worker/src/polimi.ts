@@ -1,4 +1,5 @@
 import { EXCLUDED_ROOMS } from "./data";
+import type { ListedRoomKind, RoomKind } from "./rooms";
 
 export const POLIMI_OCCUPANCY_URL =
   "https://onlineservices.polimi.it/spazi/spazi/controller/OccupazioniGiornoEsatto.do";
@@ -29,7 +30,12 @@ export interface RoomOccupancy {
   link: string;
   lessons: Lesson[];
   powerPlugs: boolean;
+  kind: ListedRoomKind;
 }
+
+export type RoomClassifier = (roomId: number | undefined) => RoomKind;
+
+const EVERY_ROOM_STANDARD: RoomClassifier = () => "standard";
 
 export type OccupanciesByBuilding = Record<
   string,
@@ -41,6 +47,7 @@ export interface FreeRoom {
   link: string;
   until: number;
   powerPlugs: boolean;
+  kind: ListedRoomKind;
 }
 
 export type FreeRoomsByBuilding = Record<string, FreeRoom[]>;
@@ -66,6 +73,8 @@ export interface SearchFreeRoomsInput {
   lookaheadHours?: number;
   /** Static contents of roomsWithPower.json, bundled by the caller. */
   roomsWithPower: readonly number[];
+  /** Room classification from json/roomTypes.json; excluded rooms are dropped. */
+  roomKind?: RoomClassifier;
 }
 
 interface RewriterElement {
@@ -147,6 +156,7 @@ function consumeRow(
   occupancies: OccupanciesByBuilding,
   currentBuilding: { value: string },
   poweredRoomIds: ReadonlySet<number>,
+  classify: RoomClassifier,
 ): void {
   if (row.cells.length === 0) return;
 
@@ -173,14 +183,16 @@ function consumeRow(
       currentRoom = normalizeText(cell.anchorText).replace(/\s+/gu, "");
       if (!currentRoom || !cell.href) continue;
 
+      const roomId = roomIdFromHref(cell.href);
+      const kind = classify(roomId);
+      // Its lesson cells find no room below and are skipped.
+      if (kind === "excluded") continue;
       const rooms = (occupancies[currentBuilding.value] ??= {});
       rooms[currentRoom] ??= {
         link: absoluteRoomUrl(cell.href),
         lessons: [],
-        powerPlugs: (() => {
-          const roomId = roomIdFromHref(cell.href!);
-          return roomId !== undefined && poweredRoomIds.has(roomId);
-        })(),
+        powerPlugs: roomId !== undefined && poweredRoomIds.has(roomId),
+        kind,
       };
     } else if (cell.classes.includes("slot") && currentRoom) {
       const duration = Number.isFinite(cell.colspan) && cell.colspan > 0
@@ -217,6 +229,7 @@ export async function parseOccupancyResponse(
   response: Response,
   roomsWithPower: readonly number[],
   htmlRewriter?: HtmlRewriterConstructor,
+  classify: RoomClassifier = EVERY_ROOM_STANDARD,
 ): Promise<OccupanciesByBuilding> {
   const occupancies: OccupanciesByBuilding = { "-": {} };
   const currentBuilding = { value: "-" };
@@ -234,7 +247,7 @@ export async function parseOccupancyResponse(
         };
         currentRow = row;
         element.onEndTag(() => {
-          consumeRow(row, occupancies, currentBuilding, poweredRoomIds);
+          consumeRow(row, occupancies, currentBuilding, poweredRoomIds, classify);
           if (currentRow === row) currentRow = undefined;
         });
       },
@@ -384,6 +397,7 @@ export async function searchRooms(
       response,
       input.roomsWithPower,
       dependencies.htmlRewriter,
+      input.roomKind,
     );
     const free: FreeRoomsByBuilding = {};
     const freeingUp: FreeRoomsByBuilding = {};
@@ -400,6 +414,7 @@ export async function searchRooms(
             link: room.link,
             until: availability.until,
             powerPlugs: room.powerPlugs,
+            kind: room.kind,
           });
           continue;
         }
@@ -415,6 +430,7 @@ export async function searchRooms(
             link: room.link,
             until: freeAt,
             powerPlugs: room.powerPlugs,
+            kind: room.kind,
           });
         }
       }

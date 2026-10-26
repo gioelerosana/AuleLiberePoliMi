@@ -167,6 +167,8 @@ describe("stateless callback protocol", () => {
     expect(decodeCallback("q:en:MIA11:3:1")).toMatchObject({ lookahead: 1 });
     expect(decodeCallback("q:en:MIA11:3:p")).toMatchObject({ lookahead: 2, powerOnly: true });
     expect(decodeCallback("q:en:MIA11:3:5:pn")).toMatchObject({ lookahead: 5, powerOnly: true, fresh: true });
+    expect(decodeCallback("q:en:MIA11:3:5:pdn")).toMatchObject({ powerOnly: true, drawing: true, fresh: true });
+    expect(decodeCallback("q:en:MIA11:3:5:dp")).toBeNull();
   });
 
   it("offers only main campuses while resolving legacy site preferences", () => {
@@ -283,6 +285,7 @@ describe("persistent keyboard", () => {
       lang,
       lookahead,
       powerOnly: false,
+      drawing: false,
     });
     // One "searching" message, then edited into the results.
     expect(methods(api.calls)).toEqual(["sendMessage", "editMessageText"]);
@@ -472,6 +475,7 @@ describe("search card", () => {
       lang: "en",
       lookahead: 2,
       powerOnly: false,
+      drawing: false,
     });
     expect(methods(api.calls)).toEqual(["answerCallbackQuery", "editMessageText", "editMessageText"]);
     const header = "<b>📍 Città Studi · Fri 28/08 · 09:00–11:00</b>";
@@ -479,9 +483,17 @@ describe("search card", () => {
     const results = api.calls[2];
     expect(results?.body.text).toBe(`${header}\n\n<b>Building 1</b>\n• Room 1 → 12:15\n`);
     const keyboard = keyboardOf(results);
-    expect(labels(keyboard)).toEqual([["🔄 Refresh", "🔌 Power plugs only"], ["🕐 Change time"]]);
-    expect(decodeCallback(keyboard[0]![1]!.callback_data)).toEqual({ ...state, powerOnly: true, fresh: true });
-    expect(decodeCallback(keyboard[1]![0]!.callback_data)).toEqual({
+    expect(labels(keyboard)).toEqual([
+      ["🔄 Refresh", "🔌 Power plugs only"],
+      ["✏️ Drawing rooms", "🕐 Change time"],
+    ]);
+    expect(decodeCallback(keyboard[0]![1]!.callback_data)).toEqual({
+      ...state,
+      powerOnly: true,
+      fresh: true,
+    });
+    expect(decodeCallback(keyboard[1]![0]!.callback_data)).toEqual({ ...state, drawing: true, fresh: true });
+    expect(decodeCallback(keyboard[1]![1]!.callback_data)).toEqual({
       action: "date",
       lang: "en",
       campus: "MIA",
@@ -538,6 +550,41 @@ describe("search card", () => {
     expect(labels(keyboardOf(api.calls[3]))[0]).toEqual(["🔄 Aggiorna", "📋 Tutte le aule"]);
   });
 
+  it("switches to drawing rooms and back", async () => {
+    const api = telegramFetch({ sendMessage: { message_id: SENT_MESSAGE_ID } });
+    const search = vi.fn(async () => []);
+    const state = {
+      action: "end",
+      lang: "it",
+      campus: "MIA",
+      date: "28/10/2026",
+      startHour: 10,
+      endHour: 12,
+      drawing: true,
+      fresh: true,
+    } as const;
+    await handleTelegramUpdate(callbackUpdate(encodeCallback(state)), env, deps(api, { search }));
+
+    expect(search).toHaveBeenCalledWith(expect.objectContaining({ drawing: true, powerOnly: false }));
+    const results = api.calls.at(-1);
+    expect(String(results?.body.text)).toContain("</b>\n✏️ Aule da disegno");
+    const keyboard = keyboardOf(results);
+    expect(labels(keyboard)[1]).toEqual(["🏫 Aule normali", "🕐 Cambia orario"]);
+    expect(decodeCallback(keyboard[1]![0]!.callback_data)).toEqual({ ...state, drawing: undefined });
+  });
+
+  it("hides the drawing rooms button where a campus has none", async () => {
+    const api = telegramFetch();
+    await handleTelegramUpdate(
+      callbackUpdate(
+        encodeCallback({ action: "end", lang: "it", campus: "PCL", date: "28/10/2026", startHour: 10, endHour: 12 }),
+      ),
+      env,
+      deps(api),
+    );
+    expect(labels(keyboardOf(api.calls.at(-1)))[1]).toEqual(["🕐 Cambia orario"]);
+  });
+
   it("offers a retry button when the search fails", async () => {
     const api = telegramFetch();
     const search = vi.fn(async () => {
@@ -590,6 +637,7 @@ describe("search card", () => {
       lang: "it",
       lookahead: 2,
       powerOnly: false,
+      drawing: false,
     });
   });
 

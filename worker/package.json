@@ -15,6 +15,7 @@
     "dev:preview": "node scripts/dev-local.mjs --preview",
     "dev:webapp": "node scripts/dev-local.mjs --webapp-only",
     "commands:set": "node scripts/set-commands.mjs",
+    "rooms:fetch": "node scripts/fetch-room-types.mjs",
     "predeploy": "npm run data:check",
     "deploy": "wrangler deploy --keep-vars"
   },

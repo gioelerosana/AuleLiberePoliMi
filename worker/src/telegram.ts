@@ -7,6 +7,7 @@ import {
   campusCodeFromShortName,
   decodeCallback,
   isValidLookahead,
+  type CallbackFlags,
   type CallbackState,
 } from "./protocol";
 import {
@@ -23,6 +24,7 @@ import {
   type InlineKeyboard,
   type Preferences,
   type Screen,
+  type SearchFilters,
   type SearchSource,
 } from "./screens";
 
@@ -40,6 +42,8 @@ export interface SearchRequest {
   /** Hours after `startHour` within which to list rooms freeing up. */
   lookahead: number;
   powerOnly: boolean;
+  /** Drawing rooms instead of lecture rooms. */
+  drawing: boolean;
 }
 
 export interface TelegramDependencies {
@@ -206,7 +210,7 @@ export async function handleTelegramUpdate(
     if (nowLabel.preferences) {
       const { lang: labelLang, campus, duration, lookahead } = nowLabel.preferences;
       const source: SearchSource = { kind: "quick", campus, duration, lookahead };
-      await performSearch(api, deps, { chatId }, labelLang, source, false);
+      await performSearch(api, deps, { chatId }, labelLang, source, { powerOnly: false, drawing: false });
     } else {
       await showScreen(api, { chatId }, campusScreen(nowLabel.lang, true, false));
     }
@@ -278,10 +282,10 @@ const CALLBACK_HANDLERS: {
   start: ({ lang, campus, date, startHour }, { api, card }) =>
     showScreen(api, card, endScreen(lang, campus, date, startHour)),
   quickCampus: ({ lang, campus }, { api, card }) => showScreen(api, card, durationScreen(lang, campus)),
-  end: ({ lang, campus, date, startHour, endHour, powerOnly }, { api, deps, card }) =>
-    performSearch(api, deps, card, lang, { kind: "range", campus, date, startHour, endHour }, Boolean(powerOnly)),
-  quick: ({ lang, campus, duration, lookahead, powerOnly }, { api, deps, card }) =>
-    performSearch(api, deps, card, lang, { kind: "quick", campus, duration, lookahead }, Boolean(powerOnly)),
+  end: ({ lang, campus, date, startHour, endHour, ...flags }, { api, deps, card }) =>
+    performSearch(api, deps, card, lang, { kind: "range", campus, date, startHour, endHour }, searchFilters(flags)),
+  quick: ({ lang, campus, duration, lookahead, ...flags }, { api, deps, card }) =>
+    performSearch(api, deps, card, lang, { kind: "quick", campus, duration, lookahead }, searchFilters(flags)),
   info: ({ lang }, { api, chatId }) => api.sendMessage(chatId, translations[lang].info, HTML_OPTIONS),
   cancel: ({ lang }, { api, card }) => closeCard(api, card, lang),
 };
@@ -313,7 +317,7 @@ async function performSearch(
   card: Card,
   lang: Language,
   source: SearchSource,
-  powerOnly: boolean,
+  filters: SearchFilters,
 ): Promise<void> {
   const t = translations[lang];
   const slot = source.kind === "quick"
@@ -326,7 +330,7 @@ async function performSearch(
     endHour: slot.endHour,
     lang,
     lookahead: source.kind === "quick" ? source.lookahead : DEFAULT_LOOKAHEAD,
-    powerOnly,
+    ...filters,
   };
   const header = resultHeader({ ...request, closed: slot.closed });
   const searchCard = await showScreen(api, card, { text: `${header}\n\n${t.searching}` });
@@ -338,13 +342,13 @@ async function performSearch(
     console.error("Classroom search failed", error);
     await showScreen(api, searchCard, {
       text: `${header}\n\n${t.searchError}`,
-      keyboard: retryKeyboard(lang, source, powerOnly),
+      keyboard: retryKeyboard(lang, source, filters),
     });
     return;
   }
 
   const [first = t.noRooms, ...rest] = results.map((result) => result.trimStart());
-  const keyboard = resultsKeyboard(lang, source, powerOnly);
+  const keyboard = resultsKeyboard(lang, source, filters);
   await showScreen(api, searchCard, {
     text: `${header}\n\n${first}`,
     keyboard: rest.length ? undefined : keyboard,
@@ -453,6 +457,10 @@ function parsePreferences(raw: string | undefined): Preferences | null {
   } catch {
     return null;
   }
+}
+
+function searchFilters(flags: CallbackFlags): SearchFilters {
+  return { powerOnly: Boolean(flags.powerOnly), drawing: Boolean(flags.drawing) };
 }
 
 function isValidDuration(duration: number): boolean {

@@ -135,6 +135,9 @@ Legenda: `[ ]` da fare · `[~]` in corso · `[x]` fatto
       bottoni `🔄 Aggiorna`, `🔌 Solo con prese`, `🕐 Cambia orario`
 - [x] Preferenze salvate in un solo messaggio, benvenuto e `/info` più corti
 - [x] Comandi `/ora`, `/cerca`, `/info` (`npm run commands:set`)
+- [x] Esclusi corridoi, laboratori e sale non usabili
+- [x] Classificazione aule da `json/roomTypes.json` (`npm run rooms:fetch`):
+      escluse le aule non didattiche, aule da disegno dietro `✏️`
 - [ ] Verifica end-to-end sul bot di test
 - [ ] Merge su `main`, `npm run commands:set` e deploy del Worker
 

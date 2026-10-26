@@ -20,6 +20,22 @@ const excludedRooms = JSON.parse(
   await readFile(resolve(repositoryRoot, "json/excludedRooms.json"), "utf8"),
 );
 
+const roomTypes = JSON.parse(
+  await readFile(resolve(repositoryRoot, "json/roomTypes.json"), "utf8"),
+);
+
+const invalidRoomType = Object.entries(roomTypes).find(
+  ([id, room]) =>
+    !/^\d+$/.test(id) ||
+    typeof room?.campus !== "string" ||
+    typeof room?.category !== "string" ||
+    typeof room?.type !== "string",
+);
+if (invalidRoomType) {
+  console.error(`json/roomTypes.json: voce non valida per l'aula ${invalidRoomType[0]}`);
+  process.exit(1);
+}
+
 if (
   !Array.isArray(excludedRooms) ||
   excludedRooms.some((name) => typeof name !== "string" || !name) ||
@@ -47,8 +63,15 @@ export const CAMPUSES = ${JSON.stringify(campuses, null, 2)} as const;
 
 export const ROOM_IDS_WITH_POWER = ${JSON.stringify(roomsWithPower, null, 2)} as const;
 
-/** Rooms listed by PoliMi that students cannot use (corridors, labs, …). */
+/** Manual exclusions by room name, for cases the PoliMi categories miss. */
 export const EXCLUDED_ROOMS = new Set<string>(${JSON.stringify(excludedRooms, null, 2)});
+
+/** PoliMi room id → [campus code, category, typology] (json/roomTypes.json). */
+export const ROOM_TYPES: Record<string, readonly [string, string, string]> = ${JSON.stringify(
+  Object.fromEntries(
+    Object.entries(roomTypes).map(([id, room]) => [id, [room.campus, room.category, room.type]]),
+  ),
+)};
 
 export type LocationName = keyof typeof LOCATIONS;
 export type LocationCode = (typeof LOCATIONS)[LocationName];

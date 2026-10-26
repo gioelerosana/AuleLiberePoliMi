@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 // @ts-ignore Vite raw imports are resolved by the test runner.
 import fixtureHtml from "./fixtures/occupancies.html?raw";
 import { formatRoomMessages } from "../src/format";
+import { campusHasDrawingRooms, classifyRoom, type RoomKind } from "../src/rooms";
 import {
   freeingTime,
   isRoomFree,
@@ -102,18 +103,24 @@ class TestHTMLRewriter implements HtmlRewriterLike {
 const RuntimeHTMLRewriter: HtmlRewriterConstructor = TestHTMLRewriter;
 
 describe("PoliMi occupancy scraper", () => {
-  it("hides the rooms listed in json/excludedRooms.json", async () => {
+  it("drops excluded rooms and tags drawing rooms", async () => {
     const row = (id: number, name: string) =>
       `<tr class="normalRow"><td class="dove"><a href="DettaglioAula.do?idaula=${id}">${name}</a></td><td></td></tr>`;
     const html = `<div id="tableContainer"><table>
       <tr><td class="innerEdificio">Milano - Via - Edificio BL27</td></tr>
       ${row(1, "BL.27.1.1")}
-      ${row(2, "CORRIDOIODX1°P.-ED.BL.27")}
-      ${row(3, "FABLAB")}
-      ${row(4, "L.04VIRTUALLAB")}
+      ${row(2, "CORRIDOIO")}
+      ${row(3, "T.0.1")}
+      ${row(4, "L.05-D.I.")}
     </table></div>`;
-    const parsed = await parseOccupancyResponse(new Response(html), [], RuntimeHTMLRewriter);
-    expect(Object.keys(parsed["Edificio BL27"] ?? {})).toEqual(["BL.27.1.1"]);
+    const kinds: Record<number, RoomKind> = { 1: "standard", 2: "excluded", 3: "drawing", 4: "drawing" };
+    const parsed = await parseOccupancyResponse(new Response(html), [], RuntimeHTMLRewriter, (id) =>
+      id === undefined ? "standard" : kinds[id] ?? "standard",
+    );
+    const building = parsed["Edificio BL27"] ?? {};
+    // L.05-D.I. is excluded by name in json/excludedRooms.json.
+    expect(Object.keys(building)).toEqual(["BL.27.1.1", "T.0.1"]);
+    expect(building["T.0.1"]?.kind).toBe("drawing");
   });
 
   it("keeps the first building, parses quarter-hour slots and power plugs", async () => {
@@ -133,6 +140,7 @@ describe("PoliMi occupancy scraper", () => {
         { name: "Occupata", from: 9, to: 9.5 },
       ],
       powerPlugs: true,
+      kind: "standard",
     });
     expect(building["2.0.2"]?.powerPlugs).toBe(false);
     expect(building.PROVA_ASICT).toBeUndefined();
@@ -279,6 +287,24 @@ describe("PoliMi occupancy scraper", () => {
   });
 });
 
+describe("room classification", () => {
+  it("keeps lecture rooms, separates drawing rooms and drops the rest", () => {
+    expect(classifyRoom("AULA DIDATTICA", "PLATEA FRONTALE")).toBe("standard");
+    expect(classifyRoom("AULA DIDATTICA", "INFORMATIZZATA")).toBe("standard");
+    expect(classifyRoom("AULA DIDATTICA", "DISEGNO")).toBe("drawing");
+    expect(classifyRoom("AULA DIDATTICA", "ALTRO")).toBe("excluded");
+    expect(classifyRoom("AULA CONVEGNI", "PLATEA FRONTALE")).toBe("excluded");
+    expect(classifyRoom("LABORATORIO DIDATTICO", "ALTRO")).toBe("excluded");
+    expect(classifyRoom("AULA MAGNA", "PLATEA FRONTALE")).toBe("excluded");
+  });
+
+  it("knows which campuses have drawing rooms", () => {
+    expect(campusHasDrawingRooms("MIA")).toBe(true);
+    expect(campusHasDrawingRooms("MIA11")).toBe(true);
+    expect(campusHasDrawingRooms("PCL")).toBe(false);
+  });
+});
+
 describe("Telegram room formatting", () => {
   it("escapes external values and handles no results", () => {
     expect(
@@ -293,6 +319,7 @@ describe("Telegram room formatting", () => {
             link: 'https://example.test/?x=1&y="2"',
             until: 12,
             powerPlugs: true,
+            kind: "standard",
           },
         ],
       },
@@ -313,6 +340,7 @@ describe("Telegram room formatting", () => {
           link: "https://example.test/room",
           until: 20,
           powerPlugs: false,
+          kind: "standard",
         })),
       },
       {},
