@@ -5,9 +5,11 @@ import { describe, expect, it, vi } from "vitest";
 import fixtureHtml from "./fixtures/occupancies.html?raw";
 import { formatRoomMessages } from "../src/format";
 import {
+  freeingTime,
   isRoomFree,
   parseOccupancyResponse,
   searchFreeRooms,
+  searchRooms,
   type HtmlRewriterConstructor,
   type HtmlRewriterLike,
 } from "../src/polimi";
@@ -138,6 +140,62 @@ describe("PoliMi occupancy scraper", () => {
         10,
       ),
     ).toEqual({ free: true, until: 12 });
+  });
+
+  it("finds when a busy room frees up, following back-to-back lessons", () => {
+    const lessons = [
+      { name: "second", from: 10, to: 11 },
+      { name: "first", from: 8, to: 10 },
+      { name: "later", from: 12, to: 13 },
+    ];
+    expect(freeingTime(lessons, 9)).toBe(11);
+    expect(freeingTime(lessons, 10)).toBe(11);
+    expect(freeingTime(lessons, 11)).toBeNull();
+    expect(freeingTime(lessons, 7)).toBeNull();
+    expect(freeingTime([], 9)).toBeNull();
+  });
+
+  it("lists rooms freeing up one to two hours after the start", async () => {
+    // Grid starts at 07:45: one empty cell reaches 08:00, a slot cell is
+    // colspan / 4 hours long.
+    const row = (id: number, name: string, cells: string) =>
+      `<tr class="normalRow"><td class="dove"><a href="DettaglioAula.do?idaula=${id}">${name}</a></td>${cells}</tr>`;
+    const slot = (quarters: number) =>
+      `<td class="slot" colspan="${quarters}"><a>Lezione</a></td>`;
+    const html = `<div id="tableContainer"><table>
+      <tr><td class="innerEdificio">Milano - Via - Edificio 1</td></tr>
+      ${row(1, "frees-1h30", `<td></td>${slot(10)}`)}
+      ${row(2, "frees-in-3h", `<td></td>${slot(18)}`)}
+      ${row(3, "frees-in-30m", `<td></td>${slot(6)}`)}
+      ${row(4, "chained", `<td></td>${slot(8)}${slot(2)}`)}
+      ${row(5, "already-free", "")}
+    </table></div>`;
+
+    const result = await searchRooms(
+      {
+        location: "MIA",
+        day: 27,
+        month: 8,
+        year: 2026,
+        startTime: 9,
+        endTime: 10,
+        roomsWithPower: [],
+      },
+      {
+        fetch: vi.fn<typeof fetch>().mockResolvedValue(new Response(html)),
+        htmlRewriter: RuntimeHTMLRewriter,
+      },
+    );
+
+    expect(result.free["Edificio 1"]?.map((room) => room.name)).toEqual([
+      "already-free",
+    ]);
+    expect(
+      result.freeingUp["Edificio 1"]?.map((room) => [room.name, room.until]),
+    ).toEqual([
+      ["frees-1h30", 10.5],
+      ["chained", 10.5],
+    ]);
   });
 
   it("checks HTTP status and builds the expected upstream query", async () => {

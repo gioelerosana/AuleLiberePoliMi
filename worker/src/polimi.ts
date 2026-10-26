@@ -6,6 +6,9 @@ const POLIMI_CONTROLLER_URL =
 const QUARTER_HOUR = 0.25;
 const FIRST_GRID_TIME = 7.75;
 const LAST_OPENING_TIME = 20;
+// Rooms freeing up this many hours after the search start are worth listing.
+const FREEING_WINDOW_FROM = 1;
+const FREEING_WINDOW_TO = 2;
 const DEFAULT_TIMEOUT_MS = 20_000;
 const GARBAGE_ROOMS = new Set(["PROVA_ASICT", "2.2.1-D.I.", "OSVALDODEDONATO"]);
 const UPSTREAM_HEADERS = {
@@ -42,6 +45,16 @@ export interface FreeRoom {
 }
 
 export type FreeRoomsByBuilding = Record<string, FreeRoom[]>;
+
+/** Rooms and lookahead produced by a single upstream fetch. */
+export interface RoomSearchResult {
+  free: FreeRoomsByBuilding;
+  /**
+   * Rooms busy at `startTime` that become free between one and two hours
+   * later. `until` holds the time the room frees up, not the end of a gap.
+   */
+  freeingUp: FreeRoomsByBuilding;
+}
 
 export interface SearchFreeRoomsInput {
   location: string;
@@ -285,6 +298,26 @@ export function isRoomFree(
   return { free: true, until };
 }
 
+/**
+ * Time at which a room busy at `time` becomes free, following back-to-back
+ * lessons. Returns null when the room is already free at `time`.
+ */
+export function freeingTime(
+  lessons: readonly Lesson[],
+  time: number,
+): number | null {
+  const sortedLessons = [...lessons].sort((a, b) => a.from - b.from);
+  let freeAt = time;
+  let busy = false;
+  for (const lesson of sortedLessons) {
+    if (lesson.from <= freeAt && lesson.to > freeAt) {
+      freeAt = lesson.to;
+      busy = true;
+    }
+  }
+  return busy ? freeAt : null;
+}
+
 function validateSearchInput(input: SearchFreeRoomsInput): void {
   if (!input.location.trim()) throw new TypeError("location must not be empty");
   for (const key of ["day", "month", "year", "startTime", "endTime"] as const) {
@@ -300,6 +333,17 @@ export async function searchFreeRooms(
   input: SearchFreeRoomsInput,
   dependencies: SearchDependencies = {},
 ): Promise<FreeRoomsByBuilding> {
+  return (await searchRooms(input, dependencies)).free;
+}
+
+/**
+ * Like {@link searchFreeRooms}, and also lists the rooms that free up between
+ * one and two hours after `startTime`, from the same upstream fetch.
+ */
+export async function searchRooms(
+  input: SearchFreeRoomsInput,
+  dependencies: SearchDependencies = {},
+): Promise<RoomSearchResult> {
   validateSearchInput(input);
   const requestUrl = new URL(
     dependencies.upstreamUrl ?? POLIMI_OCCUPANCY_URL,
@@ -336,7 +380,8 @@ export async function searchFreeRooms(
       input.roomsWithPower,
       dependencies.htmlRewriter,
     );
-    const freeRooms: FreeRoomsByBuilding = {};
+    const free: FreeRoomsByBuilding = {};
+    const freeingUp: FreeRoomsByBuilding = {};
     for (const [building, rooms] of Object.entries(occupancies)) {
       for (const [name, room] of Object.entries(rooms)) {
         const availability = isRoomFree(
@@ -344,16 +389,33 @@ export async function searchFreeRooms(
           input.startTime,
           input.endTime,
         );
-        if (!availability.free || availability.until === null) continue;
-        (freeRooms[building] ??= []).push({
-          name,
-          link: room.link,
-          until: availability.until,
-          powerPlugs: room.powerPlugs,
-        });
+        if (availability.free && availability.until !== null) {
+          (free[building] ??= []).push({
+            name,
+            link: room.link,
+            until: availability.until,
+            powerPlugs: room.powerPlugs,
+          });
+          continue;
+        }
+
+        const freeAt = freeingTime(room.lessons, input.startTime);
+        if (
+          freeAt !== null &&
+          freeAt >= input.startTime + FREEING_WINDOW_FROM &&
+          freeAt <= input.startTime + FREEING_WINDOW_TO &&
+          freeAt < LAST_OPENING_TIME
+        ) {
+          (freeingUp[building] ??= []).push({
+            name,
+            link: room.link,
+            until: freeAt,
+            powerPlugs: room.powerPlugs,
+          });
+        }
       }
     }
-    return freeRooms;
+    return { free, freeingUp };
   } finally {
     clearTimeout(timeout);
   }

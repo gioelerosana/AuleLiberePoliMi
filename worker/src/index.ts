@@ -1,6 +1,7 @@
 import { ROOM_IDS_WITH_POWER } from "./data";
-import { formatRoomMessages } from "./format";
-import { searchFreeRooms } from "./polimi";
+import { TELEGRAM_MAX_MESSAGE_LENGTH, formatRoomMessages } from "./format";
+import { translations } from "./i18n";
+import { searchRooms } from "./polimi";
 import { handleTelegramUpdate, validateTelegramSecret } from "./telegram";
 import type {
   Env,
@@ -10,6 +11,7 @@ import type {
 } from "./types";
 
 const JSON_HEADERS = { "content-type": "application/json; charset=utf-8" };
+const FREEING_UP_TITLE_RESERVE = 100;
 const SECRET_PATTERN = /^[A-Za-z0-9_-]{16,128}$/;
 
 type UpdateHandler = (
@@ -50,7 +52,7 @@ function parseDate(value: string): { day: number; month: number; year: number } 
 
 export async function searchAndFormat(request: SearchRequest): Promise<string[]> {
   const { day, month, year } = parseDate(request.date);
-  const rooms = await searchFreeRooms({
+  const { free, freeingUp } = await searchRooms({
     location: request.campus,
     day,
     month,
@@ -59,10 +61,26 @@ export async function searchAndFormat(request: SearchRequest): Promise<string[]>
     endTime: request.endHour,
     roomsWithPower: ROOM_IDS_WITH_POWER
   });
+  const t = translations[request.lang];
 
-  return formatRoomMessages(rooms, {
+  const freeMessages = formatRoomMessages(free, {
     untilLabel: request.lang === "it" ? "fino alle" : "free until"
   });
+  const freeingUpMessages = formatRoomMessages(freeingUp, {
+    untilLabel: t.freeingUpLabel,
+    // Leave room for the title prepended to the first message.
+    maxLength: TELEGRAM_MAX_MESSAGE_LENGTH - FREEING_UP_TITLE_RESERVE
+  });
+  if (freeingUpMessages.length === 0) return freeMessages;
+
+  // Keep the "no free rooms" notice: the lookahead alone must not hide it.
+  const head = freeMessages.length > 0 ? freeMessages : [t.noRooms];
+  return [
+    ...head,
+    ...freeingUpMessages.map((message, index) =>
+      index === 0 ? `<b>${t.freeingUpTitle}</b>\n${message}` : message
+    )
+  ];
 }
 
 const productionDependencies: RuntimeDependencies = {
