@@ -621,6 +621,77 @@ describe("search card", () => {
     expect(labels(keyboardOf(results))[1]).toEqual(["✏️ Aule da disegno", "🎯 Zona centrale"]);
   });
 
+  it("keeps the filters when changing the time of a range search", async () => {
+    const api = telegramFetch({ sendMessage: { message_id: SENT_MESSAGE_ID } });
+    const filters = { powerOnly: true, drawing: true, allZones: true } as const;
+    const state = { action: "end", lang: "it", campus: "MIA", date: "28/10/2026", startHour: 10.25, endHour: 12.25 } as const;
+    await handleTelegramUpdate(callbackUpdate(encodeCallback({ ...state, ...filters })), env, deps(api));
+    const changeTime = keyboardOf(api.calls.at(-1)).at(-1)![0]!;
+    expect(changeTime.text).toBe("🕐 Cambia orario");
+    expect(decodeCallback(changeTime.callback_data)).toEqual({
+      action: "date",
+      lang: "it",
+      campus: "MIA",
+      date: "28/10/2026",
+      ...filters,
+      fresh: true,
+    });
+
+    // date → start → end: every step carries the filters, none is fresh.
+    api.calls.length = 0;
+    await handleTelegramUpdate(callbackUpdate(changeTime.callback_data), env, deps(api));
+    const startKeyboard = keyboardOf(api.calls.at(-1));
+    const start = decodeCallback(startKeyboard[0]![0]!.callback_data);
+    expect(start).toEqual({ action: "start", lang: "it", campus: "MIA", date: "28/10/2026", startHour: 8.25, ...filters });
+    expect(decodeCallback(startKeyboard.at(-1)![0]!.callback_data)).toEqual({
+      action: "campus",
+      lang: "it",
+      campus: "MIA",
+      ...filters,
+    });
+
+    api.calls.length = 0;
+    await handleTelegramUpdate(callbackUpdate(startKeyboard[0]![0]!.callback_data), env, deps(api));
+    const endKeyboard = keyboardOf(api.calls.at(-1));
+    const end = endKeyboard[0]![0]!.callback_data;
+    expect(decodeCallback(end)).toEqual({ ...state, startHour: 8.25, endHour: 9.25, ...filters });
+    expect(decodeCallback(endKeyboard.at(-1)![0]!.callback_data)).toMatchObject({ action: "date", ...filters });
+
+    const search = vi.fn(async () => []);
+    await handleTelegramUpdate(callbackUpdate(end), env, deps(api, { search }));
+    expect(search).toHaveBeenCalledWith(expect.objectContaining(filters));
+  });
+
+  it("keeps the filters when changing the duration of a quick search", async () => {
+    const api = telegramFetch();
+    await handleTelegramUpdate(
+      callbackUpdate(encodeCallback({ action: "quickCampus", lang: "en", campus: "MIB", drawing: true, fresh: true })),
+      env,
+      deps(api),
+    );
+    const duration = keyboardOf(api.calls.at(-1))[0]![0]!;
+    expect(decodeCallback(duration.callback_data)).toEqual({
+      action: "quick",
+      lang: "en",
+      campus: "MIB",
+      duration: 1,
+      lookahead: 2,
+      drawing: true,
+    });
+  });
+
+  it("keeps the filtered pickers under 64 bytes and decodes older ones without flags", () => {
+    const worst = [
+      encodeCallback({ action: "end", lang: "it", campus: "MIA11", date: "28/10/2026", startHour: 18.25, endHour: 19.25, powerOnly: true, drawing: true, allZones: true, fresh: true }),
+      encodeCallback({ action: "start", lang: "it", campus: "MIA11", date: "28/10/2026", startHour: 19.75, powerOnly: true, drawing: true, allZones: true }),
+    ];
+    expect(worst).toEqual(["e:it:MIA11:20261028:18.25:19.25:pdzn", "b:it:MIA11:20261028:19.75:pdz"]);
+    for (const value of worst) expect(new TextEncoder().encode(value).length).toBeLessThanOrEqual(CALLBACK_DATA_LIMIT);
+    expect(decodeCallback("b:it:MIA:20261028:9")).toEqual({ action: "start", lang: "it", campus: "MIA", date: "28/10/2026", startHour: 9 });
+    expect(decodeCallback("c:it:MIA")).toEqual({ action: "campus", lang: "it", campus: "MIA" });
+    expect(decodeCallback("c:it:MIA:x")).toBeNull();
+  });
+
   it("offers a retry button when the search fails", async () => {
     const api = telegramFetch();
     const search = vi.fn(async () => {

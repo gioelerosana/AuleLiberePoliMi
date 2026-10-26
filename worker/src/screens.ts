@@ -41,7 +41,10 @@ export type SearchSource =
   | { kind: "range"; campus: string; date: string; startHour: number; endHour: number }
   | { kind: "quick"; campus: string; duration: number; lookahead: number };
 
-/** Result filters toggled by the buttons under the results. */
+/**
+ * Result filters toggled by the buttons under the results. After
+ * "🕐 Change time" the pickers carry them up to the new search.
+ */
 export interface SearchFilters {
   powerOnly: boolean;
   drawing: boolean;
@@ -87,7 +90,12 @@ export function campusScreen(lang: Language, quick: boolean, more: boolean): Scr
   return { text: `<b>${t.location}</b>`, keyboard };
 }
 
-export function dayScreen(lang: Language, campus: string, now: Date): Screen {
+export function dayScreen(
+  lang: Language,
+  campus: string,
+  now: Date,
+  filters: SearchFilters = DEFAULT_FILTERS,
+): Screen {
   const t = translations[lang];
   const relativeDays = [t.today, t.tomorrow];
   const buttons = range(0, DAYS_AHEAD)
@@ -96,7 +104,7 @@ export function dayScreen(lang: Language, campus: string, now: Date): Screen {
     .map(({ offset, date }) => {
       const label =
         relativeDays[offset] ?? `${t.weekdays[weekdayOf(date)]} ${Number(date.slice(0, DAY_LENGTH))}`;
-      return button(label, { action: "date", lang, campus, date });
+      return button(label, { action: "date", lang, campus, date, ...filters });
     });
   return {
     text: question(breadcrumb(lang, { campus }), t.day),
@@ -104,11 +112,24 @@ export function dayScreen(lang: Language, campus: string, now: Date): Screen {
   };
 }
 
-export function startScreen(lang: Language, campus: string, date: string, now: Date): Screen {
+export function startScreen(
+  lang: Language,
+  campus: string,
+  date: string,
+  now: Date,
+  filters: SearchFilters = DEFAULT_FILTERS,
+): Screen {
   const t = translations[lang];
   const nowHour = romeQuarterHour(now);
   const openNow = date === addRomeDays(now, 0) && nowHour >= MIN_HOUR && nowHour < MAX_HOUR;
-  const startState = (startHour: number): CallbackState => ({ action: "start", lang, campus, date, startHour });
+  const startState = (startHour: number): CallbackState => ({
+    action: "start",
+    lang,
+    campus,
+    date,
+    startHour,
+    ...filters,
+  });
   // Earlier hours of today are useless: start from the next lesson slot.
   const hours = lessonTimes(MIN_HOUR)
     .filter((hour) => !openNow || hour > nowHour)
@@ -116,13 +137,27 @@ export function startScreen(lang: Language, campus: string, date: string, now: D
   const rows: InlineKeyboard = openNow
     ? [[button(`${t.fromNow} · ${formatTime(nowHour)}`, startState(nowHour))]]
     : [];
-  rows.push(...chunk(hours, HOUR_COLUMNS), navRow(lang, { action: "campus", lang, campus }));
+  rows.push(...chunk(hours, HOUR_COLUMNS), navRow(lang, { action: "campus", lang, campus, ...filters }));
   return { text: question(breadcrumb(lang, { campus, date }), t.startingTime), keyboard: rows };
 }
 
-export function endScreen(lang: Language, campus: string, date: string, startHour: number): Screen {
+export function endScreen(
+  lang: Language,
+  campus: string,
+  date: string,
+  startHour: number,
+  filters: SearchFilters = DEFAULT_FILTERS,
+): Screen {
   const t = translations[lang];
-  const endState = (endHour: number): CallbackState => ({ action: "end", lang, campus, date, startHour, endHour });
+  const endState = (endHour: number): CallbackState => ({
+    action: "end",
+    lang,
+    campus,
+    date,
+    startHour,
+    endHour,
+    ...filters,
+  });
   const hours = lessonTimes(MIN_HOUR + 1)
     .filter((hour) => hour > startHour)
     .map((hour) => button(formatTime(hour), endState(hour)));
@@ -131,15 +166,19 @@ export function endScreen(lang: Language, campus: string, date: string, startHou
     keyboard: [
       ...chunk(hours, HOUR_COLUMNS),
       [button(`${t.untilClosing} · ${formatTime(MAX_HOUR)}`, endState(MAX_HOUR))],
-      navRow(lang, { action: "date", lang, campus, date }),
+      navRow(lang, { action: "date", lang, campus, date, ...filters }),
     ],
   };
 }
 
-export function durationScreen(lang: Language, campus: string): Screen {
+export function durationScreen(
+  lang: Language,
+  campus: string,
+  filters: SearchFilters = DEFAULT_FILTERS,
+): Screen {
   const t = translations[lang];
   const buttons = range(1, MAX_DURATION + 1).map((duration) =>
-    button(`${duration}h`, { action: "quick", lang, campus, duration, lookahead: DEFAULT_LOOKAHEAD }),
+    button(`${duration}h`, { action: "quick", lang, campus, duration, lookahead: DEFAULT_LOOKAHEAD, ...filters }),
   );
   return {
     text: question(breadcrumb(lang, { campus, quick: true }), t.quickDuration),
@@ -168,8 +207,8 @@ export function resultsKeyboard(lang: Language, source: SearchSource, filters: S
   const changeTime = button(
     t.changeTime,
     source.kind === "range"
-      ? { action: "date", lang, campus: source.campus, date: source.date, fresh: true }
-      : { action: "quickCampus", lang, campus: source.campus, fresh: true },
+      ? { action: "date", lang, campus: source.campus, date: source.date, ...filters, fresh: true }
+      : { action: "quickCampus", lang, campus: source.campus, ...filters, fresh: true },
   );
   // Campuses without drawing rooms or zones would only show a useless toggle.
   const roomKindToggle = campusHasDrawingRooms(source.campus)

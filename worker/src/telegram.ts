@@ -313,12 +313,14 @@ const CALLBACK_HANDLERS: {
 } = {
   search: ({ lang }, { api, card }) => showScreen(api, card, campusScreen(lang, false, false)),
   campusMenu: ({ lang, quick, more }, { api, card }) => showScreen(api, card, campusScreen(lang, quick, more)),
-  campus: ({ lang, campus }, { api, card, now }) => showScreen(api, card, dayScreen(lang, campus, now)),
-  date: ({ lang, campus, date }, { api, card, now }) =>
-    showScreen(api, card, startScreen(lang, campus, date, now)),
-  start: ({ lang, campus, date, startHour }, { api, card }) =>
-    showScreen(api, card, endScreen(lang, campus, date, startHour)),
-  quickCampus: ({ lang, campus }, { api, card }) => showScreen(api, card, durationScreen(lang, campus)),
+  campus: ({ lang, campus, ...flags }, { api, card, now }) =>
+    showScreen(api, card, dayScreen(lang, campus, now, searchFilters(flags))),
+  date: ({ lang, campus, date, ...flags }, { api, card, now }) =>
+    showScreen(api, card, startScreen(lang, campus, date, now, searchFilters(flags))),
+  start: ({ lang, campus, date, startHour, ...flags }, { api, card }) =>
+    showScreen(api, card, endScreen(lang, campus, date, startHour, searchFilters(flags))),
+  quickCampus: ({ lang, campus, ...flags }, { api, card }) =>
+    showScreen(api, card, durationScreen(lang, campus, searchFilters(flags))),
   end: ({ lang, campus, date, startHour, endHour, ...flags }, { api, deps, card }) =>
     performSearch(api, deps, card, lang, { kind: "range", campus, date, startHour, endHour }, searchFilters(flags)),
   quick: ({ lang, campus, duration, lookahead, ...flags }, { api, deps, card }) =>

@@ -35,15 +35,15 @@ export interface CallbackFlags {
 
 export type CallbackState =
   | { action: "search"; lang: Language }
-  | { action: "campus"; lang: Language; campus: string }
+  | ({ action: "campus"; lang: Language; campus: string } & CallbackFlags)
   | ({ action: "date"; lang: Language; campus: string; date: string } & CallbackFlags)
-  | {
+  | ({
       action: "start";
       lang: Language;
       campus: string;
       date: string;
       startHour: number;
-    }
+    } & CallbackFlags)
   | ({
       action: "end";
       lang: Language;
@@ -137,29 +137,28 @@ export function decodeCallback(value: string): CallbackState | null {
 
   const campus = parts[2];
   if (!campus || !isCampusCode(campus)) return null;
-  if (code === "c" && parts.length === 3)
-    return { action: "campus", lang, campus };
-  if (code === "b" && parts.length === 5) {
-    const date = expandDate(parts[3]!);
-    const startHour = parseHour(parts[4]!, MIN_HOUR, MAX_HOUR - QUARTER, QUARTER);
-    return date && startHour !== null
-      ? { action: "start", lang, campus, date, startHour }
-      : null;
-  }
-
   // Quick buttons sent before the lookahead existed carry no lookahead part.
   // Digits only: matches "4", rejects the flags field "pn".
   const hasLookahead = code === "q" && /^\d+$/.test(parts[4] ?? "");
-  // The remaining actions accept one optional trailing flags field.
-  const baseLength = { qc: 3, d: 4, q: hasLookahead ? 5 : 4, e: 6 }[code ?? ""];
+  // The remaining actions accept one optional trailing flags field; buttons
+  // of older messages may lack it.
+  const baseLength = { c: 3, qc: 3, d: 4, b: 5, q: hasLookahead ? 5 : 4, e: 6 }[code ?? ""];
   if (!baseLength || (parts.length !== baseLength && parts.length !== baseLength + 1))
     return null;
   const flags = decodeFlags(parts[baseLength]);
   if (!flags) return null;
+  if (code === "c") return { action: "campus", lang, campus, ...flags };
   if (code === "qc") return { action: "quickCampus", lang, campus, ...flags };
   if (code === "d") {
     const date = expandDate(parts[3]!);
     return date ? { action: "date", lang, campus, date, ...flags } : null;
+  }
+  if (code === "b") {
+    const date = expandDate(parts[3]!);
+    const startHour = parseHour(parts[4]!, MIN_HOUR, MAX_HOUR - QUARTER, QUARTER);
+    return date && startHour !== null
+      ? { action: "start", lang, campus, date, startHour, ...flags }
+      : null;
   }
   if (code === "e") {
     const date = expandDate(parts[3]!);
