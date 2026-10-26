@@ -213,6 +213,35 @@ export const ROOM_IDS_WITH_POWER = [
   4788
 ] as const;
 
+/** Rooms listed by PoliMi that students cannot use (corridors, labs, …). */
+export const EXCLUDED_ROOMS = new Set<string>([
+  "PROVA_ASICT",
+  "OSVALDODEDONATO",
+  "2.2.1-D.I.",
+  "2.2.5-VIRTUALLAB",
+  "Z.1D.I.",
+  "B2.0.1-D.I.",
+  "L.04VIRTUALLAB",
+  "L.05-D.I.",
+  "ATRIOP.T.-ED.BL.27",
+  "CORRIDOIODXP.T.-ED.BL27",
+  "CORRIDOIOSXP.T.-ED.BL27",
+  "ATRIO1°PIANO-ED.BL.27",
+  "CORRIDOIODX1°P.-ED.BL.27",
+  "CORRIDOIOSX1°P.-ED.BL.27",
+  "BIBLIOTECA",
+  "FABLAB",
+  "LABORATORIOEXTREMEDESIGN",
+  "LABORATORIOIEM",
+  "LABORATORIOMODELLISTICA",
+  "SALARIUNIONI1BACCIOCCHI",
+  "SALARIUNIONI2BACCIOCCHI",
+  "SPAZIOLAVOROSTUDENTI",
+  "THESILAB",
+  "LABORATORIO1",
+  "SALARIUNIONIGINOMARCHET"
+]);
+
 export type LocationName = keyof typeof LOCATIONS;
 export type LocationCode = (typeof LOCATIONS)[LocationName];
 export type CampusName = keyof typeof CAMPUSES;

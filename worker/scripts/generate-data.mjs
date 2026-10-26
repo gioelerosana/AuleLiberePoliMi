@@ -16,6 +16,18 @@ const campuses = JSON.parse(
 const roomsWithPower = JSON.parse(
   await readFile(resolve(repositoryRoot, "json/roomsWithPower.json"), "utf8"),
 );
+const excludedRooms = JSON.parse(
+  await readFile(resolve(repositoryRoot, "json/excludedRooms.json"), "utf8"),
+);
+
+if (
+  !Array.isArray(excludedRooms) ||
+  excludedRooms.some((name) => typeof name !== "string" || !name) ||
+  new Set(excludedRooms).size !== excludedRooms.length
+) {
+  console.error("json/excludedRooms.json: deve essere un array di nomi di aula distinti");
+  process.exit(1);
+}
 
 for (const [name, code] of Object.entries(campuses)) {
   if (locations[name] !== code) {
@@ -34,6 +46,9 @@ export const LOCATIONS = ${JSON.stringify(locations, null, 2)} as const;
 export const CAMPUSES = ${JSON.stringify(campuses, null, 2)} as const;
 
 export const ROOM_IDS_WITH_POWER = ${JSON.stringify(roomsWithPower, null, 2)} as const;
+
+/** Rooms listed by PoliMi that students cannot use (corridors, labs, …). */
+export const EXCLUDED_ROOMS = new Set<string>(${JSON.stringify(excludedRooms, null, 2)});
 
 export type LocationName = keyof typeof LOCATIONS;
 export type LocationCode = (typeof LOCATIONS)[LocationName];

@@ -107,6 +107,9 @@ stack moderno e architettura stateless.
 - `campuses.json`: campus mostrati nei menu, una voce per campus e niente
   singole vie; deve restare un sottoinsieme di `location.json`
 - `roomsWithPower.json`: ID delle aule con prese
+- `excludedRooms.json`: nomi delle aule pubblicate dal PoliMi ma non usabili
+  dagli studenti (corridoi, atri, laboratori, sale riunioni, biblioteca…);
+  il parser le scarta per nome in ogni campus
 - Generano `worker/src/data.ts` e `webapp/settings/data.js` con
   `npm run data:generate`; check, test e deploy falliscono se le copie generate
   non sono aggiornate

@@ -1,3 +1,5 @@
+import { EXCLUDED_ROOMS } from "./data";
+
 export const POLIMI_OCCUPANCY_URL =
   "https://onlineservices.polimi.it/spazi/spazi/controller/OccupazioniGiornoEsatto.do";
 
@@ -8,7 +10,6 @@ const FIRST_GRID_TIME = 7.75;
 const LAST_OPENING_TIME = 20;
 const DEFAULT_LOOKAHEAD_HOURS = 2;
 const DEFAULT_TIMEOUT_MS = 20_000;
-const GARBAGE_ROOMS = new Set(["PROVA_ASICT", "2.2.1-D.I.", "OSVALDODEDONATO"]);
 const UPSTREAM_HEADERS = {
   Accept: "text/html,application/xhtml+xml",
   "Accept-Language": "it-IT,it;q=0.9,en;q=0.8",
@@ -276,7 +277,7 @@ export async function parseOccupancyResponse(
 
   if (Object.keys(occupancies["-"] ?? {}).length === 0) delete occupancies["-"];
   for (const rooms of Object.values(occupancies)) {
-    for (const garbageRoom of GARBAGE_ROOMS) delete rooms[garbageRoom];
+    for (const excludedRoom of EXCLUDED_ROOMS) delete rooms[excludedRoom];
   }
   return occupancies;
 }

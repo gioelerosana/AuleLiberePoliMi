@@ -102,6 +102,20 @@ class TestHTMLRewriter implements HtmlRewriterLike {
 const RuntimeHTMLRewriter: HtmlRewriterConstructor = TestHTMLRewriter;
 
 describe("PoliMi occupancy scraper", () => {
+  it("hides the rooms listed in json/excludedRooms.json", async () => {
+    const row = (id: number, name: string) =>
+      `<tr class="normalRow"><td class="dove"><a href="DettaglioAula.do?idaula=${id}">${name}</a></td><td></td></tr>`;
+    const html = `<div id="tableContainer"><table>
+      <tr><td class="innerEdificio">Milano - Via - Edificio BL27</td></tr>
+      ${row(1, "BL.27.1.1")}
+      ${row(2, "CORRIDOIODX1°P.-ED.BL.27")}
+      ${row(3, "FABLAB")}
+      ${row(4, "L.04VIRTUALLAB")}
+    </table></div>`;
+    const parsed = await parseOccupancyResponse(new Response(html), [], RuntimeHTMLRewriter);
+    expect(Object.keys(parsed["Edificio BL27"] ?? {})).toEqual(["BL.27.1.1"]);
+  });
+
   it("keeps the first building, parses quarter-hour slots and power plugs", async () => {
     const parsed = await parseOccupancyResponse(
       new Response(fixtureHtml, { headers: { "content-type": "text/html" } }),
