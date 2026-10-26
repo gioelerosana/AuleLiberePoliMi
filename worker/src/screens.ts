@@ -198,7 +198,7 @@ export function resultHeader(context: ResultContext): string {
   ];
   if (context.closed) lines.push(t.closed(dayCrumb(context.lang, context.date), formatTime(context.startHour)));
   if (context.allZones && campusHasZones(context.campus)) lines.push(t.allZonesActive);
-  if (context.drawing) lines.push(t.drawingFilterActive);
+  if (context.drawing) lines.push(t.drawingRooms);
   if (context.powerOnly) lines.push(t.powerFilterActive);
   return lines.join("\n");
 }

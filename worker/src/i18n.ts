@@ -41,7 +41,6 @@ export interface Translation {
   powerFilterActive: string;
   drawingRooms: string;
   lectureRooms: string;
-  drawingFilterActive: string;
   allZones: string;
   centralZone: string;
   allZonesActive: string;
@@ -102,7 +101,6 @@ export const translations: Record<Language, Translation> = {
     powerFilterActive: "🔌 Solo aule con prese",
     drawingRooms: "✏️ Aule da disegno",
     lectureRooms: "🏫 Aule normali",
-    drawingFilterActive: "✏️ Aule da disegno",
     allZones: "🗺️ Tutte le zone",
     centralZone: "🎯 Zona centrale",
     allZonesActive: "🗺️ Tutte le zone del campus",
@@ -162,7 +160,6 @@ export const translations: Record<Language, Translation> = {
     powerFilterActive: "🔌 Rooms with power plugs only",
     drawingRooms: "✏️ Drawing rooms",
     lectureRooms: "🏫 Lecture rooms",
-    drawingFilterActive: "✏️ Drawing rooms",
     allZones: "🗺️ All zones",
     centralZone: "🎯 Central zone",
     allZonesActive: "🗺️ All campus zones",

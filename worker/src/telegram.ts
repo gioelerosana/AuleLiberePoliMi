@@ -124,7 +124,7 @@ const LABELS: Record<string, MenuEntry> = {
   "🔍Search": { action: "search", lang: "en" },
   "🕒Ora": { action: "now", lang: "it" },
   "🕒Now": { action: "now", lang: "en" },
-  ℹinfo: { action: "info" },
+  "ℹinfo": { action: "info" },
   ...Object.fromEntries(
     LANGUAGES.flatMap((lang) => [
       [translations[lang].search, { action: "search", lang }],
@@ -278,12 +278,15 @@ async function handleCallback(
     await answerCallback(api, query.id, translations[languageFromCode(query.from.language_code)].error);
     return;
   }
-  await answerCallback(api, query.id);
+  const [, card] = await Promise.all([
+    answerCallback(api, query.id),
+    cardForCallback(api, chatId, query.message?.message_id, state),
+  ]);
   const context: CallbackContext = {
     api,
     deps,
     chatId,
-    card: await cardForCallback(api, chatId, query.message?.message_id, state),
+    card,
     now: deps.now?.() ?? new Date(),
   };
   // TypeScript cannot correlate state.action with its handler's state type.
@@ -343,11 +346,15 @@ async function cardForCallback(
   const fresh = "fresh" in state && Boolean(state.fresh);
   if (!fresh) return { chatId, messageId };
   if (messageId !== undefined) {
-    await api.editMessageReplyMarkup(chatId, messageId).catch((error: unknown) => {
-      if (!isNotModified(error)) console.warn("Unable to clear the result buttons", error);
-    });
+    await clearButtons(api, chatId, messageId);
   }
   return { chatId };
+}
+
+async function clearButtons(api: TelegramApi, chatId: number, messageId: number): Promise<void> {
+  await api.editMessageReplyMarkup(chatId, messageId).catch((error: unknown) => {
+    if (!isNotModified(error)) console.warn("Unable to clear the message buttons", error);
+  });
 }
 
 async function performSearch(
@@ -413,6 +420,7 @@ async function showScreen(api: TelegramApi, card: Card, screen: Screen): Promise
     } catch (error) {
       if (isNotModified(error)) return card;
       console.warn("Unable to edit the search card, sending a new one", error);
+      await clearButtons(api, card.chatId, card.messageId);
     }
   }
   const sent = await api.sendMessage(card.chatId, screen.text, {

@@ -779,6 +779,18 @@ describe("search card", () => {
     expect(methods(api.calls)).toEqual(["answerCallbackQuery", "editMessageText"]);
   });
 
+  it("clears the old card buttons and sends a new message when editing the card fails", async () => {
+    const consoleWarn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const api = telegramFetch(
+      { sendMessage: { message_id: SENT_MESSAGE_ID } },
+      { editMessageText: "Bad Request: message can't be edited" },
+    );
+    await handleTelegramUpdate(callbackUpdate(encodeCallback({ action: "search", lang: "it" })), env, deps(api));
+    expect(methods(api.calls)).toEqual(["answerCallbackQuery", "editMessageText", "editMessageReplyMarkup", "sendMessage"]);
+    expect(api.calls[2]?.body).toEqual({ chat_id: CHAT_ID, message_id: CARD_MESSAGE_ID });
+    consoleWarn.mockRestore();
+  });
+
   it("deletes the card on cancel", async () => {
     const api = telegramFetch();
     await handleTelegramUpdate(callbackUpdate(encodeCallback({ action: "cancel", lang: "it" })), env, deps(api));
