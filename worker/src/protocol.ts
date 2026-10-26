@@ -3,6 +3,8 @@ import { CAMPUSES, LOCATION_CODES, LOCATIONS } from "./data";
 
 export const MIN_HOUR = 8;
 export const MAX_HOUR = 20;
+export const QUARTER = 0.25;
+export const MAX_DURATION = 8;
 // How far ahead (hours after the search start) the "freeing up" section looks.
 export const MIN_LOOKAHEAD = 1;
 export const MAX_LOOKAHEAD = 8;
@@ -16,10 +18,21 @@ export { CAMPUSES };
 export type CampusName = keyof typeof CAMPUSES;
 export type LocationName = keyof typeof LOCATIONS;
 
+/**
+ * Optional flags carried as a trailing callback field:
+ * - powerOnly: show only rooms with power plugs
+ * - fresh: the button sits under search results, so answer with a new
+ *   message instead of editing the results away
+ */
+export interface CallbackFlags {
+  powerOnly?: boolean;
+  fresh?: boolean;
+}
+
 export type CallbackState =
   | { action: "search"; lang: Language }
   | { action: "campus"; lang: Language; campus: string }
-  | { action: "date"; lang: Language; campus: string; date: string }
+  | ({ action: "date"; lang: Language; campus: string; date: string } & CallbackFlags)
   | {
       action: "start";
       lang: Language;
@@ -27,24 +40,25 @@ export type CallbackState =
       date: string;
       startHour: number;
     }
-  | {
+  | ({
       action: "end";
       lang: Language;
       campus: string;
       date: string;
       startHour: number;
       endHour: number;
-    }
-  | { action: "quickCampus"; lang: Language; campus: string }
-  | {
+    } & CallbackFlags)
+  | ({ action: "quickCampus"; lang: Language; campus: string } & CallbackFlags)
+  | ({
       action: "quick";
       lang: Language;
       campus: string;
       duration: number;
       lookahead: number;
-    }
+    } & CallbackFlags)
   | { action: "campusMenu"; lang: Language; quick: boolean; more: boolean }
-  | { action: "info" | "cancel"; lang: Language };
+  | { action: "info"; lang: Language }
+  | { action: "cancel"; lang: Language };
 
 const actionCodes: Record<CallbackState["action"], string> = {
   search: "s",
@@ -91,6 +105,10 @@ export function encodeCallback(state: CallbackState): string {
       base.push(state.campus, String(state.duration), String(state.lookahead));
       break;
   }
+  if ("fresh" in state || "powerOnly" in state) {
+    const flags = encodeFlags(state);
+    if (flags) base.push(flags);
+  }
   const encoded = base.join(":");
   if (new TextEncoder().encode(encoded).length > 64) {
     throw new Error("Telegram callback_data exceeds 64 bytes");
@@ -117,40 +135,44 @@ export function decodeCallback(value: string): CallbackState | null {
   if (!campus || !isCampusCode(campus)) return null;
   if (code === "c" && parts.length === 3)
     return { action: "campus", lang, campus };
-  if (code === "qc" && parts.length === 3)
-    return { action: "quickCampus", lang, campus };
-  if (code === "d" && parts.length === 4) {
-    const date = expandDate(parts[3]!);
-    return date ? { action: "date", lang, campus, date } : null;
-  }
   if (code === "b" && parts.length === 5) {
     const date = expandDate(parts[3]!);
-    const startHour = parseHour(parts[4]!, MIN_HOUR, MAX_HOUR - 1);
+    const startHour = parseHour(parts[4]!, MIN_HOUR, MAX_HOUR - QUARTER, QUARTER);
     return date && startHour !== null
       ? { action: "start", lang, campus, date, startHour }
       : null;
   }
-  if (code === "e" && parts.length === 6) {
+
+  // Quick buttons sent before the lookahead existed carry no lookahead part.
+  // Digits only: matches "4", rejects the flags field "pn".
+  const hasLookahead = code === "q" && /^\d+$/.test(parts[4] ?? "");
+  // The remaining actions accept one optional trailing flags field.
+  const baseLength = { qc: 3, d: 4, q: hasLookahead ? 5 : 4, e: 6 }[code ?? ""];
+  if (!baseLength || (parts.length !== baseLength && parts.length !== baseLength + 1))
+    return null;
+  const flags = decodeFlags(parts[baseLength]);
+  if (!flags) return null;
+  if (code === "qc") return { action: "quickCampus", lang, campus, ...flags };
+  if (code === "d") {
     const date = expandDate(parts[3]!);
-    const startHour = parseHour(parts[4]!, MIN_HOUR, MAX_HOUR - 1);
-    const endHour = parseHour(parts[5]!, MIN_HOUR + 1, MAX_HOUR);
+    return date ? { action: "date", lang, campus, date, ...flags } : null;
+  }
+  if (code === "e") {
+    const date = expandDate(parts[3]!);
+    const startHour = parseHour(parts[4]!, MIN_HOUR, MAX_HOUR - QUARTER, QUARTER);
+    const endHour = parseHour(parts[5]!, MIN_HOUR + 1, MAX_HOUR, 1);
     return date && startHour !== null && endHour !== null && endHour > startHour
-      ? { action: "end", lang, campus, date, startHour, endHour }
+      ? { action: "end", lang, campus, date, startHour, endHour, ...flags }
       : null;
   }
-  // Buttons sent before the lookahead existed carry no fifth part.
-  if (code === "q" && (parts.length === 4 || parts.length === 5)) {
-    const duration = Number(parts[3]);
-    const lookahead =
-      parts.length === 5 ? Number(parts[4]) : DEFAULT_LOOKAHEAD;
-    return Number.isInteger(duration) &&
-      duration >= 1 &&
-      duration <= 8 &&
-      isValidLookahead(lookahead)
-      ? { action: "quick", lang, campus, duration, lookahead }
-      : null;
-  }
-  return null;
+  const duration = Number(parts[3]);
+  const lookahead = hasLookahead ? Number(parts[4]) : DEFAULT_LOOKAHEAD;
+  return Number.isInteger(duration) &&
+    duration >= 1 &&
+    duration <= MAX_DURATION &&
+    isValidLookahead(lookahead)
+    ? { action: "quick", lang, campus, duration, lookahead, ...flags }
+    : null;
 }
 
 export function isValidLookahead(value: unknown): value is number {
@@ -162,6 +184,19 @@ export function isValidLookahead(value: unknown): value is number {
   );
 }
 
+function encodeFlags(flags: CallbackFlags): string {
+  return `${flags.powerOnly ? "p" : ""}${flags.fresh ? "n" : ""}`;
+}
+
+function decodeFlags(raw: string | undefined): CallbackFlags | null {
+  if (raw === undefined) return {};
+  if (!/^p?n?$/.test(raw) || raw === "") return null;
+  const flags: CallbackFlags = {};
+  if (raw.includes("p")) flags.powerOnly = true;
+  if (raw.includes("n")) flags.fresh = true;
+  return flags;
+}
+
 export function isCampusCode(value: string): boolean {
   return LOCATION_CODES.has(value);
 }
@@ -170,6 +205,21 @@ export function campusCodeFromName(value: unknown): string | null {
   return typeof value === "string" && value in LOCATIONS
     ? LOCATIONS[value as LocationName]
     : null;
+}
+
+const MILAN_PREFIX = "Milano ";
+
+/** Compact campus name for buttons: "Milano Bovisa" → "Bovisa". */
+export function shortCampusName(name: string): string {
+  return name.startsWith(MILAN_PREFIX) ? name.slice(MILAN_PREFIX.length) : name;
+}
+
+export function campusCodeFromShortName(value: string): string | null {
+  return campusCodeFromName(value) ?? campusCodeFromName(MILAN_PREFIX + value);
+}
+
+export function campusName(code: string): string {
+  return Object.entries(LOCATIONS).find(([, value]) => value === code)?.[0] ?? code;
 }
 
 function compactDate(date: string): string {
@@ -194,7 +244,8 @@ function expandDate(compact: string): string | null {
   return `${match[3]}/${match[2]}/${match[1]}`;
 }
 
-function parseHour(value: string, min: number, max: number): number | null {
+function parseHour(value: string, min: number, max: number, step: number): number | null {
+  if (!/^\d{1,2}(\.\d{1,2})?$/.test(value)) return null;
   const hour = Number(value);
-  return Number.isInteger(hour) && hour >= min && hour <= max ? hour : null;
+  return Number.isInteger(hour / step) && hour >= min && hour <= max ? hour : null;
 }

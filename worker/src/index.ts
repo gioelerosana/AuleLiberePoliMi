@@ -1,7 +1,11 @@
 import { ROOM_IDS_WITH_POWER } from "./data";
-import { TELEGRAM_MAX_MESSAGE_LENGTH, formatRoomMessages } from "./format";
+import {
+  RESULT_HEADER_RESERVE,
+  TELEGRAM_MAX_MESSAGE_LENGTH,
+  formatRoomMessages
+} from "./format";
 import { translations } from "./i18n";
-import { searchRooms } from "./polimi";
+import { searchRooms, type FreeRoomsByBuilding } from "./polimi";
 import { handleTelegramUpdate, validateTelegramSecret } from "./telegram";
 import type {
   Env,
@@ -11,6 +15,8 @@ import type {
 } from "./types";
 
 const JSON_HEADERS = { "content-type": "application/json; charset=utf-8" };
+// Every result message must leave room for the summary header the bot adds.
+const MESSAGE_BUDGET = TELEGRAM_MAX_MESSAGE_LENGTH - RESULT_HEADER_RESERVE;
 const FREEING_UP_TITLE_RESERVE = 100;
 const SECRET_PATTERN = /^[A-Za-z0-9_-]{16,128}$/;
 
@@ -64,24 +70,45 @@ export async function searchAndFormat(request: SearchRequest): Promise<string[]>
   });
   const t = translations[request.lang];
 
-  const freeMessages = formatRoomMessages(free, {
-    untilLabel: request.lang === "it" ? "fino alle" : "free until"
+  const freeMessages = formatRoomMessages(filterRooms(free, request.powerOnly), {
+    maxLength: MESSAGE_BUDGET
   });
-  const freeingUpMessages = formatRoomMessages(freeingUp, {
-    untilLabel: t.freeingUpLabel,
-    // Leave room for the title prepended to the first message.
-    maxLength: TELEGRAM_MAX_MESSAGE_LENGTH - FREEING_UP_TITLE_RESERVE
+  const freeingUpMessages = formatRoomMessages(filterRooms(freeingUp, request.powerOnly), {
+    timeLabel: t.freeingUpLabel,
+    // Leave room for the section title prepended to the first message.
+    maxLength: MESSAGE_BUDGET - FREEING_UP_TITLE_RESERVE
   });
   if (freeingUpMessages.length === 0) return freeMessages;
 
   // Keep the "no free rooms" notice: the lookahead alone must not hide it.
   const head = freeMessages.length > 0 ? freeMessages : [t.noRooms];
-  return [
-    ...head,
-    ...freeingUpMessages.map((message, index) =>
-      index === 0 ? `<b>${t.freeingUpTitle(request.lookahead)}</b>\n${message}` : message
-    )
-  ];
+  const section = freeingUpMessages.map((message, index) =>
+    index === 0 ? `\n\n<b>${t.freeingUpTitle(request.lookahead)}</b>${message}` : message
+  );
+  return packMessages([...head, ...section], MESSAGE_BUDGET);
+}
+
+function filterRooms(rooms: FreeRoomsByBuilding, powerOnly: boolean): FreeRoomsByBuilding {
+  if (!powerOnly) return rooms;
+  return Object.fromEntries(
+    Object.entries(rooms).map(([building, list]) => [
+      building,
+      list.filter((room) => room.powerPlugs)
+    ])
+  );
+}
+
+/** Merge consecutive messages while they fit, so short sections share one. */
+function packMessages(messages: string[], maxLength: number): string[] {
+  return messages.reduce<string[]>((packed, message) => {
+    const last = packed.at(-1);
+    if (last !== undefined && last.length + message.length <= maxLength) {
+      packed[packed.length - 1] = last + message;
+    } else {
+      packed.push(message);
+    }
+    return packed;
+  }, []);
 }
 
 const productionDependencies: RuntimeDependencies = {

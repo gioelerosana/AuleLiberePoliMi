@@ -121,6 +121,23 @@ Legenda: `[ ]` da fare · `[~]` in corso · `[x]` fatto
 - [x] Verifica end-to-end sul bot di test
 - [x] Merge su `main` e deploy del Worker
 
+## 🚧 Fase 8 — Interfaccia più compatta (IN CORSO, su `dev`)
+
+- [x] Scheda di ricerca unica modificata con `editMessageText`, con riepilogo
+      delle scelte (📍 · 📅 · 🕐) e `⬅ Indietro` a ogni passo
+- [x] Tastiera persistente su due righe: `🕒 Ora · Bovisa 2h`, poi
+      `🔍 Cerca` e `⚙️ Preferenze`; ℹ info spostato in `/info`
+- [x] Label di "Ora" con nome breve del campus e senza bandiera (la lingua
+      deriva dal prefisso); label e pulsanti vecchi restano riconosciuti
+- [x] Picker compatti: campus su due colonne, giorni su tre (senza domenica),
+      `⏱ Adesso` e solo ore future per oggi, `🏁 Fino a chiusura`
+- [x] Risultati: intestazione nel primo messaggio, righe `• Aula → 14:15 🔌`,
+      bottoni `🔄 Aggiorna`, `🔌 Solo con prese`, `🕐 Cambia orario`
+- [x] Preferenze salvate in un solo messaggio, benvenuto e `/info` più corti
+- [x] Comandi `/ora`, `/cerca`, `/info` (`npm run commands:set`)
+- [ ] Verifica end-to-end sul bot di test
+- [ ] Merge su `main`, `npm run commands:set` e deploy del Worker
+
 ## 📝 Note
 
 - Il bot è stato riscritto per **PTB v22.8** (API async, ContextTypes)

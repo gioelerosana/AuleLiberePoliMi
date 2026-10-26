@@ -22,7 +22,7 @@ const I18N = {
     en: {
         settingsTitle: "AuleLiberePoliMi — Settings",
         title: "Preferences",
-        subtitle: "Set your preferences for quick search.",
+        subtitle: "Campus and duration for the 🕒 Now button.",
         languageLabel: "Language",
         campusLabel: "Preferred campus",
         durationLabel: "Search duration (hours)",
@@ -36,7 +36,7 @@ const I18N = {
     it: {
         settingsTitle: "AuleLiberePoliMi — Impostazioni",
         title: "Preferenze",
-        subtitle: "Imposta le tue preferenze per la ricerca rapida.",
+        subtitle: "Campus e durata per il pulsante 🕒 Ora.",
         languageLabel: "Lingua",
         campusLabel: "Campus preferito",
         durationLabel: "Durata ricerca (ore)",
@@ -111,8 +111,9 @@ function populateCampuses() {
     campusSelect.appendChild(placeholder);
     CAMPUSES.forEach((name) => {
         const opt = document.createElement("option");
+        // The value keeps the full name: the bot resolves it to a campus code.
         opt.value = name;
-        opt.textContent = name;
+        opt.textContent = name.replace(/^Milano /, "");
         campusSelect.appendChild(opt);
     });
 }

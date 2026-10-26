@@ -64,8 +64,9 @@ Serve un bot Telegram **dedicato**, diverso da quello di produzione. Se
 `dev:local` avvia in un solo comando la Mini App statica, `wrangler dev`, due
 quick tunnel HTTPS `*.trycloudflare.com` (Mini App e Worker) e registra il
 webhook del bot di test verso il tunnel del Worker. `WEBAPP_URL` viene iniettato
-automaticamente, quindi il pulsante `⚙️Preferenze` della tastiera apre la Mini
-App locale. Poi su Telegram apri il bot di test e premi `/start`.
+automaticamente, quindi il pulsante `⚙️ Preferenze` della tastiera apre la Mini
+App locale. Registra anche i comandi del menu `/` sul bot di test. Poi su
+Telegram apri il bot di test e premi `/start`.
 
 Alla chiusura con `Ctrl+C` il webhook del bot di test viene rimosso
 (`KEEP_WEBHOOK=1` per mantenerlo, `--no-webhook` per non registrarlo affatto).

@@ -268,7 +268,7 @@ describe("PoliMi occupancy scraper", () => {
 describe("Telegram room formatting", () => {
   it("escapes external values and handles no results", () => {
     expect(
-      formatRoomMessages({}, { untilLabel: "fino alle", noResultsText: "Nessuna <aula>" }),
+      formatRoomMessages({}, { noResultsText: "Nessuna <aula>" }),
     ).toEqual(["Nessuna &lt;aula&gt;"]);
 
     const [message] = formatRoomMessages(
@@ -282,11 +282,13 @@ describe("Telegram room formatting", () => {
           },
         ],
       },
-      { untilLabel: "fino alle" },
+      {},
     );
     expect(message).toContain("Edificio &lt;2&gt;");
     expect(message).toContain("A&amp;&lt;1&gt;");
     expect(message).toContain("&quot;2&quot;");
+    expect(message).toContain("• <a href=");
+    expect(message).toContain("</a> → 12:00 🔌\n");
   });
 
   it("splits large results into complete Telegram-sized messages", () => {
@@ -299,7 +301,7 @@ describe("Telegram room formatting", () => {
           powerPlugs: false,
         })),
       },
-      { untilLabel: "free until" },
+      {},
     );
     expect(messages.length).toBeGreaterThan(1);
     expect(messages.every((message) => message.length <= 4096)).toBe(true);

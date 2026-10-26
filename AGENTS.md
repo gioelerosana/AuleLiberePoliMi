@@ -41,8 +41,9 @@ stack moderno e architettura stateless.
   (testo e tastiere) per tutta la ricerca
 
 ### Interazione impostazioni
-- Nella tastiera persistente `⚙️Preferenze` è un bottone `web_app` che apre
-  direttamente la Mini App
+- Nella tastiera persistente `⚙️ Preferenze` è un bottone `web_app` che apre
+  direttamente la Mini App (deve restare un bottone della reply keyboard:
+  `sendData()` non funziona dal menu button né da bottoni inline)
 - La Mini App **non sostituisce** l'intero bot, solo le impostazioni
 
 ### Cloudflare Workers (aggiornato 09/2026)
@@ -55,18 +56,38 @@ stack moderno e architettura stateless.
 ### Ricerca rapida "Ora"
 - Un pulsante della tastiera persistente non può trasportare dati, ma il suo
   **testo viene rimandato al bot come messaggio**: le preferenze salvate sono
-  quindi codificate nel label del pulsante `🕒Ora` (es.
-  `🕒Ora · Milano Bovisa 2h ⏳4h 🇮🇹`; `⏳Nh` è opzionale per i label vecchi), nessun KV/DB e nessun messaggio pinnato
-- Dopo il salvataggio la Mini App invia `web_app_data`: il bot ricostruisce la
-  tastiera persistente con le preferenze nel label e invia un messaggio
-  preferenze con il pulsante `🕒Ora` inline (preferenze in `callback_data`)
+  quindi codificate nel label del pulsante `🕒 Ora` (es. `🕒 Ora · Bovisa 2h`,
+  oppure `🕒 Ora · Bovisa 2h ⏳4h`), nessun KV/DB e nessun messaggio pinnato
+- Il label usa il nome breve del campus (senza "Milano ") e niente bandiera:
+  la lingua si ricava dal prefisso (`🕒 Ora` = it, `🕒 Now` = en); `⏳Nh`
+  compare solo se l'orizzonte delle aule in liberazione non è quello di default
+- Dopo il salvataggio la Mini App invia `web_app_data`: il bot risponde con un
+  solo messaggio `✅ Preferenze salvate` che porta la nuova tastiera
 - Al tap del pulsante persistente il bot ricava campus/durata/lingua dal testo
-  del messaggio con `parseNowLabel` e fa la ricerca; se il label è assente,
-  malformato o è il semplice `🕒Ora`, ripiega sul flusso inline campus → durata
-- I codici delle singole sedi (es. `MIA11`) restano trasportabili perché il
-  label usa il nome esteso che `campusCodeFromName` sa ricondurre al codice
-- La lingua di fallback si ottiene da `message.from.language_code`; nei label
-  validi vince la lingua codificata nel pulsante
+  con `parseNowLabel` e fa la ricerca; se il label è assente, malformato o è il
+  semplice `🕒 Ora`, ripiega sul picker inline campus → durata
+- `parseNowLabel` accetta anche il formato legacy `🕒Ora · Milano Bovisa 2h ⏳4h 🇮🇹`
+  (con o senza `⏳`)
+  e `LABELS` i vecchi `🔍Cerca`/`ℹinfo`: le tastiere vecchie restano sui
+  telefoni finché l'utente non rifà `/start`
+- I codici delle singole sedi (es. `MIA11`) restano trasportabili perché
+  `campusCodeFromShortName` riconduce sia il nome breve sia quello esteso
+
+### Interfaccia di ricerca
+- Una sola "scheda" per ricerca: i passi (campus → giorno → ora inizio → ora
+  fine, oppure campus → durata) modificano lo stesso messaggio con
+  `editMessageText`, mostrano un riepilogo `📍 · 📅 · 🕐` e hanno
+  `⬅ Indietro` + `✖ Annulla` (che cancella la scheda)
+- La scheda diventa `🔎 Cerco…` e poi il primo messaggio dei risultati; i
+  bottoni `🔄 Aggiorna`/`🔌 Solo con prese`/`🕐 Cambia orario` stanno
+  sotto l'ultimo messaggio
+- I bottoni sotto i risultati hanno il flag `fresh` (`n` nel callback): non
+  modificano i risultati ma ne mandano di nuovi, togliendo i bottoni vecchi;
+  il flag `p` attiva il filtro prese
+- Callback non validi o scaduti: toast con `answerCallbackQuery`, niente
+  messaggi in chat
+- I comandi del menu `/` si registrano con `npm run commands:set`
+  (automatico in `dev:local`)
 
 ### Sviluppo
 - `main` = produzione (bot di tutti); si sviluppa su `dev`
@@ -136,11 +157,13 @@ Passi usati finora (seguirli nell'ordine):
    npm run deploy
    ```
    `predeploy` esegue `data:check`; `--keep-vars` conserva `WEBAPP_URL`.
+   Se la lista comandi è cambiata: `BOT_TOKEN=... npm run commands:set` con
+   il token di produzione.
 8. Smoke test in produzione:
    ```bash
    curl https://aule-libere-polimi.gioelegr3.workers.dev/health
    ```
-   poi `/start`, `🔍Cerca` e `🕒Ora` sul bot di produzione. In caso di errori:
+   poi `/start`, `🔍 Cerca` e `🕒 Ora` sul bot di produzione. In caso di errori:
    `wrangler tail`.
 
 **Regole**
@@ -159,11 +182,14 @@ Passi usati finora (seguirli nell'ordine):
 | File | Ruolo |
 |---|---|
 | `worker/src/index.ts` | Entry point Worker, routing webhook, health |
-| `worker/src/telegram.ts` | Handler update, tastiere, flusso ricerca |
+| `worker/src/telegram.ts` | Handler update, routing, scheda e ricerca |
+| `worker/src/screens.ts` | Schermate inline, tastiera persistente, label |
+| `worker/src/clock.ts` | Orari e date nel fuso Europe/Rome |
 | `worker/src/protocol.ts` | Callback compatti encode/decode, campus |
 | `worker/src/i18n.ts` | Traduzioni it/en |
 | `worker/src/polimi.ts` | Scraper aule libere (`fetch` + `HTMLRewriter`) |
 | `worker/scripts/dev-local.mjs` | Stack di sviluppo locale end-to-end |
+| `worker/scripts/set-commands.mjs` | Registra i comandi del menu `/` |
 | `webapp/settings/` | Mini App statica (Cloudflare Pages) |
 | `worker/README.md` | Deploy, test locale, limiti Free |
 | `docs/TODO.md` | Tracking del rinnovamento |

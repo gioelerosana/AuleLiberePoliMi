@@ -14,6 +14,7 @@
     "dev:local": "node scripts/dev-local.mjs",
     "dev:preview": "node scripts/dev-local.mjs --preview",
     "dev:webapp": "node scripts/dev-local.mjs --webapp-only",
+    "commands:set": "node scripts/set-commands.mjs",
     "predeploy": "npm run data:check",
     "deploy": "wrangler deploy --keep-vars"
   },

@@ -28,6 +28,7 @@ import { mkdir, readFile, stat, writeFile } from "node:fs/promises";
 import { createServer } from "node:http";
 import { dirname, extname, join, normalize, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
+import { setBotCommands } from "./set-commands.mjs";
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const workerDir = resolve(scriptDir, "..");
@@ -551,6 +552,9 @@ async function startFullStack() {
       allowed_updates: ["message", "callback_query"],
       drop_pending_updates: true,
     }).catch((error) => fatal(`setWebhook fallito: ${error.message}`));
+    await setBotCommands(botToken).catch((error) =>
+      console.warn(`[comandi] setMyCommands non riuscito: ${error.message}`),
+    );
     webhookLine = webhookUrl;
     if (!KEEP_WEBHOOK) {
       webhookLine += "  (rimosso all'uscita)";
