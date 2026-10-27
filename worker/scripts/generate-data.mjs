@@ -1,6 +1,7 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
+import { invalidRoomTypeId } from "./room-types.mjs";
 
 const scriptDirectory = dirname(fileURLToPath(import.meta.url));
 const repositoryRoot = resolve(scriptDirectory, "../..");
@@ -16,6 +17,47 @@ const campuses = JSON.parse(
 const roomsWithPower = JSON.parse(
   await readFile(resolve(repositoryRoot, "json/roomsWithPower.json"), "utf8"),
 );
+const excludedRooms = JSON.parse(
+  await readFile(resolve(repositoryRoot, "json/excludedRooms.json"), "utf8"),
+);
+
+const roomTypes = JSON.parse(
+  await readFile(resolve(repositoryRoot, "json/roomTypes.json"), "utf8"),
+);
+
+const campusZones = JSON.parse(
+  await readFile(resolve(repositoryRoot, "json/campusZones.json"), "utf8"),
+);
+
+const invalidRoomType = invalidRoomTypeId(roomTypes);
+if (invalidRoomType !== undefined) {
+  console.error(
+    `json/roomTypes.json: voce non valida per l'aula ${invalidRoomType} (categoria vuota o campo mancante)`,
+  );
+  process.exit(1);
+}
+
+const knownSites = new Set(Object.values(roomTypes).map((room) => `${room.campus}|${room.site}`));
+for (const [campus, sites] of Object.entries(campusZones)) {
+  if (!Object.values(campuses).includes(campus) || !Array.isArray(sites)) {
+    console.error(`json/campusZones.json: "${campus}" deve essere un codice di json/campuses.json con un array di sedi`);
+    process.exit(1);
+  }
+  const unknown = sites.filter((site) => !knownSites.has(`${campus}|${site}`));
+  if (unknown.length > 0) {
+    console.error(`json/campusZones.json: sedi assenti da json/roomTypes.json per ${campus}: ${unknown.join(", ")}`);
+    process.exit(1);
+  }
+}
+
+if (
+  !Array.isArray(excludedRooms) ||
+  excludedRooms.some((name) => typeof name !== "string" || !name) ||
+  new Set(excludedRooms).size !== excludedRooms.length
+) {
+  console.error("json/excludedRooms.json: deve essere un array di nomi di aula distinti");
+  process.exit(1);
+}
 
 for (const [name, code] of Object.entries(campuses)) {
   if (locations[name] !== code) {
@@ -34,6 +76,19 @@ export const LOCATIONS = ${JSON.stringify(locations, null, 2)} as const;
 export const CAMPUSES = ${JSON.stringify(campuses, null, 2)} as const;
 
 export const ROOM_IDS_WITH_POWER = ${JSON.stringify(roomsWithPower, null, 2)} as const;
+
+/** Manual exclusions by room name, for cases the PoliMi categories miss. */
+export const EXCLUDED_ROOMS = new Set<string>(${JSON.stringify(excludedRooms, null, 2)});
+
+/** PoliMi room id → [campus code, category, typology, site] (json/roomTypes.json). */
+export const ROOM_TYPES: Record<string, readonly [string, string, string, string]> = ${JSON.stringify(
+  Object.fromEntries(
+    Object.entries(roomTypes).map(([id, room]) => [id, [room.campus, room.category, room.type, room.site]]),
+  ),
+)};
+
+/** Sites forming the central zone of a campus, shown by default (json/campusZones.json). */
+export const CAMPUS_ZONES: Record<string, readonly string[]> = ${JSON.stringify(campusZones, null, 2)};
 
 export type LocationName = keyof typeof LOCATIONS;
 export type LocationCode = (typeof LOCATIONS)[LocationName];

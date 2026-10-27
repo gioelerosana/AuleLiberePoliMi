@@ -1,0 +1,2826 @@
+{
+  "2": {
+    "campus": "MIA",
+    "name": "5.0.1",
+    "site": "Milano Città Studi - Piazza Leonardo da Vinci 32",
+    "building": "Edificio 5 - Arturo Danusso",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "3": {
+    "campus": "MIA",
+    "name": "5.1.1",
+    "site": "Milano Città Studi - Piazza Leonardo da Vinci 32",
+    "building": "Edificio 5 - Arturo Danusso",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "4": {
+    "campus": "MIA",
+    "name": "7.1.1",
+    "site": "Milano Città Studi - Piazza Leonardo da Vinci 32",
+    "building": "Edificio 7 - Carlo Erba",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "5": {
+    "campus": "MIA",
+    "name": "7.1.2",
+    "site": "Milano Città Studi - Piazza Leonardo da Vinci 32",
+    "building": "Edificio 7 - Carlo Erba",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "6": {
+    "campus": "MIA",
+    "name": "7.1.3",
+    "site": "Milano Città Studi - Piazza Leonardo da Vinci 32",
+    "building": "Edificio 7 - Carlo Erba",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "7": {
+    "campus": "MIA",
+    "name": "9.0.1",
+    "site": "Milano Città Studi - Piazza Leonardo da Vinci 32",
+    "building": "Edificio 9 - Giuseppe Bruni",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "8": {
+    "campus": "MIA",
+    "name": "9.0.2",
+    "site": "Milano Città Studi - Piazza Leonardo da Vinci 32",
+    "building": "Edificio 9 - Giuseppe Bruni",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "9": {
+    "campus": "MIA",
+    "name": "9.1.2",
+    "site": "Milano Città Studi - Piazza Leonardo da Vinci 32",
+    "building": "Edificio 9 - Giuseppe Bruni",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "10": {
+    "campus": "MIA",
+    "name": "6.0.1",
+    "site": "Milano Città Studi - Piazza Leonardo da Vinci 32",
+    "building": "Edificio 6 - Giulio Natta",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "19": {
+    "campus": "MIA",
+    "name": "21.S.2",
+    "site": "Milano Città Studi - Via Bassini",
+    "building": "Edificio 21",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "20": {
+    "campus": "MIA",
+    "name": "B.2.1",
+    "site": "Milano Città Studi - Via Bonardi",
+    "building": "Edificio 14 - Nave",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "21": {
+    "campus": "MIA",
+    "name": "21.S.1",
+    "site": "Milano Città Studi - Via Bassini",
+    "building": "Edificio 21",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "22": {
+    "campus": "MIA",
+    "name": "21.S.3",
+    "site": "Milano Città Studi - Via Bassini",
+    "building": "Edificio 21",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "23": {
+    "campus": "MIA",
+    "name": "21.S.4",
+    "site": "Milano Città Studi - Via Bassini",
+    "building": "Edificio 21",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "25": {
+    "campus": "MIA",
+    "name": "21.0.3",
+    "site": "Milano Città Studi - Via Bassini",
+    "building": "Edificio 21",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "27": {
+    "campus": "MIA",
+    "name": "8.0.1",
+    "site": "Milano Città Studi - Piazza Leonardo da Vinci 32",
+    "building": "Edificio 8 - Alessandro Amerio",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "28": {
+    "campus": "MIA",
+    "name": "8.1.1",
+    "site": "Milano Città Studi - Piazza Leonardo da Vinci 32",
+    "building": "Edificio 8 - Alessandro Amerio",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "31": {
+    "campus": "MIA",
+    "name": "B.2.2",
+    "site": "Milano Città Studi - Via Bonardi",
+    "building": "Edificio 14 - Nave",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "32": {
+    "campus": "MIA",
+    "name": "2.0.1",
+    "site": "Milano Città Studi - Piazza Leonardo da Vinci 32",
+    "building": "Edificio 2 - Bruno Finzi",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "33": {
+    "campus": "MIA",
+    "name": "2.0.2",
+    "site": "Milano Città Studi - Piazza Leonardo da Vinci 32",
+    "building": "Edificio 2 - Bruno Finzi",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "34": {
+    "campus": "MIA",
+    "name": "2.1.1",
+    "site": "Milano Città Studi - Piazza Leonardo da Vinci 32",
+    "building": "Edificio 2 - Bruno Finzi",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "35": {
+    "campus": "MIA",
+    "name": "2.1.2",
+    "site": "Milano Città Studi - Piazza Leonardo da Vinci 32",
+    "building": "Edificio 2 - Bruno Finzi",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "36": {
+    "campus": "MIA",
+    "name": "2.1.3",
+    "site": "Milano Città Studi - Piazza Leonardo da Vinci 32",
+    "building": "Edificio 2 - Bruno Finzi",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "38": {
+    "campus": "MIA",
+    "name": "2.1.5",
+    "site": "Milano Città Studi - Piazza Leonardo da Vinci 32",
+    "building": "Edificio 2 - Bruno Finzi",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "39": {
+    "campus": "MIA",
+    "name": "2.1.4",
+    "site": "Milano Città Studi - Piazza Leonardo da Vinci 32",
+    "building": "Edificio 2 - Bruno Finzi",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "41": {
+    "campus": "MIA",
+    "name": "2.2.2",
+    "site": "Milano Città Studi - Piazza Leonardo da Vinci 32",
+    "building": "Edificio 2 - Bruno Finzi",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "42": {
+    "campus": "MIA",
+    "name": "3.0.1",
+    "site": "Milano Città Studi - Piazza Leonardo da Vinci 32",
+    "building": "Edificio 3 - Gino Cassinis",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "43": {
+    "campus": "MIA",
+    "name": "3.1.7",
+    "site": "Milano Città Studi - Piazza Leonardo da Vinci 32",
+    "building": "Edificio 3 - Gino Cassinis",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "44": {
+    "campus": "MIA",
+    "name": "3.1.2",
+    "site": "Milano Città Studi - Piazza Leonardo da Vinci 32",
+    "building": "Edificio 3 - Gino Cassinis",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "45": {
+    "campus": "MIA",
+    "name": "3.1.3",
+    "site": "Milano Città Studi - Piazza Leonardo da Vinci 32",
+    "building": "Edificio 3 - Gino Cassinis",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "46": {
+    "campus": "MIA",
+    "name": "3.1.4",
+    "site": "Milano Città Studi - Piazza Leonardo da Vinci 32",
+    "building": "Edificio 3 - Gino Cassinis",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "47": {
+    "campus": "MIA",
+    "name": "3.1.5",
+    "site": "Milano Città Studi - Piazza Leonardo da Vinci 32",
+    "building": "Edificio 3 - Gino Cassinis",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "48": {
+    "campus": "MIA",
+    "name": "3.1.6",
+    "site": "Milano Città Studi - Piazza Leonardo da Vinci 32",
+    "building": "Edificio 3 - Gino Cassinis",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "52": {
+    "campus": "MIA",
+    "name": "T.0.2",
+    "site": "Milano Città Studi - Via Bonardi",
+    "building": "Edificio 13 - Trifoglio",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "53": {
+    "campus": "MIA",
+    "name": "T.1.1",
+    "site": "Milano Città Studi - Via Bonardi",
+    "building": "Edificio 13 - Trifoglio",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "54": {
+    "campus": "MIA",
+    "name": "T.2.1",
+    "site": "Milano Città Studi - Via Bonardi",
+    "building": "Edificio 13 - Trifoglio",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "55": {
+    "campus": "MIA",
+    "name": "T.2.2",
+    "site": "Milano Città Studi - Via Bonardi",
+    "building": "Edificio 13 - Trifoglio",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "56": {
+    "campus": "MIA",
+    "name": "T.2.3",
+    "site": "Milano Città Studi - Via Bonardi",
+    "building": "Edificio 13 - Trifoglio",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "57": {
+    "campus": "MIA",
+    "name": "3.0.3",
+    "site": "Milano Città Studi - Piazza Leonardo da Vinci 32",
+    "building": "Edificio 3 - Gino Cassinis",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "58": {
+    "campus": "MIA",
+    "name": "3.0.2",
+    "site": "Milano Città Studi - Piazza Leonardo da Vinci 32",
+    "building": "Edificio 3 - Gino Cassinis",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "63": {
+    "campus": "MIA",
+    "name": "3.1.1",
+    "site": "Milano Città Studi - Piazza Leonardo da Vinci 32",
+    "building": "Edificio 3 - Gino Cassinis",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "65": {
+    "campus": "MIA",
+    "name": "T.0.1",
+    "site": "Milano Città Studi - Via Bonardi",
+    "building": "Edificio 13 - Trifoglio",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "67": {
+    "campus": "MIA",
+    "name": "21.0.1",
+    "site": "Milano Città Studi - Via Bassini",
+    "building": "Edificio 21",
+    "category": "AULA DIDATTICA",
+    "type": "INFORMATIZZATA"
+  },
+  "71": {
+    "campus": "MIA",
+    "name": "T.1.2",
+    "site": "Milano Città Studi - Via Bonardi",
+    "building": "Edificio 13 - Trifoglio",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "72": {
+    "campus": "MIA",
+    "name": "T.1.3",
+    "site": "Milano Città Studi - Via Bonardi",
+    "building": "Edificio 13 - Trifoglio",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "73": {
+    "campus": "MIA",
+    "name": "B.3.1",
+    "site": "Milano Città Studi - Via Bonardi",
+    "building": "Edificio 14 - Nave",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "74": {
+    "campus": "MIA",
+    "name": "B.3.2",
+    "site": "Milano Città Studi - Via Bonardi",
+    "building": "Edificio 14 - Nave",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "75": {
+    "campus": "MIA",
+    "name": "4.0.1",
+    "site": "Milano Città Studi - Piazza Leonardo da Vinci 32",
+    "building": "Edificio 4 - Giulio De Marchi",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "79": {
+    "campus": "MIB",
+    "name": "L.01",
+    "site": "Milano Bovisa - Via La Masa",
+    "building": "Edificio B12 - Enrico Forlanini",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "80": {
+    "campus": "MIB",
+    "name": "L.02",
+    "site": "Milano Bovisa - Via La Masa",
+    "building": "Edificio B12 - Enrico Forlanini",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "81": {
+    "campus": "MIB",
+    "name": "L.03",
+    "site": "Milano Bovisa - Via La Masa",
+    "building": "Edificio B12 - Enrico Forlanini",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "82": {
+    "campus": "MIB",
+    "name": "L.04VIRTUALLAB",
+    "site": "Milano Bovisa - Via La Masa",
+    "building": "Edificio B12 - Enrico Forlanini",
+    "category": "AULA DIDATTICA",
+    "type": "ALTRO"
+  },
+  "83": {
+    "campus": "MIB",
+    "name": "L.05-D.I.",
+    "site": "Milano Bovisa - Via La Masa",
+    "building": "Edificio B12 - Enrico Forlanini",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "84": {
+    "campus": "MIB",
+    "name": "L.06",
+    "site": "Milano Bovisa - Via La Masa",
+    "building": "Edificio B12 - Enrico Forlanini",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "85": {
+    "campus": "MIB",
+    "name": "L.07",
+    "site": "Milano Bovisa - Via La Masa",
+    "building": "Edificio B12 - Enrico Forlanini",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "86": {
+    "campus": "MIB",
+    "name": "L.09",
+    "site": "Milano Bovisa - Via La Masa",
+    "building": "Edificio B12 - Enrico Forlanini",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "87": {
+    "campus": "MIB",
+    "name": "L.08",
+    "site": "Milano Bovisa - Via La Masa",
+    "building": "Edificio B12 - Enrico Forlanini",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "89": {
+    "campus": "MIB",
+    "name": "L.11",
+    "site": "Milano Bovisa - Via La Masa",
+    "building": "Edificio B12 - Enrico Forlanini",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "101": {
+    "campus": "MIA",
+    "name": "B.4.1",
+    "site": "Milano Città Studi - Via Bonardi",
+    "building": "Edificio 14 - Nave",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "161": {
+    "campus": "MIA",
+    "name": "19.0.1",
+    "site": "Milano Città Studi - Via Bassini",
+    "building": "Edificio 19 - Mario Silvestri",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "261": {
+    "campus": "MIA",
+    "name": "T.0.4",
+    "site": "Milano Città Studi - Via Bonardi",
+    "building": "Edificio 13 - Trifoglio",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "282": {
+    "campus": "MIA",
+    "name": "20.S.1",
+    "site": "Milano Città Studi - Via Bassini",
+    "building": "Edificio 20",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "428": {
+    "campus": "PCL",
+    "name": "AULAC",
+    "site": "Piacenza - Via Scalabrini 76",
+    "building": "Edificio 1",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "429": {
+    "campus": "PCL",
+    "name": "AULAA",
+    "site": "Piacenza - Via Scalabrini 76",
+    "building": "Edificio 1",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "430": {
+    "campus": "PCL",
+    "name": "AULAB",
+    "site": "Piacenza - Via Scalabrini 76",
+    "building": "Edificio 1",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "431": {
+    "campus": "PCL",
+    "name": "AULAD",
+    "site": "Piacenza - Via Scalabrini 76",
+    "building": "Edificio 1",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "610": {
+    "campus": "PCL",
+    "name": "AULAE",
+    "site": "Piacenza - Via Scalabrini 76",
+    "building": "Edificio 1",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "611": {
+    "campus": "PCL",
+    "name": "AULAF",
+    "site": "Piacenza - Via Scalabrini 76",
+    "building": "Edificio 1",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "612": {
+    "campus": "PCL",
+    "name": "AULAG",
+    "site": "Piacenza - Via Scalabrini 76",
+    "building": "Edificio 1",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "613": {
+    "campus": "PCL",
+    "name": "LABORATORIO1",
+    "site": "Piacenza - Via Scalabrini 76",
+    "building": "Edificio 1",
+    "category": "LABORATORIO DIDATTICO",
+    "type": "ALTRO"
+  },
+  "614": {
+    "campus": "PCL",
+    "name": "AULAINFORMATIZZATA1",
+    "site": "Piacenza - Via Scalabrini 76",
+    "building": "Edificio 1",
+    "category": "AULA DIDATTICA",
+    "type": "INFORMATIZZATA"
+  },
+  "616": {
+    "campus": "PCL",
+    "name": "AULAINFORMATIZZATA3",
+    "site": "Piacenza - Via Scalabrini 76",
+    "building": "Edificio 1",
+    "category": "AULA DIDATTICA",
+    "type": "INFORMATIZZATA"
+  },
+  "617": {
+    "campus": "PCL",
+    "name": "THESILAB",
+    "site": "Piacenza - Via Scalabrini 76",
+    "building": "Edificio 1",
+    "category": "LABORATORIO DIDATTICO",
+    "type": "PLATEA FRONTALE"
+  },
+  "628": {
+    "campus": "MIB",
+    "name": "LM.3",
+    "site": "Milano Bovisa - Via La Masa",
+    "building": "Edificio B15 - Aule",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "629": {
+    "campus": "MIB",
+    "name": "LM.4",
+    "site": "Milano Bovisa - Via La Masa",
+    "building": "Edificio B15 - Aule",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "630": {
+    "campus": "MIB",
+    "name": "LM.5",
+    "site": "Milano Bovisa - Via La Masa",
+    "building": "Edificio B15 - Aule",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "631": {
+    "campus": "MIB",
+    "name": "LM.6",
+    "site": "Milano Bovisa - Via La Masa",
+    "building": "Edificio B15 - Aule",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "641": {
+    "campus": "MIB",
+    "name": "L.14",
+    "site": "Milano Bovisa - Via La Masa",
+    "building": "Edificio B12 - Enrico Forlanini",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "721": {
+    "campus": "MIA",
+    "name": "A-ALDOROSSI",
+    "site": "Milano Città Studi - Via Bonardi",
+    "building": "Edificio 11 - Architettura",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "722": {
+    "campus": "MIA",
+    "name": "B",
+    "site": "Milano Città Studi - Via Bonardi",
+    "building": "Edificio 11 - Architettura",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "723": {
+    "campus": "MIA",
+    "name": "C",
+    "site": "Milano Città Studi - Via Bonardi",
+    "building": "Edificio 11 - Architettura",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "724": {
+    "campus": "MIA",
+    "name": "D",
+    "site": "Milano Città Studi - Via Bonardi",
+    "building": "Edificio 11 - Architettura",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "728": {
+    "campus": "MIA",
+    "name": "J.2",
+    "site": "Milano Città Studi - Via Bonardi",
+    "building": "Edificio 11 - Architettura",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "729": {
+    "campus": "MIA",
+    "name": "O.2",
+    "site": "Milano Città Studi - Via Bonardi",
+    "building": "Edificio 11 - Architettura",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "730": {
+    "campus": "MIA",
+    "name": "Q.1",
+    "site": "Milano Città Studi - Via Bonardi",
+    "building": "Edificio 11 - Architettura",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "731": {
+    "campus": "MIA",
+    "name": "R.1",
+    "site": "Milano Città Studi - Via Bonardi",
+    "building": "Edificio 11 - Architettura",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "732": {
+    "campus": "MIA",
+    "name": "III.A",
+    "site": "Milano Città Studi - Via Bonardi",
+    "building": "Edificio 11 - Architettura",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "733": {
+    "campus": "MIA",
+    "name": "III.B",
+    "site": "Milano Città Studi - Via Bonardi",
+    "building": "Edificio 11 - Architettura",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "734": {
+    "campus": "MIA",
+    "name": "III.C",
+    "site": "Milano Città Studi - Via Bonardi",
+    "building": "Edificio 11 - Architettura",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "736": {
+    "campus": "MIA",
+    "name": "III.D",
+    "site": "Milano Città Studi - Via Bonardi",
+    "building": "Edificio 11 - Architettura",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "737": {
+    "campus": "MIA",
+    "name": "U.1",
+    "site": "Milano Città Studi - Via Bonardi",
+    "building": "Edificio 11 - Architettura",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "738": {
+    "campus": "MIA",
+    "name": "U.2",
+    "site": "Milano Città Studi - Via Bonardi",
+    "building": "Edificio 11 - Architettura",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "741": {
+    "campus": "MIA",
+    "name": "IV",
+    "site": "Milano Città Studi - Via Bonardi",
+    "building": "Edificio 11 - Architettura",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "941": {
+    "campus": "MIA",
+    "name": "25.S.1",
+    "site": "Milano Città Studi - Via Golgi 40",
+    "building": "Edificio 25 - Emilio Massa",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "943": {
+    "campus": "MIA",
+    "name": "25.S.2",
+    "site": "Milano Città Studi - Via Golgi 40",
+    "building": "Edificio 25 - Emilio Massa",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "944": {
+    "campus": "MIA",
+    "name": "25.S.3",
+    "site": "Milano Città Studi - Via Golgi 40",
+    "building": "Edificio 25 - Emilio Massa",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "945": {
+    "campus": "MIA",
+    "name": "25.0.1",
+    "site": "Milano Città Studi - Via Golgi 40",
+    "building": "Edificio 25 - Emilio Massa",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "946": {
+    "campus": "MIA",
+    "name": "25.0.2",
+    "site": "Milano Città Studi - Via Golgi 40",
+    "building": "Edificio 25 - Emilio Massa",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "947": {
+    "campus": "MIA",
+    "name": "25.1.1",
+    "site": "Milano Città Studi - Via Golgi 40",
+    "building": "Edificio 25 - Emilio Massa",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "948": {
+    "campus": "MIA",
+    "name": "25.1.2",
+    "site": "Milano Città Studi - Via Golgi 40",
+    "building": "Edificio 25 - Emilio Massa",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "949": {
+    "campus": "MIA",
+    "name": "25.1.3",
+    "site": "Milano Città Studi - Via Golgi 40",
+    "building": "Edificio 25 - Emilio Massa",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "950": {
+    "campus": "MIA",
+    "name": "25.1.4",
+    "site": "Milano Città Studi - Via Golgi 40",
+    "building": "Edificio 25 - Emilio Massa",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "951": {
+    "campus": "MIA",
+    "name": "25.1.5",
+    "site": "Milano Città Studi - Via Golgi 40",
+    "building": "Edificio 25 - Emilio Massa",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "952": {
+    "campus": "MIA",
+    "name": "25.1.6",
+    "site": "Milano Città Studi - Via Golgi 40",
+    "building": "Edificio 25 - Emilio Massa",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "961": {
+    "campus": "MIA",
+    "name": "2.2.3",
+    "site": "Milano Città Studi - Piazza Leonardo da Vinci 32",
+    "building": "Edificio 2 - Bruno Finzi",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "962": {
+    "campus": "MIA",
+    "name": "B.6.1",
+    "site": "Milano Città Studi - Via Bonardi",
+    "building": "Edificio 14 - Nave",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "964": {
+    "campus": "MIA",
+    "name": "B.6.2",
+    "site": "Milano Città Studi - Via Bonardi",
+    "building": "Edificio 14 - Nave",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "965": {
+    "campus": "MIA",
+    "name": "B.6.3",
+    "site": "Milano Città Studi - Via Bonardi",
+    "building": "Edificio 14 - Nave",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "983": {
+    "campus": "MIB",
+    "name": "B2.1.8",
+    "site": "Milano Bovisa - Via Durando",
+    "building": "Edificio B2 - Laboratori del Design - Aule",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "984": {
+    "campus": "MIB",
+    "name": "B2.1.6",
+    "site": "Milano Bovisa - Via Durando",
+    "building": "Edificio B2 - Laboratori del Design - Aule",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "987": {
+    "campus": "MIB",
+    "name": "B2.1.3",
+    "site": "Milano Bovisa - Via Durando",
+    "building": "Edificio B2 - Laboratori del Design - Aule",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "988": {
+    "campus": "MIB",
+    "name": "B2.1.15",
+    "site": "Milano Bovisa - Via Durando",
+    "building": "Edificio B2 - Laboratori del Design - Aule",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "1081": {
+    "campus": "MIA",
+    "name": "T.0.3",
+    "site": "Milano Città Studi - Via Bonardi",
+    "building": "Edificio 13 - Trifoglio",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "1221": {
+    "campus": "MIA",
+    "name": "B.5.1",
+    "site": "Milano Città Studi - Via Bonardi",
+    "building": "Edificio 14 - Nave",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "1222": {
+    "campus": "MIA",
+    "name": "B.5.2",
+    "site": "Milano Città Studi - Via Bonardi",
+    "building": "Edificio 14 - Nave",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "1223": {
+    "campus": "MIA",
+    "name": "B.5.3",
+    "site": "Milano Città Studi - Via Bonardi",
+    "building": "Edificio 14 - Nave",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "1224": {
+    "campus": "MIA",
+    "name": "B.5.4",
+    "site": "Milano Città Studi - Via Bonardi",
+    "building": "Edificio 14 - Nave",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "1225": {
+    "campus": "MIA",
+    "name": "B.6.4",
+    "site": "Milano Città Studi - Via Bonardi",
+    "building": "Edificio 14 - Nave",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "1226": {
+    "campus": "MIA",
+    "name": "B.4.2",
+    "site": "Milano Città Studi - Via Bonardi",
+    "building": "Edificio 14 - Nave",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "1301": {
+    "campus": "MIB",
+    "name": "B2.1.10",
+    "site": "Milano Bovisa - Via Durando",
+    "building": "Edificio B2 - Laboratori del Design - Aule",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "1303": {
+    "campus": "MIA",
+    "name": "2.2.1",
+    "site": "Milano Città Studi - Piazza Leonardo da Vinci 32",
+    "building": "Edificio 2 - Bruno Finzi",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "1305": {
+    "campus": "MIA",
+    "name": "25.2.1",
+    "site": "Milano Città Studi - Via Golgi 40",
+    "building": "Edificio 25 - Emilio Massa",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "1306": {
+    "campus": "MIA",
+    "name": "25.2.2",
+    "site": "Milano Città Studi - Via Golgi 40",
+    "building": "Edificio 25 - Emilio Massa",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "1307": {
+    "campus": "MIA",
+    "name": "25.2.3",
+    "site": "Milano Città Studi - Via Golgi 40",
+    "building": "Edificio 25 - Emilio Massa",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "1541": {
+    "campus": "MIA",
+    "name": "21.0.2",
+    "site": "Milano Città Studi - Via Bassini",
+    "building": "Edificio 21",
+    "category": "AULA DIDATTICA",
+    "type": "INFORMATIZZATA"
+  },
+  "1661": {
+    "campus": "MIA",
+    "name": "G.0.1",
+    "site": "Milano Città Studi - Via Golgi 40",
+    "building": "Edificio 23 - Aule",
+    "category": "AULA DIPARTIMENTALE",
+    "type": "ALTRO"
+  },
+  "1662": {
+    "campus": "MIA",
+    "name": "G.0.2",
+    "site": "Milano Città Studi - Via Golgi 40",
+    "building": "Edificio 23 - Aule",
+    "category": "AULA DIPARTIMENTALE",
+    "type": "ALTRO"
+  },
+  "1781": {
+    "campus": "MIB",
+    "name": "L.12",
+    "site": "Milano Bovisa - Via La Masa",
+    "building": "Edificio B12 - Enrico Forlanini",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "1782": {
+    "campus": "MIB",
+    "name": "L.13",
+    "site": "Milano Bovisa - Via La Masa",
+    "building": "Edificio B12 - Enrico Forlanini",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "1783": {
+    "campus": "MIB",
+    "name": "LM.1",
+    "site": "Milano Bovisa - Via La Masa",
+    "building": "Edificio B15 - Aule",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "1862": {
+    "campus": "MIB",
+    "name": "L.15",
+    "site": "Milano Bovisa - Via La Masa",
+    "building": "Edificio B12 - Enrico Forlanini",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "1898": {
+    "campus": "MIB",
+    "name": "B2.1.1",
+    "site": "Milano Bovisa - Via Durando",
+    "building": "Edificio B2 - Laboratori del Design - Aule",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "1899": {
+    "campus": "MIB",
+    "name": "B2.1.9",
+    "site": "Milano Bovisa - Via Durando",
+    "building": "Edificio B2 - Laboratori del Design - Aule",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "1903": {
+    "campus": "MIB",
+    "name": "B2.1.2",
+    "site": "Milano Bovisa - Via Durando",
+    "building": "Edificio B2 - Laboratori del Design - Aule",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "1905": {
+    "campus": "MIB",
+    "name": "B2.1.13",
+    "site": "Milano Bovisa - Via Durando",
+    "building": "Edificio B2 - Laboratori del Design - Aule",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "1906": {
+    "campus": "MIB",
+    "name": "B2.1.12",
+    "site": "Milano Bovisa - Via Durando",
+    "building": "Edificio B2 - Laboratori del Design - Aule",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "1907": {
+    "campus": "MIB",
+    "name": "B2.2.10",
+    "site": "Milano Bovisa - Via Durando",
+    "building": "Edificio B2 - Laboratori del Design - Aule",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "1908": {
+    "campus": "MIB",
+    "name": "B2.2.8",
+    "site": "Milano Bovisa - Via Durando",
+    "building": "Edificio B2 - Laboratori del Design - Aule",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "1909": {
+    "campus": "MIB",
+    "name": "B2.2.7",
+    "site": "Milano Bovisa - Via Durando",
+    "building": "Edificio B2 - Laboratori del Design - Aule",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "1910": {
+    "campus": "MIB",
+    "name": "B2.2.6",
+    "site": "Milano Bovisa - Via Durando",
+    "building": "Edificio B2 - Laboratori del Design - Aule",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "1911": {
+    "campus": "MIB",
+    "name": "B2.2.4",
+    "site": "Milano Bovisa - Via Durando",
+    "building": "Edificio B2 - Laboratori del Design - Aule",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "1912": {
+    "campus": "MIB",
+    "name": "B2.2.3",
+    "site": "Milano Bovisa - Via Durando",
+    "building": "Edificio B2 - Laboratori del Design - Aule",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "1913": {
+    "campus": "MIB",
+    "name": "B2.2.2",
+    "site": "Milano Bovisa - Via Durando",
+    "building": "Edificio B2 - Laboratori del Design - Aule",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "1914": {
+    "campus": "MIB",
+    "name": "B2.2.1",
+    "site": "Milano Bovisa - Via Durando",
+    "building": "Edificio B2 - Laboratori del Design - Aule",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "1915": {
+    "campus": "MIB",
+    "name": "B2.2.14",
+    "site": "Milano Bovisa - Via Durando",
+    "building": "Edificio B2 - Laboratori del Design - Aule",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "1916": {
+    "campus": "MIB",
+    "name": "B2.2.13",
+    "site": "Milano Bovisa - Via Durando",
+    "building": "Edificio B2 - Laboratori del Design - Aule",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "1917": {
+    "campus": "MIB",
+    "name": "B2.2.11",
+    "site": "Milano Bovisa - Via Durando",
+    "building": "Edificio B2 - Laboratori del Design - Aule",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "1941": {
+    "campus": "MIA",
+    "name": "E\\F",
+    "site": "Milano Città Studi - Via Bonardi",
+    "building": "Edificio 11 - Architettura",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "1942": {
+    "campus": "MIA",
+    "name": "O.2.1",
+    "site": "Milano Città Studi - Via Bonardi",
+    "building": "Edificio 11 - Architettura",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "1953": {
+    "campus": "MIB",
+    "name": "B2.3.4",
+    "site": "Milano Bovisa - Via Durando",
+    "building": "Edificio B2 - Laboratori del Design - Aule",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "1954": {
+    "campus": "MIB",
+    "name": "B2.3.3",
+    "site": "Milano Bovisa - Via Durando",
+    "building": "Edificio B2 - Laboratori del Design - Aule",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "1955": {
+    "campus": "MIB",
+    "name": "B2.3.2",
+    "site": "Milano Bovisa - Via Durando",
+    "building": "Edificio B2 - Laboratori del Design - Aule",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "1956": {
+    "campus": "MIB",
+    "name": "B2.3.1",
+    "site": "Milano Bovisa - Via Durando",
+    "building": "Edificio B2 - Laboratori del Design - Aule",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "1960": {
+    "campus": "MIA",
+    "name": "Z.2",
+    "site": "Milano Città Studi - Via Bonardi",
+    "building": "Edificio 11 - Architettura",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "2000": {
+    "campus": "MIA",
+    "name": "B.2.3",
+    "site": "Milano Città Studi - Via Bonardi",
+    "building": "Edificio 14 - Nave",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "2001": {
+    "campus": "MIA",
+    "name": "B.2.4",
+    "site": "Milano Città Studi - Via Bonardi",
+    "building": "Edificio 14 - Nave",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "2002": {
+    "campus": "MIA",
+    "name": "B.3.3",
+    "site": "Milano Città Studi - Via Bonardi",
+    "building": "Edificio 14 - Nave",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "2003": {
+    "campus": "MIA",
+    "name": "B.3.4",
+    "site": "Milano Città Studi - Via Bonardi",
+    "building": "Edificio 14 - Nave",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "2004": {
+    "campus": "PCL",
+    "name": "AULAH",
+    "site": "Piacenza - Via Scalabrini 76",
+    "building": "Edificio 1",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "2005": {
+    "campus": "PCL",
+    "name": "AULAL",
+    "site": "Piacenza - Via Scalabrini 76",
+    "building": "Edificio 1",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "2006": {
+    "campus": "PCL",
+    "name": "AULAR",
+    "site": "Piacenza - Via Scalabrini 76",
+    "building": "Edificio 1",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "2009": {
+    "campus": "PCL",
+    "name": "AULAINFORMATIZZATA5",
+    "site": "Piacenza - Via Scalabrini 76",
+    "building": "Edificio 1",
+    "category": "AULA DIDATTICA",
+    "type": "INFORMATIZZATA"
+  },
+  "2010": {
+    "campus": "PCL",
+    "name": "AULAINFORMATIZZATA4",
+    "site": "Piacenza - Via Scalabrini 76",
+    "building": "Edificio 1",
+    "category": "AULA DIDATTICA",
+    "type": "INFORMATIZZATA"
+  },
+  "2038": {
+    "campus": "PCL",
+    "name": "AULAM",
+    "site": "Piacenza - Via Scalabrini 76",
+    "building": "Edificio 1",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "2065": {
+    "campus": "MNI",
+    "name": "A.1.3",
+    "site": "Mantova - Via Scarsellini 15",
+    "building": "Edificio 1",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "2066": {
+    "campus": "MNI",
+    "name": "A.1.4",
+    "site": "Mantova - Via Scarsellini 15",
+    "building": "Edificio 1",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "2067": {
+    "campus": "MNI",
+    "name": "A.1.8",
+    "site": "Mantova - Via Scarsellini 15",
+    "building": "Edificio 1",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "2071": {
+    "campus": "MNI",
+    "name": "A.1.1",
+    "site": "Mantova - Via Scarsellini 15",
+    "building": "Edificio 1",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "2072": {
+    "campus": "MNI",
+    "name": "A.0.1",
+    "site": "Mantova - Via Scarsellini 15",
+    "building": "Edificio 1",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "2073": {
+    "campus": "MNI",
+    "name": "A.1.5",
+    "site": "Mantova - Via Scarsellini 15",
+    "building": "Edificio 1",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "2074": {
+    "campus": "MNI",
+    "name": "A.0.3",
+    "site": "Mantova - Via Scarsellini 15",
+    "building": "Edificio 1",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "2077": {
+    "campus": "MNI",
+    "name": "A.0.4",
+    "site": "Mantova - Via Scarsellini 15",
+    "building": "Edificio 1",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "2078": {
+    "campus": "MNI",
+    "name": "A.0.2",
+    "site": "Mantova - Via Scarsellini 15",
+    "building": "Edificio 1",
+    "category": "AULA MAGNA",
+    "type": "PLATEA FRONTALE"
+  },
+  "2087": {
+    "campus": "PCL",
+    "name": "AULAS",
+    "site": "Piacenza - Via Scalabrini 76",
+    "building": "Edificio 1",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "2092": {
+    "campus": "MIB",
+    "name": "B2.0.1-D.I.",
+    "site": "Milano Bovisa - Via Durando",
+    "building": "Edificio B2 - Laboratori del Design - Aule",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "2106": {
+    "campus": "MIB",
+    "name": "B2.1.5",
+    "site": "Milano Bovisa - Via Durando",
+    "building": "Edificio B2 - Laboratori del Design - Aule",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "2107": {
+    "campus": "MIB",
+    "name": "B2.1.14",
+    "site": "Milano Bovisa - Via Durando",
+    "building": "Edificio B2 - Laboratori del Design - Aule",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "2108": {
+    "campus": "MIB",
+    "name": "B2.1.11",
+    "site": "Milano Bovisa - Via Durando",
+    "building": "Edificio B2 - Laboratori del Design - Aule",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "2110": {
+    "campus": "PCL",
+    "name": "SALARIUNIONIGINOMARCHET",
+    "site": "Piacenza - Via Scalabrini 76",
+    "building": "Edificio 1",
+    "category": "AULA CONVEGNI",
+    "type": "ALTRO"
+  },
+  "2132": {
+    "campus": "PCL",
+    "name": "SALARIUNIONI2BACCIOCCHI",
+    "site": "Piacenza - Via Scalabrini 113",
+    "building": "Padiglione 3 - Padiglione M. BACIOCCHI",
+    "category": "AULA CONVEGNI",
+    "type": "ALTRO"
+  },
+  "2133": {
+    "campus": "PCL",
+    "name": "PADIGLIONEMANFREDI",
+    "site": "Piacenza - Via Scalabrini 113",
+    "building": "Padiglione 6 - Padiglione M. MANFREDI",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "2134": {
+    "campus": "PCL",
+    "name": "PADIGLIONEGUIDOTTI",
+    "site": "Piacenza - Via Scalabrini 113",
+    "building": "Padiglione 4 - Padiglione C. GUIDOTTI",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "2135": {
+    "campus": "PCL",
+    "name": "AULAP",
+    "site": "Piacenza - Via Scalabrini 76",
+    "building": "Edificio 1",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "2328": {
+    "campus": "MIA",
+    "name": "2.2.5-VIRTUALLAB",
+    "site": "Milano Città Studi - Piazza Leonardo da Vinci 32",
+    "building": "Edificio 2 - Bruno Finzi",
+    "category": "AULA DIDATTICA",
+    "type": "ALTRO"
+  },
+  "2350": {
+    "campus": "MIA",
+    "name": "BELTRAMI",
+    "site": "Milano Città Studi - Piazza Leonardo da Vinci 32",
+    "building": "Edificio 5 - Arturo Danusso",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "4513": {
+    "campus": "MIA",
+    "name": "OSVALDODEDONATO",
+    "site": "Milano Città Studi - Piazza Leonardo da Vinci 32",
+    "building": "Edificio 3 - Gino Cassinis",
+    "category": "AULA CONVEGNI",
+    "type": "PLATEA FRONTALE"
+  },
+  "4517": {
+    "campus": "MIB",
+    "name": "F.LLICASTIGLIONI",
+    "site": "Milano Bovisa - Via Durando",
+    "building": "Edificio B1 - Biblioteca",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "4546": {
+    "campus": "MIB",
+    "name": "BL.27.0.1",
+    "site": "Milano Bovisa - Via La Masa",
+    "building": "Edificio BL27 - Aule",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "4547": {
+    "campus": "MIB",
+    "name": "BL.27.0.2",
+    "site": "Milano Bovisa - Via La Masa",
+    "building": "Edificio BL27 - Aule",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "4548": {
+    "campus": "MIB",
+    "name": "BL.27.0.3",
+    "site": "Milano Bovisa - Via La Masa",
+    "building": "Edificio BL27 - Aule",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "4549": {
+    "campus": "MIB",
+    "name": "BL.27.0.4",
+    "site": "Milano Bovisa - Via La Masa",
+    "building": "Edificio BL27 - Aule",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "4550": {
+    "campus": "MIB",
+    "name": "BL.27.0.5",
+    "site": "Milano Bovisa - Via La Masa",
+    "building": "Edificio BL27 - Aule",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "4551": {
+    "campus": "MIB",
+    "name": "BL.27.0.6",
+    "site": "Milano Bovisa - Via La Masa",
+    "building": "Edificio BL27 - Aule",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "4552": {
+    "campus": "MIB",
+    "name": "BL.27.0.7",
+    "site": "Milano Bovisa - Via La Masa",
+    "building": "Edificio BL27 - Aule",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "4553": {
+    "campus": "MIB",
+    "name": "BL.27.0.8",
+    "site": "Milano Bovisa - Via La Masa",
+    "building": "Edificio BL27 - Aule",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "4554": {
+    "campus": "MIB",
+    "name": "BL.27.1.1",
+    "site": "Milano Bovisa - Via La Masa",
+    "building": "Edificio BL27 - Aule",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "4556": {
+    "campus": "MIB",
+    "name": "BL.27.1.2",
+    "site": "Milano Bovisa - Via La Masa",
+    "building": "Edificio BL27 - Aule",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "4557": {
+    "campus": "MIB",
+    "name": "BL.27.1.3",
+    "site": "Milano Bovisa - Via La Masa",
+    "building": "Edificio BL27 - Aule",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "4558": {
+    "campus": "MIB",
+    "name": "BL.27.1.4",
+    "site": "Milano Bovisa - Via La Masa",
+    "building": "Edificio BL27 - Aule",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "4559": {
+    "campus": "MIB",
+    "name": "BL.27.1.5",
+    "site": "Milano Bovisa - Via La Masa",
+    "building": "Edificio BL27 - Aule",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "4560": {
+    "campus": "MIB",
+    "name": "BL.27.1.6",
+    "site": "Milano Bovisa - Via La Masa",
+    "building": "Edificio BL27 - Aule",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "4561": {
+    "campus": "MIB",
+    "name": "BL.27.1.7",
+    "site": "Milano Bovisa - Via La Masa",
+    "building": "Edificio BL27 - Aule",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "4562": {
+    "campus": "MIB",
+    "name": "BL.27.1.8",
+    "site": "Milano Bovisa - Via La Masa",
+    "building": "Edificio BL27 - Aule",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "4588": {
+    "campus": "PCL",
+    "name": "PADIGLIONENICELLI",
+    "site": "Piacenza - Via Scalabrini 113",
+    "building": "Padiglione 8 - Padiglione A. NICELLI",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "4589": {
+    "campus": "MIA",
+    "name": "7.0.1",
+    "site": "Milano Città Studi - Piazza Leonardo da Vinci 32",
+    "building": "Edificio 7 - Carlo Erba",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "4590": {
+    "campus": "MIA",
+    "name": "B.4.3",
+    "site": "Milano Città Studi - Via Bonardi",
+    "building": "Edificio 14 - Nave",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "4596": {
+    "campus": "MIA",
+    "name": "E.P.1",
+    "site": "Milano Città Studi - Via Colombo 40",
+    "building": "Edificio 32.3",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "4599": {
+    "campus": "MIA",
+    "name": "26.0.2",
+    "site": "Milano Città Studi - Via Golgi 20",
+    "building": "Edificio 26 - Mensa",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "4600": {
+    "campus": "MIA",
+    "name": "26.0.3",
+    "site": "Milano Città Studi - Via Golgi 20",
+    "building": "Edificio 26 - Mensa",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "4601": {
+    "campus": "MIA",
+    "name": "26.1.1",
+    "site": "Milano Città Studi - Via Golgi 20",
+    "building": "Edificio 26 - Mensa",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "4602": {
+    "campus": "MIA",
+    "name": "26.1.2",
+    "site": "Milano Città Studi - Via Golgi 20",
+    "building": "Edificio 26 - Mensa",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "4603": {
+    "campus": "MIA",
+    "name": "26.1.3",
+    "site": "Milano Città Studi - Via Golgi 20",
+    "building": "Edificio 26 - Mensa",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "4604": {
+    "campus": "MIA",
+    "name": "26.1.4",
+    "site": "Milano Città Studi - Via Golgi 20",
+    "building": "Edificio 26 - Mensa",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "4605": {
+    "campus": "MIA",
+    "name": "26.1.5",
+    "site": "Milano Città Studi - Via Golgi 20",
+    "building": "Edificio 26 - Mensa",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "4606": {
+    "campus": "MIA",
+    "name": "26.1.6",
+    "site": "Milano Città Studi - Via Golgi 20",
+    "building": "Edificio 26 - Mensa",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "4616": {
+    "campus": "MIB",
+    "name": "B2.2.12",
+    "site": "Milano Bovisa - Via Durando",
+    "building": "Edificio B2 - Laboratori del Design - Aule",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "4617": {
+    "campus": "MIB",
+    "name": "B2.2.5",
+    "site": "Milano Bovisa - Via Durando",
+    "building": "Edificio B2 - Laboratori del Design - Aule",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "4618": {
+    "campus": "MIB",
+    "name": "B2.1.16",
+    "site": "Milano Bovisa - Via Durando",
+    "building": "Edificio B2 - Laboratori del Design - Aule",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "4619": {
+    "campus": "MIB",
+    "name": "B2.2.15",
+    "site": "Milano Bovisa - Via Durando",
+    "building": "Edificio B2 - Laboratori del Design - Aule",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "4620": {
+    "campus": "MIB",
+    "name": "B2.2.9",
+    "site": "Milano Bovisa - Via Durando",
+    "building": "Edificio B2 - Laboratori del Design - Aule",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "4628": {
+    "campus": "MIA",
+    "name": "26.0.4",
+    "site": "Milano Città Studi - Via Golgi 20",
+    "building": "Edificio 26 - Mensa",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "4630": {
+    "campus": "MIA",
+    "name": "3.2.1",
+    "site": "Milano Città Studi - Piazza Leonardo da Vinci 32",
+    "building": "Edificio 3 - Gino Cassinis",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "4631": {
+    "campus": "MIA",
+    "name": "3.2.2",
+    "site": "Milano Città Studi - Piazza Leonardo da Vinci 32",
+    "building": "Edificio 3 - Gino Cassinis",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "4632": {
+    "campus": "MIA",
+    "name": "3.2.3",
+    "site": "Milano Città Studi - Piazza Leonardo da Vinci 32",
+    "building": "Edificio 3 - Gino Cassinis",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "4633": {
+    "campus": "MIA",
+    "name": "3.2.4",
+    "site": "Milano Città Studi - Piazza Leonardo da Vinci 32",
+    "building": "Edificio 3 - Gino Cassinis",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "4634": {
+    "campus": "PCL",
+    "name": "PADIGLIONEVEGEZZI",
+    "site": "Piacenza - Via Scalabrini 113",
+    "building": "Padiglione 5 - Padiglione N. Vegezzi",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "4635": {
+    "campus": "LCF",
+    "name": "T.1",
+    "site": "Lecco - Via Ghislanzoni",
+    "building": "Edificio 8",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "4636": {
+    "campus": "LCF",
+    "name": "T.2",
+    "site": "Lecco - Via Ghislanzoni",
+    "building": "Edificio 8",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "4637": {
+    "campus": "LCF",
+    "name": "T.3",
+    "site": "Lecco - Via Ghislanzoni",
+    "building": "Edificio 8",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "4638": {
+    "campus": "LCF",
+    "name": "T.4",
+    "site": "Lecco - Via Ghislanzoni",
+    "building": "Edificio 8",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "4639": {
+    "campus": "LCF",
+    "name": "B.0.1",
+    "site": "Lecco - Via Ghislanzoni",
+    "building": "Edificio 9",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "4640": {
+    "campus": "LCF",
+    "name": "B.0.2",
+    "site": "Lecco - Via Ghislanzoni",
+    "building": "Edificio 9",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "4641": {
+    "campus": "LCF",
+    "name": "B.0.3",
+    "site": "Lecco - Via Ghislanzoni",
+    "building": "Edificio 9",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "4642": {
+    "campus": "LCF",
+    "name": "B.0.4",
+    "site": "Lecco - Via Ghislanzoni",
+    "building": "Edificio 9",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "4643": {
+    "campus": "LCF",
+    "name": "B.0.5",
+    "site": "Lecco - Via Ghislanzoni",
+    "building": "Edificio 9",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "4644": {
+    "campus": "LCF",
+    "name": "B.0.6",
+    "site": "Lecco - Via Ghislanzoni",
+    "building": "Edificio 9",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "4645": {
+    "campus": "LCF",
+    "name": "B.0.7",
+    "site": "Lecco - Via Ghislanzoni",
+    "building": "Edificio 9",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "4646": {
+    "campus": "LCF",
+    "name": "B.1.1",
+    "site": "Lecco - Via Ghislanzoni",
+    "building": "Edificio 9",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "4647": {
+    "campus": "LCF",
+    "name": "B.1.2",
+    "site": "Lecco - Via Ghislanzoni",
+    "building": "Edificio 9",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "4648": {
+    "campus": "LCF",
+    "name": "B.1.3",
+    "site": "Lecco - Via Ghislanzoni",
+    "building": "Edificio 9",
+    "category": "AULA DIDATTICA",
+    "type": "INFORMATIZZATA"
+  },
+  "4649": {
+    "campus": "LCF",
+    "name": "B.1.4",
+    "site": "Lecco - Via Ghislanzoni",
+    "building": "Edificio 9",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "4650": {
+    "campus": "LCF",
+    "name": "B.1.5",
+    "site": "Lecco - Via Ghislanzoni",
+    "building": "Edificio 9",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "4651": {
+    "campus": "LCF",
+    "name": "B.2.1",
+    "site": "Lecco - Via Ghislanzoni",
+    "building": "Edificio 9",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "4652": {
+    "campus": "LCF",
+    "name": "B.2.2",
+    "site": "Lecco - Via Ghislanzoni",
+    "building": "Edificio 9",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "4653": {
+    "campus": "LCF",
+    "name": "B.2.3",
+    "site": "Lecco - Via Ghislanzoni",
+    "building": "Edificio 9",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "4654": {
+    "campus": "LCF",
+    "name": "B.2.4",
+    "site": "Lecco - Via Ghislanzoni",
+    "building": "Edificio 9",
+    "category": "AULA DIDATTICA",
+    "type": "INFORMATIZZATA"
+  },
+  "4655": {
+    "campus": "LCF",
+    "name": "B.2.5",
+    "site": "Lecco - Via Ghislanzoni",
+    "building": "Edificio 9",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "4656": {
+    "campus": "LCF",
+    "name": "B.2.6",
+    "site": "Lecco - Via Ghislanzoni",
+    "building": "Edificio 9",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "4657": {
+    "campus": "LCF",
+    "name": "A.0.1",
+    "site": "Lecco - Via Ghislanzoni",
+    "building": "Edificio 10",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "4658": {
+    "campus": "LCF",
+    "name": "A.0.2",
+    "site": "Lecco - Via Ghislanzoni",
+    "building": "Edificio 10",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "4659": {
+    "campus": "LCF",
+    "name": "A.1.1",
+    "site": "Lecco - Via Ghislanzoni",
+    "building": "Edificio 10",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "4660": {
+    "campus": "LCF",
+    "name": "A.1.2",
+    "site": "Lecco - Via Ghislanzoni",
+    "building": "Edificio 10",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "4661": {
+    "campus": "LCF",
+    "name": "A.1.3",
+    "site": "Lecco - Via Ghislanzoni",
+    "building": "Edificio 10",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "4666": {
+    "campus": "MIA",
+    "name": "26.0.1",
+    "site": "Milano Città Studi - Via Golgi 20",
+    "building": "Edificio 26 - Mensa",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "4668": {
+    "campus": "MIB",
+    "name": "ATRIOP.T.-ED.BL.27",
+    "site": "Milano Bovisa - Via La Masa",
+    "building": "Edificio BL27 - Aule",
+    "category": "SPAZIO ESPOSITIVO",
+    "type": "ALTRO"
+  },
+  "4669": {
+    "campus": "MIB",
+    "name": "CORRIDOIOSXP.T.-ED.BL27",
+    "site": "Milano Bovisa - Via La Masa",
+    "building": "Edificio BL27 - Aule",
+    "category": "SPAZIO ESPOSITIVO",
+    "type": "PLATEA FRONTALE"
+  },
+  "4670": {
+    "campus": "MIB",
+    "name": "CORRIDOIODXP.T.-ED.BL27",
+    "site": "Milano Bovisa - Via La Masa",
+    "building": "Edificio BL27 - Aule",
+    "category": "SPAZIO ESPOSITIVO",
+    "type": "PLATEA FRONTALE"
+  },
+  "4671": {
+    "campus": "MIB",
+    "name": "ATRIO1°PIANO-ED.BL.27",
+    "site": "Milano Bovisa - Via La Masa",
+    "building": "Edificio BL27 - Aule",
+    "category": "SPAZIO ESPOSITIVO",
+    "type": "ALTRO"
+  },
+  "4672": {
+    "campus": "MIB",
+    "name": "CORRIDOIOSX1°P.-ED.BL.27",
+    "site": "Milano Bovisa - Via La Masa",
+    "building": "Edificio BL27 - Aule",
+    "category": "SPAZIO ESPOSITIVO",
+    "type": "PLATEA FRONTALE"
+  },
+  "4673": {
+    "campus": "MIB",
+    "name": "CORRIDOIODX1°P.-ED.BL.27",
+    "site": "Milano Bovisa - Via La Masa",
+    "building": "Edificio BL27 - Aule",
+    "category": "SPAZIO ESPOSITIVO",
+    "type": "PLATEA FRONTALE"
+  },
+  "4674": {
+    "campus": "MNI",
+    "name": "A1.2",
+    "site": "Mantova - Via Scarsellini 15",
+    "building": "Edificio 1",
+    "category": "AULA CONVEGNI",
+    "type": "PLATEA FRONTALE"
+  },
+  "4677": {
+    "campus": "PCL",
+    "name": "AULASTUDIO",
+    "site": "Piacenza - Via Scalabrini 76",
+    "building": "Edificio 1",
+    "category": "AULA STUDIO",
+    "type": "STUDIO INDIVIDUALE"
+  },
+  "4682": {
+    "campus": "MIA",
+    "name": "R.2",
+    "site": "Milano Città Studi - Via Bonardi",
+    "building": "Edificio 11 - Architettura",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "4684": {
+    "campus": "MIA",
+    "name": "O.1",
+    "site": "Milano Città Studi - Via Bonardi",
+    "building": "Edificio 11 - Architettura",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "4693": {
+    "campus": "MIB",
+    "name": "B6.2.1",
+    "site": "Milano Bovisa - Via Durando",
+    "building": "Edificio B6 - Laboratorio sulla Sicurezza dei Trasporti (LAST) - Aule",
+    "category": "AULA DIDATTICA",
+    "type": "INFORMATIZZATA"
+  },
+  "4694": {
+    "campus": "MIB",
+    "name": "B6.2.2",
+    "site": "Milano Bovisa - Via Durando",
+    "building": "Edificio B6 - Laboratorio sulla Sicurezza dei Trasporti (LAST) - Aule",
+    "category": "AULA DIDATTICA",
+    "type": "INFORMATIZZATA"
+  },
+  "4699": {
+    "campus": "MIB",
+    "name": "B6.2.5",
+    "site": "Milano Bovisa - Via Durando",
+    "building": "Edificio B6 - Laboratorio sulla Sicurezza dei Trasporti (LAST) - Aule",
+    "category": "AULA DIDATTICA",
+    "type": "INFORMATIZZATA"
+  },
+  "4700": {
+    "campus": "MIB",
+    "name": "B6.2.6",
+    "site": "Milano Bovisa - Via Durando",
+    "building": "Edificio B6 - Laboratorio sulla Sicurezza dei Trasporti (LAST) - Aule",
+    "category": "AULA DIDATTICA",
+    "type": "INFORMATIZZATA"
+  },
+  "4701": {
+    "campus": "MIB",
+    "name": "B6.3.1",
+    "site": "Milano Bovisa - Via Durando",
+    "building": "Edificio B6 - Laboratorio sulla Sicurezza dei Trasporti (LAST) - Aule",
+    "category": "AULA DIDATTICA",
+    "type": "INFORMATIZZATA"
+  },
+  "4703": {
+    "campus": "MIB",
+    "name": "B6.3.2",
+    "site": "Milano Bovisa - Via Durando",
+    "building": "Edificio B6 - Laboratorio sulla Sicurezza dei Trasporti (LAST) - Aule",
+    "category": "AULA DIDATTICA",
+    "type": "INFORMATIZZATA"
+  },
+  "4725": {
+    "campus": "MIA",
+    "name": "B.4.4",
+    "site": "Milano Città Studi - Via Bonardi",
+    "building": "Edificio 14 - Nave",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "4726": {
+    "campus": "MIA",
+    "name": "2.2.4",
+    "site": "Milano Città Studi - Piazza Leonardo da Vinci 32",
+    "building": "Edificio 2 - Bruno Finzi",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "4733": {
+    "campus": "MIA",
+    "name": "3.1.9",
+    "site": "Milano Città Studi - Piazza Leonardo da Vinci 32",
+    "building": "Edificio 3 - Gino Cassinis",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "4734": {
+    "campus": "MIA",
+    "name": "3.1.8",
+    "site": "Milano Città Studi - Piazza Leonardo da Vinci 32",
+    "building": "Edificio 3 - Gino Cassinis",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "4738": {
+    "campus": "MIA",
+    "name": "5.02",
+    "site": "Milano Città Studi - Piazza Leonardo da Vinci 32",
+    "building": "Edificio 5 - Arturo Danusso",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "4739": {
+    "campus": "MIA",
+    "name": "5.03",
+    "site": "Milano Città Studi - Piazza Leonardo da Vinci 32",
+    "building": "Edificio 5 - Arturo Danusso",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "4740": {
+    "campus": "MIA",
+    "name": "9.0.3",
+    "site": "Milano Città Studi - Piazza Leonardo da Vinci 32",
+    "building": "Edificio 9 - Giuseppe Bruni",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "4741": {
+    "campus": "MIB",
+    "name": "BL.28.1.1",
+    "site": "Milano Bovisa - Via La Masa",
+    "building": "Edificio BL28 - Edificio 28",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "4742": {
+    "campus": "MIB",
+    "name": "BL.28.1.2",
+    "site": "Milano Bovisa - Via La Masa",
+    "building": "Edificio BL28 - Edificio 28",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "4743": {
+    "campus": "MIB",
+    "name": "BL.28.2.1",
+    "site": "Milano Bovisa - Via La Masa",
+    "building": "Edificio BL28 - Edificio 28",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "4744": {
+    "campus": "MIB",
+    "name": "BL.28.2.2",
+    "site": "Milano Bovisa - Via La Masa",
+    "building": "Edificio BL28 - Edificio 28",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "4745": {
+    "campus": "MIB",
+    "name": "AULACARASSAEDADDA",
+    "site": "Milano Bovisa - Via La Masa",
+    "building": "Edificio BL28 - Edificio 28",
+    "category": "AULA CONVEGNI",
+    "type": "PLATEA FRONTALE"
+  },
+  "4752": {
+    "campus": "MIA",
+    "name": "E.P.2",
+    "site": "Milano Città Studi - Via Colombo 40",
+    "building": "Edificio 32.3",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "4765": {
+    "campus": "MIA",
+    "name": "9.0.4",
+    "site": "Milano Città Studi - Piazza Leonardo da Vinci 32",
+    "building": "Edificio 9 - Giuseppe Bruni",
+    "category": "AULA DIDATTICA",
+    "type": "INFORMATIZZATA"
+  },
+  "4766": {
+    "campus": "MIA",
+    "name": "E.P.3",
+    "site": "Milano Città Studi - Via Colombo 40",
+    "building": "Edificio 32.3",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "4778": {
+    "campus": "MIB",
+    "name": "B80.1",
+    "site": "Milano Bovisa - Via Durando",
+    "building": "Edificio B8 - Aule",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "4779": {
+    "campus": "MIB",
+    "name": "B80.2",
+    "site": "Milano Bovisa - Via Durando",
+    "building": "Edificio B8 - Aule",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "4780": {
+    "campus": "MIB",
+    "name": "B80.3",
+    "site": "Milano Bovisa - Via Durando",
+    "building": "Edificio B8 - Aule",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "4781": {
+    "campus": "MIB",
+    "name": "B80.4",
+    "site": "Milano Bovisa - Via Durando",
+    "building": "Edificio B8 - Aule",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "4782": {
+    "campus": "MIB",
+    "name": "B80.5",
+    "site": "Milano Bovisa - Via Durando",
+    "building": "Edificio B8 - Aule",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "4783": {
+    "campus": "MIB",
+    "name": "B80.6",
+    "site": "Milano Bovisa - Via Durando",
+    "building": "Edificio B8 - Aule",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "4784": {
+    "campus": "MIB",
+    "name": "B80.8",
+    "site": "Milano Bovisa - Via Durando",
+    "building": "Edificio B8 - Aule",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "4785": {
+    "campus": "MIB",
+    "name": "B81.1",
+    "site": "Milano Bovisa - Via Durando",
+    "building": "Edificio B8 - Aule",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "4786": {
+    "campus": "MIB",
+    "name": "B81.3",
+    "site": "Milano Bovisa - Via Durando",
+    "building": "Edificio B8 - Aule",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "4787": {
+    "campus": "MIB",
+    "name": "B82.1",
+    "site": "Milano Bovisa - Via Durando",
+    "building": "Edificio B8 - Aule",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "4788": {
+    "campus": "MIB",
+    "name": "B82.2",
+    "site": "Milano Bovisa - Via Durando",
+    "building": "Edificio B8 - Aule",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "4789": {
+    "campus": "MIB",
+    "name": "B82.3",
+    "site": "Milano Bovisa - Via Durando",
+    "building": "Edificio B8 - Aule",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "4791": {
+    "campus": "MIA",
+    "name": "G.3",
+    "site": "Milano Città Studi - Via Bonardi",
+    "building": "Edificio 11 - Architettura",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "4855": {
+    "campus": "MIB",
+    "name": "B6.2.3",
+    "site": "Milano Bovisa - Via Durando",
+    "building": "Edificio B6 - Laboratorio sulla Sicurezza dei Trasporti (LAST) - Aule",
+    "category": "AULA DIDATTICA",
+    "type": "INFORMATIZZATA"
+  },
+  "4856": {
+    "campus": "MIB",
+    "name": "B6.2.4",
+    "site": "Milano Bovisa - Via Durando",
+    "building": "Edificio B6 - Laboratorio sulla Sicurezza dei Trasporti (LAST) - Aule",
+    "category": "AULA DIDATTICA",
+    "type": "INFORMATIZZATA"
+  },
+  "4861": {
+    "campus": "MIB",
+    "name": "B6.3.3",
+    "site": "Milano Bovisa - Via Durando",
+    "building": "Edificio B6 - Laboratorio sulla Sicurezza dei Trasporti (LAST) - Aule",
+    "category": "AULA DIDATTICA",
+    "type": "INFORMATIZZATA"
+  },
+  "4862": {
+    "campus": "MIB",
+    "name": "B80.10",
+    "site": "Milano Bovisa - Via Durando",
+    "building": "Edificio B8 - Aule",
+    "category": "AULA DIDATTICA",
+    "type": "INFORMATIZZATA"
+  },
+  "4863": {
+    "campus": "MIB",
+    "name": "B80.11",
+    "site": "Milano Bovisa - Via Durando",
+    "building": "Edificio B8 - Aule",
+    "category": "AULA DIDATTICA",
+    "type": "INFORMATIZZATA"
+  },
+  "4864": {
+    "campus": "MIB",
+    "name": "B80.12",
+    "site": "Milano Bovisa - Via Durando",
+    "building": "Edificio B8 - Aule",
+    "category": "AULA DIDATTICA",
+    "type": "INFORMATIZZATA"
+  },
+  "4990": {
+    "campus": "MIA",
+    "name": "16B.0.1",
+    "site": "Milano Città Studi - Via Bonardi",
+    "building": "Edificio 16B",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "4991": {
+    "campus": "MIA",
+    "name": "16B.1.1",
+    "site": "Milano Città Studi - Via Bonardi",
+    "building": "Edificio 16B",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "4992": {
+    "campus": "MIA",
+    "name": "16B.2.1",
+    "site": "Milano Città Studi - Via Bonardi",
+    "building": "Edificio 16B",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "4993": {
+    "campus": "MIA",
+    "name": "16B.3.1",
+    "site": "Milano Città Studi - Via Bonardi",
+    "building": "Edificio 16B",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "5011": {
+    "campus": "MIA",
+    "name": "16C.0.1",
+    "site": "Milano Città Studi - Via Bonardi",
+    "building": "Edificio 16C",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "5012": {
+    "campus": "MIA",
+    "name": "16C.0.2",
+    "site": "Milano Città Studi - Via Bonardi",
+    "building": "Edificio 16C",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "5013": {
+    "campus": "MIA",
+    "name": "16C.0.3",
+    "site": "Milano Città Studi - Via Bonardi",
+    "building": "Edificio 16C",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "5014": {
+    "campus": "MIB",
+    "name": "CARLODECARLI",
+    "site": "Milano Bovisa - Via Durando",
+    "building": "Edificio B9 - Spazio Convegni \"Carlo De Carli\"",
+    "category": "AULA CONVEGNI",
+    "type": "PLATEA FRONTALE"
+  },
+  "5017": {
+    "campus": "LCF",
+    "name": "M.2",
+    "site": "Lecco - Via Ghislanzoni",
+    "building": "Edificio 12",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "5018": {
+    "campus": "LCF",
+    "name": "M.1",
+    "site": "Lecco - Via Ghislanzoni",
+    "building": "Edificio 12",
+    "category": "AULA CONVEGNI",
+    "type": "DISEGNO"
+  },
+  "5030": {
+    "campus": "PCL",
+    "name": "LABORATORIOEXTREMEDESIGN",
+    "site": "Piacenza - Via Scalabrini 113",
+    "building": "Padiglione 3 - Padiglione M. BACIOCCHI",
+    "category": "LABORATORIO",
+    "type": "ALTRO"
+  },
+  "5031": {
+    "campus": "PCL",
+    "name": "LABORATORIOIEM",
+    "site": "Piacenza - Via Scalabrini 113",
+    "building": "Padiglione 3 - Padiglione M. BACIOCCHI",
+    "category": "LABORATORIO DIDATTICO",
+    "type": "ALTRO"
+  },
+  "5032": {
+    "campus": "PCL",
+    "name": "SALARIUNIONI1BACCIOCCHI",
+    "site": "Piacenza - Via Scalabrini 113",
+    "building": "Padiglione 3 - Padiglione M. BACIOCCHI",
+    "category": "AULA DIDATTICA",
+    "type": "ALTRO"
+  },
+  "5033": {
+    "campus": "PCL",
+    "name": "SPAZIOLAVOROSTUDENTI",
+    "site": "Piacenza - Via Scalabrini 113",
+    "building": "Padiglione 3 - Padiglione M. BACIOCCHI",
+    "category": "AULA STUDIO",
+    "type": "DISEGNO"
+  },
+  "5034": {
+    "campus": "PCL",
+    "name": "PADIGLIONENEGROTTI1",
+    "site": "Piacenza - Via Scalabrini 113",
+    "building": "Padiglione 9",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "5035": {
+    "campus": "PCL",
+    "name": "PADIGLIONENEGROTTI2",
+    "site": "Piacenza - Via Scalabrini 113",
+    "building": "Padiglione 9",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "5038": {
+    "campus": "MIA",
+    "name": "Y.1",
+    "site": "Milano Città Studi - Via Bonardi",
+    "building": "Edificio 11 - Architettura",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "5039": {
+    "campus": "MIA",
+    "name": "Z.1D.I.",
+    "site": "Milano Città Studi - Via Bonardi",
+    "building": "Edificio 11 - Architettura",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "5072": {
+    "campus": "MIB",
+    "name": "B80.7",
+    "site": "Milano Bovisa - Via Durando",
+    "building": "Edificio B8 - Aule",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "5073": {
+    "campus": "MIB",
+    "name": "B80.9",
+    "site": "Milano Bovisa - Via Durando",
+    "building": "Edificio B8 - Aule",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "5074": {
+    "campus": "MIB",
+    "name": "B81.2",
+    "site": "Milano Bovisa - Via Durando",
+    "building": "Edificio B8 - Aule",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "5075": {
+    "campus": "MIB",
+    "name": "B81.4",
+    "site": "Milano Bovisa - Via Durando",
+    "building": "Edificio B8 - Aule",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "5098": {
+    "campus": "MIA",
+    "name": "E.P.6",
+    "site": "Milano Città Studi - Via Colombo 40",
+    "building": "Edificio 32.1",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "5099": {
+    "campus": "MIA",
+    "name": "E.P.7",
+    "site": "Milano Città Studi - Via Colombo 40",
+    "building": "Edificio 32.1",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "5101": {
+    "campus": "MIA",
+    "name": "3.1.11",
+    "site": "Milano Città Studi - Piazza Leonardo da Vinci 32",
+    "building": "Edificio 3 - Gino Cassinis",
+    "category": "AULA DIDATTICA",
+    "type": "DISEGNO"
+  },
+  "5102": {
+    "campus": "MIA",
+    "name": "3.1.12",
+    "site": "Milano Città Studi - Piazza Leonardo da Vinci 32",
+    "building": "Edificio 3 - Gino Cassinis",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "5122": {
+    "campus": "PCL",
+    "name": "FABLAB",
+    "site": "Piacenza - Via Scalabrini 113",
+    "building": "Padiglione 3 - Padiglione M. BACIOCCHI",
+    "category": "LABORATORIO DIDATTICO",
+    "type": "ALTRO"
+  },
+  "5146": {
+    "campus": "CRG",
+    "name": "CR04.0.2",
+    "site": "Cremona - Via Bissolati 34",
+    "building": "Edificio CR04",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "5147": {
+    "campus": "CRG",
+    "name": "CR04.0.1",
+    "site": "Cremona - Via Bissolati 34",
+    "building": "Edificio CR04",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "5148": {
+    "campus": "CRG",
+    "name": "CR04.0.3",
+    "site": "Cremona - Via Bissolati 34",
+    "building": "Edificio CR04",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "5149": {
+    "campus": "CRG",
+    "name": "CR04.1.1",
+    "site": "Cremona - Via Bissolati 34",
+    "building": "Edificio CR04",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "5150": {
+    "campus": "CRG",
+    "name": "CR03.0.1",
+    "site": "Cremona - Via Bissolati 34",
+    "building": "Edificio CR03",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "5151": {
+    "campus": "CRG",
+    "name": "CR04.1.2",
+    "site": "Cremona - Via Bissolati 34",
+    "building": "Edificio CR04",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "5152": {
+    "campus": "CRG",
+    "name": "CR03.0.2",
+    "site": "Cremona - Via Bissolati 34",
+    "building": "Edificio CR03",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "5153": {
+    "campus": "CRG",
+    "name": "CR04.1.3",
+    "site": "Cremona - Via Bissolati 34",
+    "building": "Edificio CR04",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "5154": {
+    "campus": "CRG",
+    "name": "CR04.1.4",
+    "site": "Cremona - Via Bissolati 34",
+    "building": "Edificio CR04",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "5155": {
+    "campus": "CRG",
+    "name": "CR03.0.3",
+    "site": "Cremona - Via Bissolati 34",
+    "building": "Edificio CR03",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "5156": {
+    "campus": "CRG",
+    "name": "CR04.2.1",
+    "site": "Cremona - Via Bissolati 34",
+    "building": "Edificio CR04",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "5157": {
+    "campus": "CRG",
+    "name": "CR04.2.2",
+    "site": "Cremona - Via Bissolati 34",
+    "building": "Edificio CR04",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "5158": {
+    "campus": "CRG",
+    "name": "CR04.2.3",
+    "site": "Cremona - Via Bissolati 34",
+    "building": "Edificio CR04",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "5159": {
+    "campus": "CRG",
+    "name": "CR04.2.4",
+    "site": "Cremona - Via Bissolati 34",
+    "building": "Edificio CR04",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "5160": {
+    "campus": "CRG",
+    "name": "CR04.2.5",
+    "site": "Cremona - Via Bissolati 34",
+    "building": "Edificio CR04",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "5161": {
+    "campus": "CRG",
+    "name": "CR04.2.6",
+    "site": "Cremona - Via Bissolati 34",
+    "building": "Edificio CR04",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "5162": {
+    "campus": "CRG",
+    "name": "AULAMAGNAMAFFEZZONI",
+    "site": "Cremona - Via Bissolati 34",
+    "building": "Edificio CR04",
+    "category": "AULA MAGNA",
+    "type": "PLATEA FRONTALE"
+  },
+  "5176": {
+    "campus": "PCL",
+    "name": "SC1",
+    "site": "Piacenza -",
+    "building": "Indirizzo",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "5177": {
+    "campus": "PCL",
+    "name": "SC2",
+    "site": "Piacenza -",
+    "building": "Indirizzo",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "5178": {
+    "campus": "PCL",
+    "name": "SC3",
+    "site": "Piacenza -",
+    "building": "Indirizzo",
+    "category": "AULA DIDATTICA",
+    "type": "PLATEA FRONTALE"
+  },
+  "5183": {
+    "campus": "PCL",
+    "name": "LABORATORIOMODELLISTICA",
+    "site": "Piacenza - Via Scalabrini 113",
+    "building": "Padiglione 3 - Padiglione M. BACIOCCHI",
+    "category": "LABORATORIO",
+    "type": "ALTRO"
+  },
+  "5184": {
+    "campus": "PCL",
+    "name": "BIBLIOTECA",
+    "site": "Piacenza - Via Scalabrini 113",
+    "building": "Padiglione 11 - Padiglione BIBLIOTECA",
+    "category": "AULA STUDIO",
+    "type": "ALTRO"
+  }
+}

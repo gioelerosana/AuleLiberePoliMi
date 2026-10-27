@@ -1,7 +1,14 @@
 import { ROOM_IDS_WITH_POWER } from "./data";
-import { formatRoomMessages } from "./format";
-import { searchFreeRooms } from "./polimi";
-import { handleTelegramUpdate, validateTelegramSecret } from "./telegram";
+import {
+  RESULT_HEADER_RESERVE,
+  TELEGRAM_MAX_MESSAGE_LENGTH,
+  formatRoomMessages,
+  formatTime
+} from "./format";
+import { translations } from "./i18n";
+import { searchRooms, type FreeRoomsByBuilding, type RoomClassifier, type SearchDependencies } from "./polimi";
+import { campusHasZones, roomInfo, type RoomZone } from "./rooms";
+import { handleTelegramUpdate, isRetryableError, validateTelegramSecret } from "./telegram";
 import type {
   Env,
   SearchRequest,
@@ -10,7 +17,15 @@ import type {
 } from "./types";
 
 const JSON_HEADERS = { "content-type": "application/json; charset=utf-8" };
+// Every result message must leave room for the summary header the bot adds.
+const MESSAGE_BUDGET = TELEGRAM_MAX_MESSAGE_LENGTH - RESULT_HEADER_RESERVE;
+const FREEING_UP_TITLE_RESERVE = 100;
 const SECRET_PATTERN = /^[A-Za-z0-9_-]{16,128}$/;
+
+export interface SearchAndFormatDependencies extends SearchDependencies {
+  roomsWithPower?: readonly number[];
+  roomInfo?: RoomClassifier;
+}
 
 type UpdateHandler = (
   update: TelegramUpdate,
@@ -48,21 +63,90 @@ function parseDate(value: string): { day: number; month: number; year: number } 
   return { day, month, year };
 }
 
-export async function searchAndFormat(request: SearchRequest): Promise<string[]> {
+export async function searchAndFormat(
+  request: SearchRequest,
+  dependencies: SearchAndFormatDependencies = {}
+): Promise<string[]> {
   const { day, month, year } = parseDate(request.date);
-  const rooms = await searchFreeRooms({
-    location: request.campus,
-    day,
-    month,
-    year,
-    startTime: request.startHour,
-    endTime: request.endHour,
-    roomsWithPower: ROOM_IDS_WITH_POWER
-  });
+  const { free, freeingUp } = await searchRooms(
+    {
+      location: request.campus,
+      day,
+      month,
+      year,
+      startTime: request.startHour,
+      endTime: request.endHour,
+      lookaheadHours: request.lookahead,
+      roomsWithPower: dependencies.roomsWithPower ?? ROOM_IDS_WITH_POWER,
+      roomInfo: dependencies.roomInfo ?? roomInfo
+    },
+    dependencies
+  );
+  const t = translations[request.lang];
 
-  return formatRoomMessages(rooms, {
-    untilLabel: request.lang === "it" ? "fino alle" : "free until"
+  // Whole-campus searches list the central zone unless the user widens them;
+  // the rooms left out are only counted, so the list stays short.
+  const centralOnly = !request.allZones && campusHasZones(request.campus);
+  const freeRooms = filterRooms(free, request);
+  const shownFree = centralOnly ? inZone(freeRooms, "main") : freeRooms;
+  const hiddenFree = centralOnly ? countRooms(inZone(freeRooms, "other")) : 0;
+  const freeingUpRooms = filterRooms(freeingUp, request);
+  const shownFreeingUp = centralOnly ? inZone(freeingUpRooms, "main") : freeingUpRooms;
+
+  const freeMessages = formatRoomMessages(shownFree, { maxLength: MESSAGE_BUDGET });
+  const freeingUpMessages = formatRoomMessages(shownFreeingUp, {
+    timeText: (room) => t.freeingUpRange(formatTime(room.from), formatTime(room.until)),
+    // Leave room for the section title prepended to the first message.
+    maxLength: MESSAGE_BUDGET - FREEING_UP_TITLE_RESERVE
   });
+  const section = freeingUpMessages.map((message, index) =>
+    index === 0 ? `\n\n<b>${t.freeingUpTitle(request.lookahead)}</b>${message}` : message
+  );
+  const hint = hiddenFree > 0 ? [`\n\n<i>${t.otherZonesHint(hiddenFree)}</i>`] : [];
+  if (freeMessages.length === 0 && section.length === 0 && hint.length === 0) return [];
+
+  // Keep the "no free rooms" notice: the lookahead or the hint must not hide it.
+  const head = freeMessages.length > 0 ? freeMessages : [t.noRooms];
+  return packMessages([...head, ...section, ...hint], MESSAGE_BUDGET);
+}
+
+/** Lecture or drawing rooms, optionally only those with power plugs. */
+function filterRooms(
+  rooms: FreeRoomsByBuilding,
+  { powerOnly, drawing }: Pick<SearchRequest, "powerOnly" | "drawing">
+): FreeRoomsByBuilding {
+  const kind = drawing ? "drawing" : "standard";
+  return mapRooms(rooms, (room) => room.kind === kind && (!powerOnly || room.powerPlugs));
+}
+
+function inZone(rooms: FreeRoomsByBuilding, zone: RoomZone): FreeRoomsByBuilding {
+  return mapRooms(rooms, (room) => room.zone === zone);
+}
+
+function mapRooms(
+  rooms: FreeRoomsByBuilding,
+  keep: (room: FreeRoomsByBuilding[string][number]) => boolean
+): FreeRoomsByBuilding {
+  return Object.fromEntries(
+    Object.entries(rooms).map(([building, list]) => [building, list.filter(keep)])
+  );
+}
+
+function countRooms(rooms: FreeRoomsByBuilding): number {
+  return Object.values(rooms).reduce((total, list) => total + list.length, 0);
+}
+
+/** Merge consecutive messages while they fit, so short sections share one. */
+function packMessages(messages: string[], maxLength: number): string[] {
+  return messages.reduce<string[]>((packed, message) => {
+    const last = packed.at(-1);
+    if (last !== undefined && last.length + message.length <= maxLength) {
+      packed[packed.length - 1] = last + message;
+    } else {
+      packed.push(message);
+    }
+    return packed;
+  }, []);
 }
 
 const productionDependencies: RuntimeDependencies = {
@@ -120,6 +204,8 @@ export function createRequestHandler(
       return json({ ok: true });
     } catch (error) {
       console.error("Telegram update failed", update.update_id, error);
+      // Acknowledge errors a retry cannot fix, so Telegram drops the update.
+      if (!isRetryableError(error)) return json({ ok: false });
       // A non-2xx response asks Telegram to retry the update.
       return json({ error: "update_failed" }, 500);
     }

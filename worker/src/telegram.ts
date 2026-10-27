@@ -1,18 +1,33 @@
-import { formatTime } from "./format";
+import { quickSearchSlot } from "./clock";
+import { languageFromCode, translations, type Language } from "./i18n";
 import {
-  CAMPUSES,
-  MAX_HOUR,
-  MIN_HOUR,
+  DEFAULT_LOOKAHEAD,
+  MAX_DURATION,
   campusCodeFromName,
+  campusCodeFromShortName,
   decodeCallback,
-  encodeCallback,
+  isValidLookahead,
+  type CallbackFlags,
+  type CallbackState,
 } from "./protocol";
 import {
-  languageFromCode,
-  translations,
-  type Language,
-} from "./i18n";
-import { LOCATIONS } from "./data";
+  DEFAULT_FILTERS,
+  campusScreen,
+  dayScreen,
+  durationScreen,
+  endScreen,
+  mainKeyboard,
+  preferencesSummary,
+  resultHeader,
+  resultsKeyboard,
+  retryKeyboard,
+  startScreen,
+  type InlineKeyboard,
+  type Preferences,
+  type Screen,
+  type SearchFilters,
+  type SearchSource,
+} from "./screens";
 
 export interface TelegramEnv {
   BOT_TOKEN: string;
@@ -25,6 +40,13 @@ export interface SearchRequest {
   startHour: number;
   endHour: number;
   lang: Language;
+  /** Hours after `startHour` within which to list rooms freeing up. */
+  lookahead: number;
+  powerOnly: boolean;
+  /** Drawing rooms instead of lecture rooms. */
+  drawing: boolean;
+  /** The whole campus instead of its central zone. */
+  allZones: boolean;
 }
 
 export interface TelegramDependencies {
@@ -60,19 +82,108 @@ export interface TelegramUpdate {
   callback_query?: CallbackQuery;
 }
 
-interface InlineButton {
-  text: string;
-  callback_data: string;
+type TelegramApi = ReturnType<typeof createTelegramApi>;
+
+/** The message hosting the search card; without messageId a new one is sent. */
+interface Card {
+  chatId: number;
+  messageId?: number | undefined;
 }
 
-interface Preferences {
+type MenuAction = "search" | "now" | "info" | "menu";
+
+interface MenuEntry {
+  action: MenuAction;
+  lang?: Language;
+}
+
+const DEFAULT_WEBAPP_URL = "https://aule-libere-polimi-settings.pages.dev";
+const MAX_WEB_APP_DATA_LENGTH = 2048;
+const LANGUAGES: readonly Language[] = ["it", "en"];
+const HTML_OPTIONS = { parse_mode: "HTML", disable_web_page_preview: true } as const;
+const HTTP_CLIENT_ERROR = 400;
+const HTTP_SERVER_ERROR = 500;
+
+const COMMANDS: Record<string, MenuAction> = {
+  "/cerca": "search",
+  "/search": "search",
+  "/ora": "now",
+  "/now": "now",
+  "/info": "info",
+  "/help": "info",
+  "/cancel": "menu",
+  "/terminate": "menu",
+  "/back": "menu",
+  "/indietro": "menu",
+};
+
+// Older releases used these labels and their keyboards may still be on
+// users' devices until the next /start.
+const LABELS: Record<string, MenuEntry> = {
+  "🔍Cerca": { action: "search", lang: "it" },
+  "🔍Search": { action: "search", lang: "en" },
+  "🕒Ora": { action: "now", lang: "it" },
+  "🕒Now": { action: "now", lang: "en" },
+  "ℹinfo": { action: "info" },
+  ...Object.fromEntries(
+    LANGUAGES.flatMap((lang) => [
+      [translations[lang].search, { action: "search", lang }],
+      [translations[lang].now, { action: "now", lang }],
+    ]),
+  ),
+};
+
+interface NowLabelFormat {
+  prefix: string;
   lang: Language;
-  campus: string;
-  duration: number;
+  pattern: RegExp;
 }
 
-const DEFAULT_WEBAPP_URL =
-  "https://aule-libere-polimi-settings.pages.dev";
+const FLAG_LANGUAGES: Record<string, Language> = { "🇮🇹": "it", "🇬🇧": "en" };
+
+const NOW_LABEL_FORMATS: readonly NowLabelFormat[] = [
+  ...LANGUAGES.map((lang) => ({
+    prefix: `${translations[lang].now} · `,
+    lang,
+    // Short campus name, duration and optional lookahead after the prefix:
+    // matches "Bovisa 2h" and "Bovisa 2h ⏳4h", rejects "Bovisa 2h 🇮🇹".
+    pattern: /^(.+?) (\d{1,2})h(?: ⏳(\d{1,2})h)?$/u,
+  })),
+  ...[
+    { prefix: "🕒Ora · ", lang: "it" as const },
+    { prefix: "🕒Now · ", lang: "en" as const },
+  ].map((format) => ({
+    ...format,
+    // Legacy label: full campus name, duration, optional lookahead and a
+    // language flag: matches "Milano Bovisa 2h ⏳4h 🇮🇹", rejects "Bovisa 2h".
+    pattern: /^(.+?) (\d{1,2})h(?: ⏳(\d{1,2})h)? (🇮🇹|🇬🇧)$/u,
+  })),
+];
+
+/** A Bot API call answered with an error, with Telegram's error code. */
+export class TelegramApiError extends Error {
+  constructor(
+    readonly method: string,
+    readonly status: number,
+    description: string,
+  ) {
+    super(description);
+    this.name = "TelegramApiError";
+  }
+}
+
+/**
+ * Telegram 4xx errors (bad request, bot blocked, rate limit) would fail again
+ * on a webhook retry, or resend the result messages already delivered: only
+ * network and 5xx errors are worth a retry.
+ */
+export function isRetryableError(error: unknown): boolean {
+  return !(
+    error instanceof TelegramApiError &&
+    error.status >= HTTP_CLIENT_ERROR &&
+    error.status < HTTP_SERVER_ERROR
+  );
+}
 
 export function validateTelegramSecret(
   request: Request,
@@ -81,10 +192,11 @@ export function validateTelegramSecret(
   if (!expectedSecret) return false;
   const actual = request.headers.get("X-Telegram-Bot-Api-Secret-Token") ?? "";
   if (actual.length !== expectedSecret.length) return false;
-  let difference = 0;
-  for (let index = 0; index < actual.length; index += 1) {
-    difference |= actual.charCodeAt(index) ^ expectedSecret.charCodeAt(index);
-  }
+  // Constant-time comparison: always inspect every character.
+  const difference = Array.from(
+    { length: actual.length },
+    (_, index) => actual.charCodeAt(index) ^ expectedSecret.charCodeAt(index),
+  ).reduce((accumulator, value) => accumulator | value, 0);
   return difference === 0;
 }
 
@@ -97,478 +209,326 @@ export async function handleTelegramUpdate(
   const api = createTelegramApi(env.BOT_TOKEN, deps.fetch ?? fetch);
 
   if (update.callback_query) {
-    await api.answerCallbackQuery(update.callback_query.id);
     await handleCallback(update.callback_query, api, deps);
     return;
   }
 
   const message = update.message;
   if (!message) return;
+  const chatId = message.chat.id;
   const lang = languageFromCode(message.from?.language_code);
+  const webappUrl = env.WEBAPP_URL || DEFAULT_WEBAPP_URL;
 
   if (message.web_app_data) {
-    await handleWebAppData(message, lang, env, api);
+    await handleWebAppData(message, lang, webappUrl, api);
     return;
   }
 
   const text = message.text?.trim();
   if (!text) return;
   if (text === "/start" || text.startsWith("/start@")) {
-    await api.sendMessage(message.chat.id, translations[lang].welcome(message.from?.first_name ?? ""), {
-      parse_mode: "HTML",
-      disable_web_page_preview: true,
-      reply_markup: mainKeyboard(lang, env.WEBAPP_URL),
+    await api.sendMessage(chatId, translations[lang].welcome(message.from?.first_name ?? ""), {
+      ...HTML_OPTIONS,
+      reply_markup: mainKeyboard(lang, webappUrl),
     });
     return;
   }
-  if (isLabel(text, "search")) {
-    await sendCampusPicker(message.chat.id, lang, api);
-    return;
-  }
-  if (isLabel(text, "infoButton")) {
-    await sendInfo(message.chat.id, lang, api);
-    return;
-  }
-  if (
-    text === "/cancel" ||
-    text === "/terminate" ||
-    text === "/Back" ||
-    text === "/Indietro"
-  ) {
-    await api.sendMessage(message.chat.id, translations[lang].cancel, {
-      reply_markup: mainKeyboard(lang, env.WEBAPP_URL),
-    });
-    return;
-  }
-  if (nowLabelPrefix(text)) {
-    // The label is the only carrier of the saved preferences. A malformed one
-    // (stale keyboard, edited text) still falls back to the inline flow.
-    const preferences = parseNowLabel(text);
-    await sendQuickSearch(message.chat.id, preferences, lang, api, deps);
-    return;
-  }
-  if (isLabel(text, "now")) {
-    await sendQuickSearch(message.chat.id, null, lang, api, deps);
-  }
-}
 
-/**
- * Quick search from the persistent keyboard. The Worker keeps no state: the
- * preferences travel inside the label of the 🕒Ora reply-keyboard button, which
- * Telegram echoes back as the message text. When the label has none (or the
- * user typed the plain button text) fall back to the inline flow.
- */
-async function sendQuickSearch(
-  chatId: number,
-  preferences: Preferences | null,
-  fallbackLang: Language,
-  api: ReturnType<typeof createTelegramApi>,
-  deps: TelegramDependencies,
-): Promise<void> {
-  if (!preferences) {
-    await sendCampusPicker(chatId, fallbackLang, api, "quickCampus");
+  const nowLabel = parseNowLabel(text);
+  if (nowLabel) {
+    // A malformed label (stale keyboard, edited text) falls back to the picker.
+    if (nowLabel.preferences) {
+      const { lang: labelLang, campus, duration, lookahead } = nowLabel.preferences;
+      const source: SearchSource = { kind: "quick", campus, duration, lookahead };
+      await performSearch(api, deps, { chatId }, labelLang, source, DEFAULT_FILTERS);
+    } else {
+      await showScreen(api, { chatId }, campusScreen(nowLabel.lang, true, false));
+    }
     return;
   }
 
-  const t = translations[preferences.lang];
-  const slot = quickSearchSlot(deps.now?.() ?? new Date(), preferences.duration);
-  if (slot.closed) await api.sendMessage(chatId, t.closed);
-  await performSearch(
-    chatId,
-    {
-      ...preferences,
-      date: slot.date,
-      startHour: slot.startHour,
-      endHour: slot.endHour,
-    },
-    api,
-    deps,
-  );
+  const entry = menuEntry(text);
+  if (!entry) return;
+  await MENU_HANDLERS[entry.action]({ api, chatId, lang: entry.lang ?? lang, webappUrl });
 }
+
+interface MenuContext {
+  api: TelegramApi;
+  chatId: number;
+  lang: Language;
+  webappUrl: string;
+}
+
+const MENU_HANDLERS: Record<MenuAction, (context: MenuContext) => Promise<unknown>> = {
+  search: ({ api, chatId, lang }) => showScreen(api, { chatId }, campusScreen(lang, false, false)),
+  now: ({ api, chatId, lang }) => showScreen(api, { chatId }, campusScreen(lang, true, false)),
+  info: ({ api, chatId, lang }) => api.sendMessage(chatId, translations[lang].info, HTML_OPTIONS),
+  menu: ({ api, chatId, lang, webappUrl }) =>
+    api.sendMessage(chatId, translations[lang].menu, { reply_markup: mainKeyboard(lang, webappUrl) }),
+};
 
 async function handleCallback(
   query: CallbackQuery,
-  api: ReturnType<typeof createTelegramApi>,
+  api: TelegramApi,
   deps: TelegramDependencies,
 ): Promise<void> {
   const chatId = query.message?.chat.id;
-  if (!chatId) return;
   const state = query.data ? decodeCallback(query.data) : null;
-  if (!state) {
-    await api.sendMessage(chatId, translations[languageFromCode(query.from.language_code)].error);
+  if (!chatId || !state) {
+    await answerCallback(api, query.id, translations[languageFromCode(query.from.language_code)].error);
     return;
   }
-  const t = translations[state.lang];
-  switch (state.action) {
-    case "search":
-      await sendCampusPicker(chatId, state.lang, api);
-      return;
-    case "campus":
-      await api.sendMessage(chatId, t.day, {
-        reply_markup: { inline_keyboard: dayKeyboard(state.lang, state.campus, deps.now?.() ?? new Date()) },
-      });
-      return;
-    case "date":
-      await api.sendMessage(chatId, t.startingTime, {
-        reply_markup: { inline_keyboard: hourKeyboard(state.lang, state.campus, state.date) },
-      });
-      return;
-    case "quickCampus":
-      await api.sendMessage(chatId, t.quickDuration, {
-        reply_markup: { inline_keyboard: durationKeyboard(state.lang, state.campus) },
-      });
-      return;
-    case "start":
-      await api.sendMessage(chatId, t.endingTime, {
-        reply_markup: {
-          inline_keyboard: endHourKeyboard(state.lang, state.campus, state.date, state.startHour),
-        },
-      });
-      return;
-    case "end":
-      await performSearch(chatId, state, api, deps);
-      return;
-    case "quick": {
-      const slot = quickSearchSlot(deps.now?.() ?? new Date(), state.duration);
-      if (slot.closed) await api.sendMessage(chatId, t.closed);
-      await performSearch(
-        chatId,
-        {
-          ...state,
-          date: slot.date,
-          startHour: slot.startHour,
-          endHour: slot.endHour,
-        },
-        api,
-        deps,
-      );
-      return;
-    }
-    case "campusMenu":
-      await sendCampusPicker(
-        chatId,
-        state.lang,
-        api,
-        state.quick ? "quickCampus" : "campus",
-        state.more,
-      );
-      return;
-    case "info":
-      await sendInfo(chatId, state.lang, api);
-      return;
-    case "cancel":
-      await api.sendMessage(chatId, t.cancel);
+  const [, card] = await Promise.all([
+    answerCallback(api, query.id),
+    cardForCallback(api, chatId, query.message?.message_id, state),
+  ]);
+  const context: CallbackContext = {
+    api,
+    deps,
+    chatId,
+    card,
+    now: deps.now?.() ?? new Date(),
+  };
+  // TypeScript cannot correlate state.action with its handler's state type.
+  const handler = CALLBACK_HANDLERS[state.action] as CallbackHandler<CallbackState>;
+  await handler(state, context);
+}
+
+/** Best effort: Telegram refuses answers to queries older than a few seconds. */
+async function answerCallback(api: TelegramApi, queryId: string, text?: string): Promise<void> {
+  await api.answerCallbackQuery(queryId, text).catch((error: unknown) => {
+    console.warn("Unable to answer the callback query", error);
+  });
+}
+
+interface CallbackContext {
+  api: TelegramApi;
+  deps: TelegramDependencies;
+  chatId: number;
+  card: Card;
+  now: Date;
+}
+
+type CallbackHandler<S extends CallbackState> = (state: S, context: CallbackContext) => Promise<unknown>;
+
+const CALLBACK_HANDLERS: {
+  [A in CallbackState["action"]]: CallbackHandler<Extract<CallbackState, { action: A }>>;
+} = {
+  search: ({ lang }, { api, card }) => showScreen(api, card, campusScreen(lang, false, false)),
+  campusMenu: ({ lang, quick, more }, { api, card }) => showScreen(api, card, campusScreen(lang, quick, more)),
+  campus: ({ lang, campus, ...flags }, { api, card, now }) =>
+    showScreen(api, card, dayScreen(lang, campus, now, searchFilters(flags))),
+  date: ({ lang, campus, date, ...flags }, { api, card, now }) =>
+    showScreen(api, card, startScreen(lang, campus, date, now, searchFilters(flags))),
+  start: ({ lang, campus, date, startHour, ...flags }, { api, card }) =>
+    showScreen(api, card, endScreen(lang, campus, date, startHour, searchFilters(flags))),
+  quickCampus: ({ lang, campus, ...flags }, { api, card }) =>
+    showScreen(api, card, durationScreen(lang, campus, searchFilters(flags))),
+  end: ({ lang, campus, date, startHour, endHour, ...flags }, { api, deps, card }) =>
+    performSearch(api, deps, card, lang, { kind: "range", campus, date, startHour, endHour }, searchFilters(flags)),
+  quick: ({ lang, campus, duration, lookahead, ...flags }, { api, deps, card }) =>
+    performSearch(api, deps, card, lang, { kind: "quick", campus, duration, lookahead }, searchFilters(flags)),
+  info: ({ lang }, { api, chatId }) => api.sendMessage(chatId, translations[lang].info, HTML_OPTIONS),
+  cancel: ({ lang }, { api, card }) => closeCard(api, card, lang),
+};
+
+/**
+ * Wizard buttons edit their own message. Buttons under search results are
+ * "fresh": they keep the results and answer with a new message, so the old
+ * result list loses its now superseded buttons.
+ */
+async function cardForCallback(
+  api: TelegramApi,
+  chatId: number,
+  messageId: number | undefined,
+  state: CallbackState,
+): Promise<Card> {
+  const fresh = "fresh" in state && Boolean(state.fresh);
+  if (!fresh) return { chatId, messageId };
+  if (messageId !== undefined) {
+    await clearButtons(api, chatId, messageId);
   }
+  return { chatId };
+}
+
+async function clearButtons(api: TelegramApi, chatId: number, messageId: number): Promise<void> {
+  await api.editMessageReplyMarkup(chatId, messageId).catch((error: unknown) => {
+    if (!isNotModified(error)) console.warn("Unable to clear the message buttons", error);
+  });
 }
 
 async function performSearch(
-  chatId: number,
-  state: {
-    lang: Language;
-    campus: string;
-    date: string;
-    startHour: number;
-    endHour: number;
-  },
-  api: ReturnType<typeof createTelegramApi>,
+  api: TelegramApi,
   deps: TelegramDependencies,
+  card: Card,
+  lang: Language,
+  source: SearchSource,
+  filters: SearchFilters,
 ): Promise<void> {
-  const t = translations[state.lang];
-  await api.sendChatAction(chatId, "typing");
+  const t = translations[lang];
+  const slot = source.kind === "quick"
+    ? quickSearchSlot(deps.now?.() ?? new Date(), source.duration)
+    : { ...source, closed: false };
+  const request: SearchRequest = {
+    campus: source.campus,
+    date: slot.date,
+    startHour: slot.startHour,
+    endHour: slot.endHour,
+    lang,
+    lookahead: source.kind === "quick" ? source.lookahead : DEFAULT_LOOKAHEAD,
+    ...filters,
+  };
+  const header = resultHeader({ ...request, closed: slot.closed });
+  const searchCard = await showScreen(api, card, { text: `${header}\n\n${t.searching}` });
+
+  let results: string[];
   try {
-    const messages = await deps.search({
-      campus: state.campus,
-      date: state.date,
-      startHour: state.startHour,
-      endHour: state.endHour,
-      lang: state.lang,
-    });
-    await api.sendMessage(
-      chatId,
-      `${state.date}  ${campusLabel(state.campus)}  ${formatTime(state.startHour)}-${formatTime(state.endHour)}`,
-    );
-    for (const result of messages.length ? messages : [t.noRooms]) {
-      await api.sendMessage(chatId, result, {
-        parse_mode: "HTML",
-        disable_web_page_preview: true,
-      });
-    }
+    results = await deps.search(request);
   } catch (error) {
     console.error("Classroom search failed", error);
-    await api.sendMessage(chatId, t.searchError);
+    await showScreen(api, searchCard, {
+      text: `${header}\n\n${t.searchError}`,
+      keyboard: retryKeyboard(lang, source, filters),
+    });
+    return;
+  }
+
+  const [first = t.noRooms, ...rest] = results.map((result) => result.trimStart());
+  const keyboard = resultsKeyboard(lang, source, filters);
+  await showScreen(api, searchCard, {
+    text: `${header}\n\n${first}`,
+    keyboard: rest.length ? undefined : keyboard,
+  });
+  // Results longer than one Telegram message continue in new messages; the
+  // action buttons always sit under the last one.
+  await rest.reduce(async (previous, text, index) => {
+    await previous;
+    const isLast = index === rest.length - 1;
+    await api.sendMessage(card.chatId, text, { ...HTML_OPTIONS, ...inlineMarkup(isLast ? keyboard : undefined) });
+  }, Promise.resolve());
+}
+
+/** Edit the card in place, or send it as a new message when there is none. */
+async function showScreen(api: TelegramApi, card: Card, screen: Screen): Promise<Card> {
+  if (card.messageId !== undefined) {
+    try {
+      await api.editMessageText(card.chatId, card.messageId, screen.text, {
+        ...HTML_OPTIONS,
+        ...inlineMarkup(screen.keyboard),
+      });
+      return card;
+    } catch (error) {
+      if (isNotModified(error)) return card;
+      console.warn("Unable to edit the search card, sending a new one", error);
+      await clearButtons(api, card.chatId, card.messageId);
+    }
+  }
+  const sent = await api.sendMessage(card.chatId, screen.text, {
+    ...HTML_OPTIONS,
+    ...inlineMarkup(screen.keyboard),
+  });
+  return { chatId: card.chatId, messageId: messageIdOf(sent) };
+}
+
+async function closeCard(api: TelegramApi, card: Card, lang: Language): Promise<void> {
+  if (card.messageId === undefined) return;
+  try {
+    await api.deleteMessage(card.chatId, card.messageId);
+  } catch {
+    // Bots can only delete messages younger than 48 hours.
+    await showScreen(api, card, { text: translations[lang].cancelled });
   }
 }
 
 async function handleWebAppData(
   message: TelegramMessage,
   fallbackLang: Language,
-  env: TelegramEnv,
-  api: ReturnType<typeof createTelegramApi>,
+  webappUrl: string,
+  api: TelegramApi,
 ): Promise<void> {
   const preferences = parsePreferences(message.web_app_data?.data);
   if (!preferences) {
     await api.sendMessage(message.chat.id, translations[fallbackLang].invalidPreferences);
     return;
   }
-  const t = translations[preferences.lang];
-  // Restore the translated persistent keyboard with the preferences encoded in
-  // the 🕒Ora label: the Worker keeps no state, Telegram echoes the label back.
-  // It is a separate message because Telegram cannot attach an inline keyboard
-  // and a reply keyboard to the same message.
-  await api.sendMessage(message.chat.id, t.menuReady, {
-    reply_markup: mainKeyboard(preferences.lang, env.WEBAPP_URL, preferences),
-  });
-  await sendPreferences(message.chat.id, preferences, api, t);
+  // The reply keyboard carries the preferences in the 🕒 Ora label: the Worker
+  // keeps no state, Telegram echoes the label back when it is tapped.
+  await api.sendMessage(
+    message.chat.id,
+    `${translations[preferences.lang].success}\n${preferencesSummary(preferences)}`,
+    { ...HTML_OPTIONS, reply_markup: mainKeyboard(preferences.lang, webappUrl, preferences) },
+  );
 }
 
-function preferencesSummary(preferences: Preferences): string {
-  const flag = preferences.lang === "it" ? "🇮🇹" : "🇬🇧";
-  return `${campusLabel(preferences.campus)} · ${preferences.duration}h · ${flag}`;
+function menuEntry(text: string): MenuEntry | null {
+  if (!text.startsWith("/")) return LABELS[text] ?? null;
+  const command = text.split("@")[0]!.toLowerCase();
+  const action = COMMANDS[command];
+  return action ? { action } : null;
 }
 
-function nowButtonLabel(preferences: Preferences, now: string): string {
-  const flag = preferences.lang === "it" ? "🇮🇹" : "🇬🇧";
-  return `${now} · ${campusLabel(preferences.campus)} ${preferences.duration}h ${flag}`;
-}
-
-function nowLabelPrefix(text: string): string | null {
-  return [translations.it.now, translations.en.now]
-    .map((label) => `${label} · `)
-    .find((prefix) => text.startsWith(prefix)) ?? null;
-}
-
-function parseNowLabel(text: string): Preferences | null {
-  const prefix = nowLabelPrefix(text);
-  if (!prefix) return null;
-  const suffix = text.slice(prefix.length);
-  const match = /^(.+?) (\d{1,2})h (🇮🇹|🇬🇧)$/u.exec(suffix);
-  if (!match) return null;
-  const campus = campusCodeFromName(match[1]!.trim());
-  const duration = Number(match[2]);
-  const lang: Language = match[3] === "🇮🇹" ? "it" : "en";
-  if (!campus || !Number.isInteger(duration) || duration < 1 || duration > 8) return null;
-  return { lang, campus, duration };
-}
-
-async function sendPreferences(
-  chatId: number,
-  preferences: Preferences,
-  api: ReturnType<typeof createTelegramApi>,
-  t: (typeof translations)[Language],
-): Promise<void> {
-  const text = `${preferencesSummary(preferences)}\n${t.success}`;
-  const reply_markup = {
-    inline_keyboard: [
-      [
-        {
-          text: t.now,
-          callback_data: encodeCallback({
-            action: "quick",
-            lang: preferences.lang,
-            campus: preferences.campus,
-            duration: preferences.duration,
-          }),
-        },
-      ],
-    ],
-  };
-  try {
-    await api.sendMessage(chatId, text, { reply_markup });
-  } catch (error) {
-    console.error("Unable to send the preferences message", error);
-  }
+function parseNowLabel(text: string): { lang: Language; preferences: Preferences | null } | null {
+  const format = NOW_LABEL_FORMATS.find((candidate) => text.startsWith(candidate.prefix));
+  if (!format) return null;
+  const match = format.pattern.exec(text.slice(format.prefix.length));
+  if (!match) return { lang: format.lang, preferences: null };
+  const [, name, rawDuration, rawLookahead, flag] = match;
+  const lang = (flag && FLAG_LANGUAGES[flag]) || format.lang;
+  const campus = campusCodeFromShortName(name!.trim());
+  const duration = Number(rawDuration);
+  // Labels built before the lookahead existed, or with the default, omit it.
+  const lookahead = rawLookahead === undefined ? DEFAULT_LOOKAHEAD : Number(rawLookahead);
+  const valid = campus && isValidDuration(duration) && isValidLookahead(lookahead);
+  return { lang, preferences: valid ? { lang, campus, duration, lookahead } : null };
 }
 
 function parsePreferences(raw: string | undefined): Preferences | null {
-  if (!raw || raw.length > 2048) return null;
+  if (!raw || raw.length > MAX_WEB_APP_DATA_LENGTH) return null;
   try {
     const value = JSON.parse(raw) as Record<string, unknown>;
     if (!value || typeof value !== "object" || Array.isArray(value)) return null;
     const lang = value.lang;
     const campus = campusCodeFromName(value.campus);
     const duration = value.duration;
+    // Mini App builds without the setting omit it: keep their data valid.
+    const lookahead = value.lookahead ?? DEFAULT_LOOKAHEAD;
     if (
       (lang !== "it" && lang !== "en") ||
       !campus ||
       typeof duration !== "number" ||
-      !Number.isInteger(duration) ||
-      duration < 1 ||
-      duration > 8
+      !isValidDuration(duration) ||
+      !isValidLookahead(lookahead)
     )
       return null;
-    return { lang, campus, duration };
+    return { lang, campus, duration, lookahead };
   } catch {
     return null;
   }
 }
 
-const MAIN_CAMPUS_NAMES = ["Milano Città Studi", "Milano Bovisa"];
-
-async function sendCampusPicker(
-  chatId: number,
-  lang: Language,
-  api: ReturnType<typeof createTelegramApi>,
-  action: "campus" | "quickCampus" = "campus",
-  more = false,
-): Promise<void> {
-  const t = translations[lang];
-  const quick = action === "quickCampus";
-  const entries = Object.entries(CAMPUSES).filter(
-    ([name]) => MAIN_CAMPUS_NAMES.includes(name) !== more,
-  );
-  const rows: InlineButton[][] = entries.map(([name, campus]) => [
-    { text: name, callback_data: encodeCallback({ action, lang, campus }) },
-  ]);
-  const menuButton = (text: string, toMore: boolean): InlineButton[] => [
-    { text, callback_data: encodeCallback({ action: "campusMenu", lang, quick, more: toMore }) },
-  ];
-  if (more) rows.unshift(menuButton(t.backToMainCampuses, false));
-  else rows.push(menuButton(t.otherCampuses, true));
-  rows.unshift(cancelRow(lang));
-  await api.sendMessage(chatId, t.location, {
-    reply_markup: { inline_keyboard: rows },
-  });
-}
-
-function durationKeyboard(lang: Language, campus: string): InlineButton[][] {
-  const buttons: InlineButton[] = [];
-  for (let duration = 1; duration <= 8; duration += 1) {
-    buttons.push({
-      text: `${duration}h`,
-      callback_data: encodeCallback({ action: "quick", lang, campus, duration }),
-    });
-  }
-  return [cancelRow(lang), ...chunk(buttons, 4)];
-}
-
-async function sendInfo(
-  chatId: number,
-  lang: Language,
-  api: ReturnType<typeof createTelegramApi>,
-): Promise<void> {
-  await api.sendMessage(chatId, translations[lang].info, {
-    parse_mode: "HTML",
-    disable_web_page_preview: true,
-  });
-}
-
-function dayKeyboard(lang: Language, campus: string, now: Date): InlineButton[][] {
-  const rows: InlineButton[][] = [cancelRow(lang)];
-  for (let offset = 0; offset < 7; offset += 1) {
-    const date = addRomeDays(now, offset);
-    const text = offset === 0
-      ? translations[lang].today
-      : offset === 1
-        ? translations[lang].tomorrow
-        : date;
-    rows.push([{ text, callback_data: encodeCallback({ action: "date", lang, campus, date }) }]);
-  }
-  return rows;
-}
-
-function hourKeyboard(lang: Language, campus: string, date: string): InlineButton[][] {
-  const buttons: InlineButton[] = [];
-  for (let hour = MIN_HOUR; hour < MAX_HOUR; hour += 1) {
-    buttons.push({
-      text: String(hour),
-      callback_data: encodeCallback({ action: "start", lang, campus, date, startHour: hour }),
-    });
-  }
-  return [cancelRow(lang), ...chunk(buttons, 4)];
-}
-
-function endHourKeyboard(
-  lang: Language,
-  campus: string,
-  date: string,
-  startHour: number,
-): InlineButton[][] {
-  const buttons: InlineButton[] = [];
-  for (let hour = startHour + 1; hour <= MAX_HOUR; hour += 1) {
-    buttons.push({
-      text: String(hour),
-      callback_data: encodeCallback({ action: "end", lang, campus, date, startHour, endHour: hour }),
-    });
-  }
-  return [cancelRow(lang), ...chunk(buttons, 4)];
-}
-
-function cancelRow(lang: Language): InlineButton[] {
-  return [{ text: translations[lang].back, callback_data: encodeCallback({ action: "cancel", lang }) }];
-}
-
-function mainKeyboard(
-  lang: Language,
-  webappUrl = DEFAULT_WEBAPP_URL,
-  preferences?: Preferences,
-) {
-  const t = translations[lang];
-  const now = preferences ? nowButtonLabel(preferences, t.now) : t.now;
+function searchFilters(flags: CallbackFlags): SearchFilters {
   return {
-    keyboard: [
-      [{ text: t.search }],
-      [{ text: now }],
-      [{ text: t.infoButton }, { text: t.preferences, web_app: { url: webappUrl } }],
-    ],
-    resize_keyboard: true,
+    powerOnly: Boolean(flags.powerOnly),
+    drawing: Boolean(flags.drawing),
+    allZones: Boolean(flags.allZones),
   };
 }
 
-function quickSearchSlot(now: Date, duration: number) {
-  const parts = romeParts(now);
-  let date = `${pad(parts.day)}/${pad(parts.month)}/${parts.year}`;
-  // Lessons run :15 to :15, so truncating to the hour would still see a lesson
-  // that ended minutes ago; floor to the quarter hour instead.
-  let startHour = parts.hour + Math.floor(parts.minute / 15) / 4;
-  let closed = false;
-  if (startHour < MIN_HOUR) {
-    startHour = MIN_HOUR;
-    closed = true;
-  } else if (startHour >= MAX_HOUR) {
-    date = addRomeDays(now, 1);
-    startHour = MIN_HOUR;
-    closed = true;
-  }
-  return { date, startHour, endHour: Math.min(startHour + duration, MAX_HOUR), closed };
+function isValidDuration(duration: number): boolean {
+  return Number.isInteger(duration) && duration >= 1 && duration <= MAX_DURATION;
 }
 
-function addRomeDays(now: Date, offset: number): string {
-  const parts = romeParts(now);
-  const date = new Date(Date.UTC(parts.year, parts.month - 1, parts.day + offset, 12));
-  return `${pad(date.getUTCDate())}/${pad(date.getUTCMonth() + 1)}/${date.getUTCFullYear()}`;
+function inlineMarkup(keyboard: InlineKeyboard | undefined) {
+  return keyboard ? { reply_markup: { inline_keyboard: keyboard } } : {};
 }
 
-function romeParts(date: Date) {
-  const parts = new Intl.DateTimeFormat("en-GB", {
-    timeZone: "Europe/Rome",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    hourCycle: "h23",
-  }).formatToParts(date);
-  const value = (type: Intl.DateTimeFormatPartTypes) =>
-    Number(parts.find((part) => part.type === type)?.value);
-  return { year: value("year"), month: value("month"), day: value("day"), hour: value("hour"), minute: value("minute") };
+function messageIdOf(sent: unknown): number | undefined {
+  if (typeof sent !== "object" || sent === null || !("message_id" in sent)) return undefined;
+  return typeof sent.message_id === "number" ? sent.message_id : undefined;
 }
 
-function campusLabel(code: string): string {
-  return Object.entries(LOCATIONS).find(([, value]) => value === code)?.[0] ?? code;
-}
-
-function isLabel(text: string, key: "search" | "now" | "infoButton"): boolean {
-  return text === translations.it[key] || text === translations.en[key];
-}
-
-function chunk<T>(items: T[], size: number): T[][] {
-  const rows: T[][] = [];
-  for (let index = 0; index < items.length; index += size) rows.push(items.slice(index, index + size));
-  return rows;
-}
-
-function pad(value: number): string {
-  return String(value).padStart(2, "0");
+function isNotModified(error: unknown): boolean {
+  return error instanceof Error && error.message.includes("message is not modified");
 }
 
 function createTelegramApi(token: string, fetchImpl: typeof fetch) {
@@ -578,21 +538,28 @@ function createTelegramApi(token: string, fetchImpl: typeof fetch) {
       headers: { "content-type": "application/json" },
       body: JSON.stringify(body),
     });
-    if (!response.ok) throw new Error(`Telegram ${method} failed with HTTP ${response.status}`);
-    const result = (await response.json()) as {
+    const result = (await response.json().catch(() => ({}))) as {
       ok?: boolean;
+      error_code?: number;
       description?: string;
       result?: unknown;
     };
-    if (!result.ok) throw new Error(result.description ?? `Telegram ${method} failed`);
+    if (!response.ok || !result.ok) {
+      const status = result.error_code ?? response.status;
+      throw new TelegramApiError(method, status, result.description ?? `Telegram ${method} failed with HTTP ${status}`);
+    }
     return result.result;
   };
   return {
     sendMessage: (chat_id: number, text: string, options: Record<string, unknown> = {}) =>
       call("sendMessage", { chat_id, text, ...options }),
-    sendChatAction: (chat_id: number, action: string) =>
-      call("sendChatAction", { chat_id, action }),
-    answerCallbackQuery: (callback_query_id: string) =>
-      call("answerCallbackQuery", { callback_query_id }),
+    editMessageText: (chat_id: number, message_id: number, text: string, options: Record<string, unknown> = {}) =>
+      call("editMessageText", { chat_id, message_id, text, ...options }),
+    editMessageReplyMarkup: (chat_id: number, message_id: number) =>
+      call("editMessageReplyMarkup", { chat_id, message_id }),
+    deleteMessage: (chat_id: number, message_id: number) =>
+      call("deleteMessage", { chat_id, message_id }),
+    answerCallbackQuery: (callback_query_id: string, text?: string) =>
+      call("answerCallbackQuery", { callback_query_id, ...(text ? { text } : {}) }),
   };
 }

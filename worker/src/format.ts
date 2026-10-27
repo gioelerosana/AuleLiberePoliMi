@@ -1,11 +1,14 @@
 import type { FreeRoomsByBuilding } from "./polimi";
 
 export const TELEGRAM_MAX_MESSAGE_LENGTH = 4096;
+/** Room left in the first result message for the search summary header. */
+export const RESULT_HEADER_RESERVE = 512;
+
+type Room = FreeRoomsByBuilding[string][number];
 
 export interface FormatRoomMessagesOptions {
-  untilLabel: string;
-  /** Returned as the sole message when the search has no results. */
-  noResultsText?: string;
+  /** Plain text after each room name: "→ 14:15" (free until) by default. */
+  timeText?: (room: Room) => string;
   maxLength?: number;
 }
 
@@ -42,20 +45,22 @@ function makeHeader(building: string, maxLength: number): string {
   return `\n<b>${truncateEscaped(building, maxLength - wrapperLength)}</b>\n`;
 }
 
-function makeRoomLine(
-  room: FreeRoomsByBuilding[string][number],
-  untilLabel: string,
-  availableLength: number,
-): string {
-  const suffix = ` (${escapeTelegramHtml(untilLabel)} ${escapeTelegramHtml(formatTime(room.until))}) ${room.powerPlugs ? "🔌" : ""}\n`;
+const freeUntil = (room: Room): string => `→ ${formatTime(room.until)}`;
+
+function plainRoomLine(room: Room, time: string): string {
+  return `${room.name} ${time}${room.powerPlugs ? " 🔌" : ""}`;
+}
+
+function makeRoomLine(room: Room, time: string, availableLength: number): string {
+  const suffix = ` ${escapeTelegramHtml(time)}${room.powerPlugs ? " 🔌" : ""}\n`;
   const escapedName = escapeTelegramHtml(room.name);
   const escapedLink = escapeTelegramHtml(room.link, true);
-  const linked = ` <a href="${escapedLink}">${escapedName}</a>${suffix}`;
+  const linked = `• <a href="${escapedLink}">${escapedName}</a>${suffix}`;
   if (linked.length <= availableLength) return linked;
 
   // A pathological upstream URL must not create an invalid Telegram message.
   // Drop the link first, then safely truncate user-controlled text if needed.
-  const plainPrefix = " ";
+  const plainPrefix = "• ";
   const roomNameBudget = Math.max(
     0,
     availableLength - plainPrefix.length - suffix.length,
@@ -63,18 +68,16 @@ function makeRoomLine(
   const plain = `${plainPrefix}${truncateEscaped(room.name, roomNameBudget)}${suffix}`;
   return plain.length <= availableLength
     ? plain
-    : truncateEscaped(
-        `${room.name} ${untilLabel} ${formatTime(room.until)}${room.powerPlugs ? " 🔌" : ""}`,
-        availableLength,
-      );
+    : truncateEscaped(plainRoomLine(room, time), availableLength);
 }
 
 /** Format free rooms as valid Telegram HTML messages of at most 4096 chars. */
 export function formatRoomMessages(
   availableRooms: FreeRoomsByBuilding,
-  options: FormatRoomMessagesOptions,
+  options: FormatRoomMessagesOptions = {},
 ): string[] {
   const maxLength = options.maxLength ?? TELEGRAM_MAX_MESSAGE_LENGTH;
+  const timeText = options.timeText ?? freeUntil;
   if (!Number.isInteger(maxLength) || maxLength < 32) {
     throw new RangeError("maxLength must be an integer of at least 32");
   }
@@ -82,10 +85,7 @@ export function formatRoomMessages(
   const nonEmptyBuildings = Object.entries(availableRooms).filter(
     ([, rooms]) => rooms.length > 0,
   );
-  if (nonEmptyBuildings.length === 0) {
-    if (!options.noResultsText) return [];
-    return [truncateEscaped(options.noResultsText, maxLength)];
-  }
+  if (nonEmptyBuildings.length === 0) return [];
 
   const messages: string[] = [];
   let current = "";
@@ -94,11 +94,8 @@ export function formatRoomMessages(
     let needsHeader = true;
     for (const room of rooms) {
       let prefix = needsHeader ? header : "";
-      const line = makeRoomLine(
-        room,
-        options.untilLabel,
-        maxLength - header.length,
-      );
+      const time = timeText(room);
+      const line = makeRoomLine(room, time, maxLength - header.length);
       if (current && current.length + prefix.length + line.length > maxLength) {
         messages.push(current);
         current = "";
@@ -108,7 +105,7 @@ export function formatRoomMessages(
       if (line.length === 0 || current.length + prefix.length + line.length > maxLength) {
         // This only occurs with an exceptionally long localized suffix.
         if (current) messages.push(current);
-        current = truncateEscaped(`${room.name} ${options.untilLabel} ${formatTime(room.until)}`, maxLength);
+        current = truncateEscaped(plainRoomLine(room, time), maxLength);
         needsHeader = true;
       } else {
         current += prefix + line;

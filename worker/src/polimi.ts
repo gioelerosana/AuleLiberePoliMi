@@ -1,3 +1,6 @@
+import { EXCLUDED_ROOMS } from "./data";
+import type { ListedRoomKind, RoomInfo, RoomZone } from "./rooms";
+
 export const POLIMI_OCCUPANCY_URL =
   "https://onlineservices.polimi.it/spazi/spazi/controller/OccupazioniGiornoEsatto.do";
 
@@ -6,8 +9,10 @@ const POLIMI_CONTROLLER_URL =
 const QUARTER_HOUR = 0.25;
 const FIRST_GRID_TIME = 7.75;
 const LAST_OPENING_TIME = 20;
+const DEFAULT_LOOKAHEAD_HOURS = 2;
+// Rooms freeing up for a shorter gap are not worth walking to.
+const MIN_FREEING_UP_HOURS = 1;
 const DEFAULT_TIMEOUT_MS = 20_000;
-const GARBAGE_ROOMS = new Set(["PROVA_ASICT", "2.2.1-D.I.", "OSVALDODEDONATO"]);
 const UPSTREAM_HEADERS = {
   Accept: "text/html,application/xhtml+xml",
   "Accept-Language": "it-IT,it;q=0.9,en;q=0.8",
@@ -27,7 +32,13 @@ export interface RoomOccupancy {
   link: string;
   lessons: Lesson[];
   powerPlugs: boolean;
+  kind: ListedRoomKind;
+  zone: RoomZone;
 }
+
+export type RoomClassifier = (roomId: number | undefined) => RoomInfo;
+
+const EVERY_ROOM_STANDARD: RoomClassifier = () => ({ kind: "standard", zone: "main" });
 
 export type OccupanciesByBuilding = Record<
   string,
@@ -37,11 +48,26 @@ export type OccupanciesByBuilding = Record<
 export interface FreeRoom {
   name: string;
   link: string;
+  /** The room is free from `from` to `until`. */
+  from: number;
   until: number;
   powerPlugs: boolean;
+  kind: ListedRoomKind;
+  zone: RoomZone;
 }
 
 export type FreeRoomsByBuilding = Record<string, FreeRoom[]>;
+
+/** Rooms and lookahead produced by a single upstream fetch. */
+export interface RoomSearchResult {
+  free: FreeRoomsByBuilding;
+  /**
+   * Rooms busy at `startTime` that become free within `lookaheadHours` of it
+   * for at least an hour: `from` is when the room frees up, `until` when it
+   * is busy again (or PoliMi closes).
+   */
+  freeingUp: FreeRoomsByBuilding;
+}
 
 export interface SearchFreeRoomsInput {
   location: string;
@@ -50,8 +76,12 @@ export interface SearchFreeRoomsInput {
   year: number;
   startTime: number;
   endTime: number;
+  /** How many hours after `startTime` to look for rooms freeing up. */
+  lookaheadHours?: number;
   /** Static contents of roomsWithPower.json, bundled by the caller. */
   roomsWithPower: readonly number[];
+  /** Room kind and zone from json/roomTypes.json; excluded rooms are dropped. */
+  roomInfo?: RoomClassifier;
 }
 
 interface RewriterElement {
@@ -133,6 +163,7 @@ function consumeRow(
   occupancies: OccupanciesByBuilding,
   currentBuilding: { value: string },
   poweredRoomIds: ReadonlySet<number>,
+  classify: RoomClassifier,
 ): void {
   if (row.cells.length === 0) return;
 
@@ -159,14 +190,17 @@ function consumeRow(
       currentRoom = normalizeText(cell.anchorText).replace(/\s+/gu, "");
       if (!currentRoom || !cell.href) continue;
 
+      const roomId = roomIdFromHref(cell.href);
+      const { kind, zone } = classify(roomId);
+      // Its lesson cells find no room below and are skipped.
+      if (kind === "excluded") continue;
       const rooms = (occupancies[currentBuilding.value] ??= {});
       rooms[currentRoom] ??= {
         link: absoluteRoomUrl(cell.href),
         lessons: [],
-        powerPlugs: (() => {
-          const roomId = roomIdFromHref(cell.href!);
-          return roomId !== undefined && poweredRoomIds.has(roomId);
-        })(),
+        powerPlugs: roomId !== undefined && poweredRoomIds.has(roomId),
+        kind,
+        zone,
       };
     } else if (cell.classes.includes("slot") && currentRoom) {
       const duration = Number.isFinite(cell.colspan) && cell.colspan > 0
@@ -203,6 +237,7 @@ export async function parseOccupancyResponse(
   response: Response,
   roomsWithPower: readonly number[],
   htmlRewriter?: HtmlRewriterConstructor,
+  classify: RoomClassifier = EVERY_ROOM_STANDARD,
 ): Promise<OccupanciesByBuilding> {
   const occupancies: OccupanciesByBuilding = { "-": {} };
   const currentBuilding = { value: "-" };
@@ -220,7 +255,7 @@ export async function parseOccupancyResponse(
         };
         currentRow = row;
         element.onEndTag(() => {
-          consumeRow(row, occupancies, currentBuilding, poweredRoomIds);
+          consumeRow(row, occupancies, currentBuilding, poweredRoomIds, classify);
           if (currentRow === row) currentRow = undefined;
         });
       },
@@ -263,7 +298,7 @@ export async function parseOccupancyResponse(
 
   if (Object.keys(occupancies["-"] ?? {}).length === 0) delete occupancies["-"];
   for (const rooms of Object.values(occupancies)) {
-    for (const garbageRoom of GARBAGE_ROOMS) delete rooms[garbageRoom];
+    for (const excludedRoom of EXCLUDED_ROOMS) delete rooms[excludedRoom];
   }
   return occupancies;
 }
@@ -285,10 +320,49 @@ export function isRoomFree(
   return { free: true, until };
 }
 
+/**
+ * Time at which a room busy at `time` becomes free, following back-to-back
+ * lessons. Returns null when the room is already free at `time`.
+ */
+export function freeingTime(
+  lessons: readonly Lesson[],
+  time: number,
+): number | null {
+  const sortedLessons = [...lessons].sort((a, b) => a.from - b.from);
+  let freeAt = time;
+  let busy = false;
+  for (const lesson of sortedLessons) {
+    if (lesson.from <= freeAt && lesson.to > freeAt) {
+      freeAt = lesson.to;
+      busy = true;
+    }
+  }
+  return busy ? freeAt : null;
+}
+
+/**
+ * The free gap of a room busy at `time` that frees up within `lookaheadHours`,
+ * or null when the room never frees up in time or only for a short gap.
+ */
+export function freeingGap(
+  lessons: readonly Lesson[],
+  time: number,
+  lookaheadHours: number,
+): { from: number; until: number } | null {
+  const from = freeingTime(lessons, time);
+  if (from === null || from > time + lookaheadHours) return null;
+  // Back-to-back lessons are followed, so the room is free right at `from`.
+  const { until } = isRoomFree(lessons, from, from + QUARTER_HOUR);
+  return until !== null && until - from >= MIN_FREEING_UP_HOURS ? { from, until } : null;
+}
+
 function validateSearchInput(input: SearchFreeRoomsInput): void {
   if (!input.location.trim()) throw new TypeError("location must not be empty");
   for (const key of ["day", "month", "year", "startTime", "endTime"] as const) {
     if (!Number.isFinite(input[key])) throw new TypeError(`${key} must be finite`);
+  }
+  if (input.lookaheadHours !== undefined && !Number.isFinite(input.lookaheadHours)) {
+    throw new TypeError("lookaheadHours must be finite");
   }
   if (input.startTime >= input.endTime) {
     throw new RangeError("startTime must be before endTime");
@@ -300,7 +374,19 @@ export async function searchFreeRooms(
   input: SearchFreeRoomsInput,
   dependencies: SearchDependencies = {},
 ): Promise<FreeRoomsByBuilding> {
+  return (await searchRooms(input, dependencies)).free;
+}
+
+/**
+ * Like {@link searchFreeRooms}, and also lists the rooms that free up within
+ * `lookaheadHours` of `startTime`, from the same upstream fetch.
+ */
+export async function searchRooms(
+  input: SearchFreeRoomsInput,
+  dependencies: SearchDependencies = {},
+): Promise<RoomSearchResult> {
   validateSearchInput(input);
+  const lookaheadHours = input.lookaheadHours ?? DEFAULT_LOOKAHEAD_HOURS;
   const requestUrl = new URL(
     dependencies.upstreamUrl ?? POLIMI_OCCUPANCY_URL,
   );
@@ -335,8 +421,10 @@ export async function searchFreeRooms(
       response,
       input.roomsWithPower,
       dependencies.htmlRewriter,
+      input.roomInfo,
     );
-    const freeRooms: FreeRoomsByBuilding = {};
+    const free: FreeRoomsByBuilding = {};
+    const freeingUp: FreeRoomsByBuilding = {};
     for (const [building, rooms] of Object.entries(occupancies)) {
       for (const [name, room] of Object.entries(rooms)) {
         const availability = isRoomFree(
@@ -344,16 +432,33 @@ export async function searchFreeRooms(
           input.startTime,
           input.endTime,
         );
-        if (!availability.free || availability.until === null) continue;
-        (freeRooms[building] ??= []).push({
-          name,
-          link: room.link,
-          until: availability.until,
-          powerPlugs: room.powerPlugs,
-        });
+        if (availability.free && availability.until !== null) {
+          (free[building] ??= []).push({
+            name,
+            link: room.link,
+            from: input.startTime,
+            until: availability.until,
+            powerPlugs: room.powerPlugs,
+            kind: room.kind,
+            zone: room.zone,
+          });
+          continue;
+        }
+
+        const gap = freeingGap(room.lessons, input.startTime, lookaheadHours);
+        if (gap) {
+          (freeingUp[building] ??= []).push({
+            name,
+            link: room.link,
+            ...gap,
+            powerPlugs: room.powerPlugs,
+            kind: room.kind,
+            zone: room.zone,
+          });
+        }
       }
     }
-    return freeRooms;
+    return { free, freeingUp };
   } finally {
     clearTimeout(timeout);
   }

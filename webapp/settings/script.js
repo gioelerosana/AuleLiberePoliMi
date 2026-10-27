@@ -11,21 +11,23 @@
  *  launched from a KeyboardButton (reply keyboard), NOT from an
  *  InlineKeyboardButton. The bot's ⚙️ button is a KeyboardButton.
  *
- *  CONTRACT: sends a JSON string {"lang","campus","duration"} to the
+ *  CONTRACT: sends a JSON string {"lang","campus","duration","lookahead"} to the
  *  bot via sendData(). Do not rename these keys (see worker/src/telegram.ts).
  */
 
 const STORAGE_KEY = "auleliberepolimi_prefs";
 
-// ── Translations ──────────────────────────────────────────────
+// ── Translations ───────────────────────────────────────────────
 const I18N = {
     en: {
         settingsTitle: "AuleLiberePoliMi — Settings",
         title: "Preferences",
-        subtitle: "Set your preferences for quick search.",
+        subtitle: "Campus, duration and freeing-up rooms for the 🕒 Now button.",
         languageLabel: "Language",
         campusLabel: "Preferred campus",
         durationLabel: "Search duration (hours)",
+        lookaheadLabel: "Look ahead for rooms freeing up (hours)",
+        lookaheadHint: "Results also list rooms that free up within this many hours from the start.",
         campusPlaceholder: "— Select a campus —",
         saveBtn: "Save preferences",
         footer: "Preferences are stored on your device.",
@@ -34,10 +36,12 @@ const I18N = {
     it: {
         settingsTitle: "AuleLiberePoliMi — Impostazioni",
         title: "Preferenze",
-        subtitle: "Imposta le tue preferenze per la ricerca rapida.",
+        subtitle: "Campus, durata e aule in liberazione per il pulsante 🕒 Ora.",
         languageLabel: "Lingua",
         campusLabel: "Campus preferito",
         durationLabel: "Durata ricerca (ore)",
+        lookaheadLabel: "Guarda avanti per le aule che si liberano (ore)",
+        lookaheadHint: "I risultati elencano anche le aule che si liberano entro questo numero di ore dall'inizio.",
         campusPlaceholder: "— Seleziona un campus —",
         saveBtn: "Salva preferenze",
         footer: "Le preferenze sono salvate sul tuo dispositivo.",
@@ -61,16 +65,22 @@ function applyLanguage(lang) {
     }
 }
 
-// ── DOM refs ──────────────────────────────────────────────────
+// ── DOM refs ───────────────────────────────────────────────────
 const langSegmented = document.getElementById("lang-segmented");
 const langButtons = langSegmented.querySelectorAll(".segmented__btn");
 const campusSelect = document.getElementById("campus");
 const durationSlider = document.getElementById("duration");
 const durationValue = document.getElementById("duration-value");
-const sliderEl = durationSlider.parentElement; // .slider container
+const lookaheadSlider = document.getElementById("lookahead");
+const lookaheadValue = document.getElementById("lookahead-value");
+// Each slider pairs the <input>, its value bubble and the .slider container.
+const sliders = [
+    { input: durationSlider, value: durationValue, el: durationSlider.parentElement },
+    { input: lookaheadSlider, value: lookaheadValue, el: lookaheadSlider.parentElement },
+];
 const saveBtn = document.getElementById("save-btn");
 
-// ── Language (segmented button) ───────────────────────────────
+// ── Language (segmented button) ────────────────────────────────
 function getSelectedLang() {
     const selected = langSegmented.querySelector(".segmented__btn.is-selected");
     return selected ? selected.dataset.lang : "en";
@@ -93,7 +103,7 @@ langButtons.forEach((btn) => {
     btn.addEventListener("click", () => setSelectedLang(btn.dataset.lang));
 });
 
-// ── Populate campus dropdown ──────────────────────────────────
+// ── Populate campus dropdown ───────────────────────────────────
 function populateCampuses() {
     const placeholder = document.createElement("option");
     placeholder.value = "";
@@ -101,8 +111,9 @@ function populateCampuses() {
     campusSelect.appendChild(placeholder);
     CAMPUSES.forEach((name) => {
         const opt = document.createElement("option");
+        // The value keeps the full name: the bot resolves it to a campus code.
         opt.value = name;
-        opt.textContent = name;
+        opt.textContent = name.replace(/^Milano /, "");
         campusSelect.appendChild(opt);
     });
 }
@@ -117,7 +128,7 @@ function matchCampusName(saved) {
     return CAMPUSES.find((name) => saved.startsWith(name + " - ")) || null;
 }
 
-// ── Apply loaded preferences to form ──────────────────────────
+// ── Apply loaded preferences to form ───────────────────────────
 function applyPrefs(prefs) {
     console.log("Applying preferences:", prefs);
     if (prefs.lang) setSelectedLang(prefs.lang);
@@ -126,7 +137,11 @@ function applyPrefs(prefs) {
     if (prefs.duration >= 1 && prefs.duration <= 8) {
         durationSlider.value = prefs.duration;
     }
-    updateDurationDisplay();
+    // Older saved preferences have no lookahead: keep the slider default.
+    if (prefs.lookahead >= 1 && prefs.lookahead <= 8) {
+        lookaheadSlider.value = prefs.lookahead;
+    }
+    updateSliderDisplays();
 }
 
 // ── Load saved preferences from Telegram CloudStorage ─────────
@@ -147,7 +162,7 @@ function loadPreferences() {
                     } catch (e) {
                         console.warn("CloudStorage parse error:", e);
                         applyTelegramDefaultLang();
-                        updateDurationDisplay();
+                        updateSliderDisplays();
                     }
                 } else {
                     console.log("No CloudStorage data found");
@@ -199,6 +214,7 @@ function savePreferences() {
     const lang = getSelectedLang();
     const campus = campusSelect.value;
     const duration = parseInt(durationSlider.value, 10);
+    const lookahead = parseInt(lookaheadSlider.value, 10);
     const t = I18N[lang] || I18N.en;
 
     if (!campus) {
@@ -210,7 +226,7 @@ function savePreferences() {
         return;
     }
 
-    const data = JSON.stringify({ lang, campus, duration });
+    const data = JSON.stringify({ lang, campus, duration, lookahead });
     console.log("Saving preferences:", data);
 
     const tg = window.Telegram && window.Telegram.WebApp;
@@ -248,22 +264,26 @@ function savePreferences() {
     }
 }
 
-// ── Update duration display + track fill + bubble position ────
-function updateDurationDisplay() {
-    const min = parseInt(durationSlider.min, 10);
-    const max = parseInt(durationSlider.max, 10);
-    const val = parseInt(durationSlider.value, 10);
+// ── Update slider displays: value text + track fill + bubble position ─
+function updateSliderDisplays() {
+    sliders.forEach(updateSliderDisplay);
+}
+
+function updateSliderDisplay({ input, value, el }) {
+    const min = parseInt(input.min, 10);
+    const max = parseInt(input.max, 10);
+    const val = parseInt(input.value, 10);
     const pct = (val - min) / (max - min);
 
-    durationValue.textContent = val + "h";
+    value.textContent = val + "h";
     // Track fill (left of thumb = primary) and bubble position are driven
     // purely by CSS using this fraction — no JS pixel math, so the bubble
     // stays aligned with the browser-positioned thumb across resize/font load.
-    sliderEl.style.setProperty("--slider-fill", pct * 100 + "%");
-    sliderEl.style.setProperty("--pct", String(pct));
+    el.style.setProperty("--slider-fill", pct * 100 + "%");
+    el.style.setProperty("--pct", String(pct));
 }
 
-// ── Apply Telegram theme ──────────────────────────────────────
+// ── Apply Telegram theme ───────────────────────────────────────
 function applyTheme() {
     if (window.Telegram && window.Telegram.WebApp) {
         document.documentElement.style.colorScheme =
@@ -287,23 +307,23 @@ function attachRipple(el) {
 }
 
 // ── Slider bubble: only visible while dragging ────────────────
-function attachSliderDragBehavior() {
-    const start = () => sliderEl.classList.add("is-dragging");
-    const end = () => sliderEl.classList.remove("is-dragging");
+function attachSliderDragBehavior({ input, el }) {
+    const start = () => el.classList.add("is-dragging");
+    const end = () => el.classList.remove("is-dragging");
 
     // Pointer events cover mouse/touch/stylus in modern WebViews.
-    durationSlider.addEventListener("pointerdown", start);
+    input.addEventListener("pointerdown", start);
     window.addEventListener("pointerup", end);
     window.addEventListener("pointercancel", end);
 
     // Fallback for older WebViews without pointer events.
-    durationSlider.addEventListener("touchstart", start, { passive: true });
+    input.addEventListener("touchstart", start, { passive: true });
     window.addEventListener("touchend", end);
-    durationSlider.addEventListener("mousedown", start);
+    input.addEventListener("mousedown", start);
     window.addEventListener("mouseup", end);
 }
 
-// ── Init ──────────────────────────────────────────────────────
+// ── Init ───────────────────────────────────────────────────────
 function init() {
     console.log("Mini App initialized");
     populateCampuses();
@@ -330,16 +350,18 @@ function init() {
     // Align slider fill + value bubble to the initial input value, even
     // when no preferences are saved (applyPrefs only runs async on load).
     // Position is pure CSS (fraction-based), so this is layout-independent.
-    updateDurationDisplay();
+    updateSliderDisplays();
 
-    durationSlider.addEventListener("input", updateDurationDisplay);
-    attachSliderDragBehavior();
+    sliders.forEach((slider) => {
+        slider.input.addEventListener("input", () => updateSliderDisplay(slider));
+        attachSliderDragBehavior(slider);
+    });
     saveBtn.addEventListener("click", savePreferences);
     attachRipple(saveBtn);
 
     // Recompute on resize / orientation change / full load (defensive)
-    window.addEventListener("resize", updateDurationDisplay);
-    window.addEventListener("load", updateDurationDisplay);
+    window.addEventListener("resize", updateSliderDisplays);
+    window.addEventListener("load", updateSliderDisplays);
 }
 
 document.addEventListener("DOMContentLoaded", init);

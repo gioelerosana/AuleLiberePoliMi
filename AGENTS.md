@@ -33,14 +33,19 @@ stack moderno e architettura stateless.
   - Lingua preferita (it/en)
   - Campus preferito
   - Durata della ricerca rapida (1-8 ore)
+  - Quante ore guardare avanti per le aule che si liberano (1-8, default 2):
+    la sezione "⏳ Si liberano entro N ore" in fondo ai risultati, che mostra
+    l'intervallo libero (`dalle HH:MM alle HH:MM`) per le aule che restano
+    libere almeno un'ora
 - La Mini App è hostata su **Cloudflare Pages** (statica)
 - I dati arrivano al bot via `web_app_data` quando l'utente salva
 - La Mini App è solo per le *impostazioni* — il bot rimane **inline**
   (testo e tastiere) per tutta la ricerca
 
 ### Interazione impostazioni
-- Nella tastiera persistente `⚙️Preferenze` è un bottone `web_app` che apre
-  direttamente la Mini App
+- Nella tastiera persistente `⚙️ Preferenze` è un bottone `web_app` che apre
+  direttamente la Mini App (deve restare un bottone della reply keyboard:
+  `sendData()` non funziona dal menu button né da bottoni inline)
 - La Mini App **non sostituisce** l'intero bot, solo le impostazioni
 
 ### Cloudflare Workers (aggiornato 09/2026)
@@ -53,24 +58,60 @@ stack moderno e architettura stateless.
 ### Ricerca rapida "Ora"
 - Un pulsante della tastiera persistente non può trasportare dati, ma il suo
   **testo viene rimandato al bot come messaggio**: le preferenze salvate sono
-  quindi codificate nel label del pulsante `🕒Ora` (es.
-  `🕒Ora · Milano Bovisa 2h 🇮🇹`), nessun KV/DB e nessun messaggio pinnato
-- Dopo il salvataggio la Mini App invia `web_app_data`: il bot ricostruisce la
-  tastiera persistente con le preferenze nel label e invia un messaggio
-  preferenze con il pulsante `🕒Ora` inline (preferenze in `callback_data`)
+  quindi codificate nel label del pulsante `🕒 Ora` (es. `🕒 Ora · Bovisa 2h`,
+  oppure `🕒 Ora · Bovisa 2h ⏳4h`), nessun KV/DB e nessun messaggio pinnato
+- Il label usa il nome breve del campus (senza "Milano ") e niente bandiera:
+  la lingua si ricava dal prefisso (`🕒 Ora` = it, `🕒 Now` = en); `⏳Nh`
+  compare solo se l'orizzonte delle aule in liberazione non è quello di default
+- Dopo il salvataggio la Mini App invia `web_app_data`: il bot risponde con un
+  solo messaggio `✅ Preferenze salvate` che porta la nuova tastiera
 - Al tap del pulsante persistente il bot ricava campus/durata/lingua dal testo
-  del messaggio con `parseNowLabel` e fa la ricerca; se il label è assente,
-  malformato o è il semplice `🕒Ora`, ripiega sul flusso inline campus → durata
-- I codici delle singole sedi (es. `MIA11`) restano trasportabili perché il
-  label usa il nome esteso che `campusCodeFromName` sa ricondurre al codice
-- La lingua di fallback si ottiene da `message.from.language_code`; nei label
-  validi vince la lingua codificata nel pulsante
+  con `parseNowLabel` e fa la ricerca; se il label è assente, malformato o è il
+  semplice `🕒 Ora`, ripiega sul picker inline campus → durata
+- Quando il PoliMi è chiuso (prima delle 08:00, dopo le 20:00 o la domenica),
+  la ricerca rapida parte dalla riapertura alle 08:00 saltando la domenica
+  (sabato sera e domenica cercano lunedì alle 08:00) e lo segnala nell'intestazione
+- `parseNowLabel` accetta anche il formato legacy `🕒Ora · Milano Bovisa 2h ⏳4h 🇮🇹`
+  (con o senza `⏳`)
+  e `LABELS` i vecchi `🔍Cerca`/`ℹinfo`: le tastiere vecchie restano sui
+  telefoni finché l'utente non rifà `/start`
+- I codici delle singole sedi (es. `MIA11`) restano trasportabili perché
+  `campusCodeFromShortName` riconduce sia il nome breve sia quello esteso
+
+### Interfaccia di ricerca
+- Una sola "scheda" per ricerca: i passi (campus → giorno → ora inizio → ora
+  fine, oppure campus → durata) modificano lo stesso messaggio con
+  `editMessageText`, mostrano un riepilogo `📍 · 📅 · 🕐` e hanno
+  `⬅ Indietro` + `✖ Annulla` (che cancella la scheda); se la modifica della
+  scheda fallisce, rimuove i bottoni dalla vecchia in best-effort prima di
+  inviare la nuova
+- Gli orari del picker seguono lo schema `:15` delle lezioni PoliMi (inizio
+  `08:15`–`19:15`, fine `09:15`–`19:15` più `🏁 Fino a chiusura · 20:00`, con
+  le callback a ore intere già inviate che restano valide); dopo le `19:45`
+  "Oggi" scompare dal picker dei giorni
+- La scheda diventa `🔎 Cerco…` e poi il primo messaggio dei risultati; i
+  bottoni `🔄 Aggiorna`/`🔌 Solo con prese`/`🕐 Cambia orario` stanno
+  sotto l'ultimo messaggio
+- I bottoni sotto i risultati hanno il flag `fresh` (`n` nel callback): non
+  modificano i risultati ma ne mandano di nuovi, togliendo i bottoni vecchi;
+  il flag `p` attiva il filtro prese, `d` mostra le aule da disegno al posto
+  di quelle normali (il bottone manca nei campus o singole sedi senza aule da
+  disegno), `z` mostra tutte le zone del campus. `🕐 Cambia orario` conserva
+  i filtri `p`/`d`/`z` lungo il picker
+- Callback non validi o scaduti: toast con `answerCallbackQuery` (best-effort),
+  niente messaggi in chat; gli errori 4xx non transitori della Bot API
+  chiudono il webhook con 200 per evitare retry infiniti
+- I comandi del menu `/` si registrano con `npm run commands:set`
+  (automatico in `dev:local`)
 
 ### Sviluppo
 - `main` = produzione (bot di tutti); si sviluppa su `dev`
 - `npm run dev:local` avvia Mini App + Worker + due quick tunnel Cloudflare +
   webhook sul **bot di test** (token in `worker/.dev.vars`)
 - `npm run dev:webapp` per provare la Mini App nel browser
+- `npm run dev:preview` come `dev:local`, ma il bot di test apre la preview
+  Cloudflare Pages del branch corrente (`<branch>.aule-libere-polimi-settings.pages.dev`)
+  invece del tunnel locale; richiede branch pushato e build di Pages completata
 - Workflow completo nella sezione "Workflow di sviluppo (dev → main)"
 
 ### Logging
@@ -81,6 +122,26 @@ stack moderno e architettura stateless.
 - `campuses.json`: campus mostrati nei menu, una voce per campus e niente
   singole vie; deve restare un sottoinsieme di `location.json`
 - `roomsWithPower.json`: ID delle aule con prese
+- `roomTypes.json`: per ogni ID aula PoliMi campus, sede ("Dove"), edificio,
+  categoria e tipologia,
+  scaricate dalle schede aula con `npm run rooms:fetch` (snapshot statico,
+  da rilanciare quando il PoliMi aggiunge aule; se una scheda fallisce o un
+  campus non elenca aule in quel giorno vengono mantenute le voci precedenti,
+  e le schede fallite fanno uscire lo script con codice 1). `worker/src/rooms.ts`
+  classifica: *aula didattica* con platea frontale o informatizzata =
+  normale (mostrata di default), *aula didattica / disegno* = aula da disegno
+  (bottone `✏️ Aule da disegno` sotto i risultati), tutto il resto
+  (laboratori, aule convegni, aule magne, dipartimentali, aule studio, spazi
+  espositivi) viene scartato. Le aule assenti dallo snapshot contano come
+  normali
+- `campusZones.json`: per campus, le sedi della "zona centrale" mostrate di
+  default (Città Studi: Piazza Leonardo da Vinci 32 e Via Bonardi, cioè
+  campus storico, Trifoglio, Nave, Architettura). Le aule delle altre sedi
+  sono solo contate in fondo ai risultati e si vedono con `🗺️ Tutte le zone`
+  (flag `z`). Vale solo per le ricerche sull'intero campus, non per le sedi
+  singole delle preferenze legacy; i campus senza voce non hanno zone
+- `excludedRooms.json`: esclusioni manuali per nome, solo per i casi che le
+  categorie non coprono (es. le aule `-D.I.`, che risultano aule da disegno)
 - Generano `worker/src/data.ts` e `webapp/settings/data.js` con
   `npm run data:generate`; check, test e deploy falliscono se le copie generate
   non sono aggiornate
@@ -131,11 +192,13 @@ Passi usati finora (seguirli nell'ordine):
    npm run deploy
    ```
    `predeploy` esegue `data:check`; `--keep-vars` conserva `WEBAPP_URL`.
+   Se la lista comandi è cambiata: `BOT_TOKEN=... npm run commands:set` con
+   il token di produzione.
 8. Smoke test in produzione:
    ```bash
    curl https://aule-libere-polimi.gioelegr3.workers.dev/health
    ```
-   poi `/start`, `🔍Cerca` e `🕒Ora` sul bot di produzione. In caso di errori:
+   poi `/start`, `🔍 Cerca` e `🕒 Ora` sul bot di produzione. In caso di errori:
    `wrangler tail`.
 
 **Regole**
@@ -154,11 +217,16 @@ Passi usati finora (seguirli nell'ordine):
 | File | Ruolo |
 |---|---|
 | `worker/src/index.ts` | Entry point Worker, routing webhook, health |
-| `worker/src/telegram.ts` | Handler update, tastiere, flusso ricerca |
+| `worker/src/telegram.ts` | Handler update, routing, scheda e ricerca |
+| `worker/src/screens.ts` | Schermate inline, tastiera persistente, label |
+| `worker/src/clock.ts` | Orari e date nel fuso Europe/Rome |
+| `worker/src/rooms.ts` | Classificazione aule (normali, disegno, escluse) e zone |
 | `worker/src/protocol.ts` | Callback compatti encode/decode, campus |
 | `worker/src/i18n.ts` | Traduzioni it/en |
 | `worker/src/polimi.ts` | Scraper aule libere (`fetch` + `HTMLRewriter`) |
 | `worker/scripts/dev-local.mjs` | Stack di sviluppo locale end-to-end |
+| `worker/scripts/set-commands.mjs` | Registra i comandi del menu `/` |
+| `worker/scripts/fetch-room-types.mjs` | Scarica categorie e tipologie aule |
 | `webapp/settings/` | Mini App statica (Cloudflare Pages) |
 | `worker/README.md` | Deploy, test locale, limiti Free |
 | `docs/TODO.md` | Tracking del rinnovamento |

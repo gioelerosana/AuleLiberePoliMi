@@ -236,6 +236,14 @@ body {
     line-height: 1;
 }
 
+.field__hint {
+    margin: 2px 0 0;
+    padding-left: 4px;
+    font-size: 12px;
+    line-height: 16px;
+    color: var(--md-on-surface-variant);
+}
+
 /* ── Material 3 slider ─────────────────────────────────────── */
 :root {
     --md-track-inactive: color-mix(in srgb, var(--md-on-surface) 30%, transparent);

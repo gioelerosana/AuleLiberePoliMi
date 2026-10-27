@@ -18,7 +18,7 @@
     <div class="app">
         <header class="app__header">
             <h1 class="app__title" data-i18n="title">Preferences</h1>
-            <p class="app__subtitle" data-i18n="subtitle">Set your preferences for quick search.</p>
+            <p class="app__subtitle" data-i18n="subtitle">Campus, duration and freeing-up rooms for the 🕒 Now button.</p>
         </header>
 
         <section class="card">
@@ -50,6 +50,19 @@
                 <div class="slider__scale" aria-hidden="true">
                     <span>1h</span><span>8h</span>
                 </div>
+            </div>
+
+            <!-- Lookahead: rooms about to free up -->
+            <div class="field">
+                <span class="field__label" data-i18n="lookaheadLabel">Look ahead for rooms freeing up (hours)</span>
+                <div class="slider">
+                    <input type="range" id="lookahead" min="1" max="8" step="1" value="2" aria-describedby="lookahead-hint" />
+                    <span class="slider__value" id="lookahead-value">2h</span>
+                </div>
+                <div class="slider__scale" aria-hidden="true">
+                    <span>1h</span><span>8h</span>
+                </div>
+                <p class="field__hint" id="lookahead-hint" data-i18n="lookaheadHint">Results also list rooms that free up within this many hours from the start.</p>
             </div>
         </section>
 
