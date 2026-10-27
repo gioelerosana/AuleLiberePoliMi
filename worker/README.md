@@ -161,7 +161,22 @@ wrangler secret put WEBHOOK_SECRET
 la dashboard Cloudflare. Deve essere l'URL HTTPS della Mini App su Pages. Lo
 script di deploy usa `--keep-vars` per non cancellare questa variabile remota.
 
-Prima del deploy autenticarsi con `wrangler login`, quindi:
+In produzione il deploy è automatico: il Worker è collegato al repository con
+Workers Builds e ogni push su `main` lancia il build con questa configurazione
+(**Settings → Build** del Worker):
+
+| Campo | Valore |
+|---|---|
+| Branch di produzione | `main` |
+| Directory radice | `worker` |
+| Comando di build | `npm ci` |
+| Comando di deploy | `npm run deploy` |
+| Build dei branch non di produzione | disattivati |
+
+Il comando di deploy deve restare `npm run deploy` e non `npx wrangler deploy`,
+altrimenti si perde `--keep-vars` e il deploy cancella `WEBAPP_URL`.
+
+Per un deploy manuale di ripiego, autenticarsi con `wrangler login`, quindi:
 
 ```bash
 npm run deploy

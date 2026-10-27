@@ -187,11 +187,11 @@ Passi usati finora (seguirli nell'ordine):
    git merge --ff-only dev
    git push origin main
    ```
-7. Deploy del Worker (da `worker/`):
-   ```bash
-   npm run deploy
-   ```
-   `predeploy` esegue `data:check`; `--keep-vars` conserva `WEBAPP_URL`.
+7. Deploy del Worker: automatico. Il Worker è collegato al repository con
+   Workers Builds e ogni push su `main` esegue, da `worker/`, `npm ci` e
+   `npm run deploy` (`predeploy` esegue `data:check`; `--keep-vars` conserva
+   `WEBAPP_URL`). Si segue in **Workers & Pages → aule-libere-polimi →
+   Deployments**; `npm run deploy` a mano resta solo come ripiego.
    Se la lista comandi è cambiata: `BOT_TOKEN=... npm run commands:set` con
    il token di produzione.
 8. Smoke test in produzione:
@@ -206,9 +206,9 @@ Passi usati finora (seguirli nell'ordine):
 - Mai fare deploy da `dev`: si deploya solo ciò che è su `main`
 - Il merge deve restare `--ff-only` per mantenere la storia lineare
 - `dev:local` usa esclusivamente il bot di test, mai quello di produzione
-- La Mini App su Cloudflare Pages si aggiorna via Git integration: le
-  modifiche a `webapp/settings/` seguono lo stesso percorso `dev` → `main`,
-  senza comandi di deploy manuali
+- Worker (Workers Builds) e Mini App (Cloudflare Pages) si aggiornano via Git
+  integration al push su `main`, senza comandi di deploy manuali; i build dei
+  branch non di produzione del Worker sono disattivati
 
 ---
 
